@@ -1,0 +1,22 @@
+{
+	
+    "key.pet.attack.desc": "Pet: Attack",
+    "key.pet.attackall.desc": "All Pets: Attack",
+    "key.pet.placementmode.desc": "Cycle Pet Placement Mode",
+    "key.pet.stopall.desc": "All Pets: Stop",
+    "key.pet.targetmode.desc": "Cycle Pet Target Mode",
+	
+	"key.PetCommand.desc": "Pet Command",
+	
+    "config.petcommand.show.healthbar": "Show Pet Healthbars",
+	"config.petcommand.show.healthbar.desc": "Show healthbars for tames pets, including information about their activity",
+	
+	"config.petcommand.show.bighealthbar": "Show Specialty Healthbars",
+	"config.petcommand.show.bighealthbar.desc": "Show larger healthbars for special pets",
+	
+	"config.petcommand.display.anchorx": "Healthbar Anchor X",
+	"config.petcommand.display.anchorx.desc": "X offset (in pixels) to display the pet healthbars. Negative values are from the right of the screen.",
+	
+	"config.petcommand.display.anchory": "Healthbar Anchor Y",
+	"config.petcommand.display.anchory.desc": "Y offset (in pixels) to display the pet healthbars"	
+}

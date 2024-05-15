@@ -1,0 +1,9 @@
+{
+    "ui.tick":
+    {
+        "sounds":
+        [
+            "petcommand:ui/tick"
+        ]
+    }
+}
