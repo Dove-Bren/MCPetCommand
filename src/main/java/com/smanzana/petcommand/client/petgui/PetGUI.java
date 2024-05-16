@@ -1,4 +1,4 @@
-package com.smanzana.petcommand.client.container;
+package com.smanzana.petcommand.client.petgui;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +18,8 @@ import com.smanzana.petcommand.api.client.petgui.PetGUIRenderHelper;
 import com.smanzana.petcommand.api.client.petgui.PetGUIStatAdapter;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.entity.IRerollablePet;
+import com.smanzana.petcommand.client.container.AutoGuiContainer;
+import com.smanzana.petcommand.client.container.PetCommandContainers;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetGUIControlMessage;
 import com.smanzana.petcommand.network.message.PetGUISyncMessage;
@@ -124,6 +126,8 @@ public class PetGUI {
 			if (livingPet.world.isRemote()) {
 				PetGUI.clientContainer = this;
 			}
+
+			this.setSheet(0);
 		}
 		
 		public static final PetContainer<?> FromNetwork(int windowId, PlayerInventory playerInv, PacketBuffer buffer) {
@@ -359,8 +363,8 @@ public class PetGUI {
 
 			protected void drawSlotRaw(MatrixStack matrixStackIn, int width, int height, int x, int y) {
 				Screen.blit(matrixStackIn, x, y,
-						width, height,
 						GUI_TEX_CELL_HOFFSET, GUI_TEX_CELL_VOFFSET, 
+						width, height,
 						GUI_TEX_WIDTH, GUI_TEX_HEIGHT);
 			}
 
@@ -407,6 +411,7 @@ public class PetGUI {
 			
 			final int GUI_SHEET_HOFFSET = this.width - (GUI_SHEET_WIDTH + GUI_SHEET_NHOFFSET);
 			this.container.setGUIOffets(GUI_SHEET_HOFFSET, GUI_SHEET_VOFFSET);
+			this.container.setSheet(0);
 		}
 		
 //		@Override

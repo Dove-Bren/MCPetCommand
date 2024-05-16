@@ -3,7 +3,7 @@ package com.smanzana.petcommand.proxy;
 import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.api.entity.IEntityPet;
-import com.smanzana.petcommand.client.container.PetGUI;
+import com.smanzana.petcommand.client.petgui.PetGUI;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 
 import net.minecraft.entity.player.PlayerEntity;

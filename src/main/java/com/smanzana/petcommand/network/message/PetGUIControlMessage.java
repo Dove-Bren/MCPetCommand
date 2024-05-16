@@ -2,7 +2,7 @@ package com.smanzana.petcommand.network.message;
 
 import java.util.function.Supplier;
 
-import com.smanzana.petcommand.client.container.PetGUI;
+import com.smanzana.petcommand.client.petgui.PetGUI;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;

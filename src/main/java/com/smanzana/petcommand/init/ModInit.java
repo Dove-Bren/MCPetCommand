@@ -27,5 +27,4 @@ public class ModInit {
 		
 		registry.register(new DataSerializerEntry(PetJobSerializer.GetInstance()).setRegistryName("petcommand.serial.pet_job"));
 	}
-	
 }

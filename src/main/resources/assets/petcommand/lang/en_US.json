@@ -18,5 +18,7 @@
 	"config.petcommand.display.anchorx.desc": "X offset (in pixels) to display the pet healthbars. Negative values are from the right of the screen.",
 	
 	"config.petcommand.display.anchory": "Healthbar Anchor Y",
-	"config.petcommand.display.anchory.desc": "Y offset (in pixels) to display the pet healthbars"	
+	"config.petcommand.display.anchory.desc": "Y offset (in pixels) to display the pet healthbars",
+	
+	"entity.petcommand.bound_iron_golem": "Bound Iron Golem"
 }

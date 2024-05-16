@@ -69,36 +69,18 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 			matrixStackIn.pop();
 			
 			// Player slots
+			final int playerTopOffset = 100;
 			matrixStackIn.push();
-			matrixStackIn.translate(leftOffset - 1, dragonTopOffset - 1, 0);
+			matrixStackIn.translate(leftOffset - 1, playerTopOffset - 1, 0);
 			// ... First 27
 			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, Math.min(27, playerInvSize), invRow);
 			
 			// Remaining (toolbar)
-			matrixStackIn.translate(0, 10, 0);
+			final int yOffset = ((Math.min(27, playerInvSize) / invRow)) * cellWidth;
+			matrixStackIn.translate(0, 10 + yOffset, 0);
 			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, Math.max(0, playerInvSize-27), invRow);
 			
 			matrixStackIn.pop();
-			
-			
-			
-//			for (int i = 0; i < petInv.getSizeInventory(); i++) {
-//				Screen.blit(matrixStackIn, leftOffset - 1 + (cellWidth * (i % invRow)),
-//						dragonTopOffset - 1 + (cellWidth * (i / invRow)),
-//						cellWidth, cellWidth,
-//						PetGUI.GUI_TEX_CELL_HOFFSET, PetGUI.GUI_TEX_CELL_VOFFSET, 
-//						256, 256);
-//			}
-			
-//			final int playerTopOffset = 100;
-//			for (int i = 0; i < playerInvSize; i++) {
-//				Screen.blit(matrixStackIn, leftOffset - 1 + (cellWidth * (i % invRow)),
-//						(i < 27 ? 0 : 10) + playerTopOffset - 1 + (cellWidth * (i / invRow)),
-//						cellWidth, cellWidth,
-//						PetGUI.GUI_TEX_CELL_HOFFSET, PetGUI.GUI_TEX_CELL_VOFFSET,
-//						256, 256);
-//			}
-			
 		}
 		matrixStackIn.pop();
 	}

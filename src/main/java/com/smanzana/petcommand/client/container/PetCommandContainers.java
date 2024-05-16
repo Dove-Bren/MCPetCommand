@@ -1,6 +1,7 @@
 package com.smanzana.petcommand.client.container;
 
 import com.smanzana.petcommand.PetCommand;
+import com.smanzana.petcommand.client.petgui.PetGUI;
 
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraftforge.common.extensions.IForgeContainerType;

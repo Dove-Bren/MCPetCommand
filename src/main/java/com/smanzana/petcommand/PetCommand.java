@@ -13,6 +13,7 @@ import com.google.common.collect.Lists;
 import com.smanzana.petcommand.api.ai.IFollowOwnerGoal;
 import com.smanzana.petcommand.api.entity.ITameableEntity;
 import com.smanzana.petcommand.config.ModConfig;
+import com.smanzana.petcommand.entity.BoundIronGolemEntity;
 import com.smanzana.petcommand.entity.ai.FollowOwnerAdvancedGoal;
 import com.smanzana.petcommand.entity.ai.PetTargetGoal;
 import com.smanzana.petcommand.listener.MovementListener;
@@ -61,6 +62,7 @@ public class PetCommand
 		
 		MinecraftForge.EVENT_BUS.register(this);
 		movementListener = new MovementListener();
+		MinecraftForge.EVENT_BUS.addListener(BoundIronGolemEntity::EntityInteractListener);
 	}
 	
 	public static CommonProxy GetProxy() {
