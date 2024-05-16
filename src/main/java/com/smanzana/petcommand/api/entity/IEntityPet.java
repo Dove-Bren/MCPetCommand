@@ -1,10 +1,10 @@
-package com.smanzana.petcommand.entity;
+package com.smanzana.petcommand.api.entity;
 
 import java.util.UUID;
 
-import com.smanzana.petcommand.client.container.IPetGUISheet;
-import com.smanzana.petcommand.client.container.PetGUI;
-import com.smanzana.petcommand.pet.PetInfo;
+import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
+import com.smanzana.petcommand.api.client.petgui.PetGUIStatAdapter;
+import com.smanzana.petcommand.api.pet.PetInfo;
 
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
@@ -24,6 +24,6 @@ public interface IEntityPet extends ITameableEntity {
 	
 	public IPetGUISheet<? extends IEntityPet>[] getContainerSheets(PlayerEntity player);
 	
-	public PetGUI.PetGUIStatAdapter<? extends IEntityPet> getGUIAdapter();
+	public PetGUIStatAdapter<? extends IEntityPet> getGUIAdapter();
 	
 }

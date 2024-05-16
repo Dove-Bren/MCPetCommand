@@ -1,11 +1,12 @@
 package com.smanzana.petcommand.init;
 
 import com.smanzana.petcommand.PetCommand;
+import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.client.container.PetCommandContainers;
 import com.smanzana.petcommand.client.container.PetGUI;
 import com.smanzana.petcommand.client.container.PetGUI.PetContainer;
 import com.smanzana.petcommand.client.container.PetGUI.PetGUIContainer;
-import com.smanzana.petcommand.entity.IEntityPet;
+import com.smanzana.petcommand.client.container.PetGUI.PetGUIContainer.PetGUIRenderHelperImpl;
 import com.smanzana.petcommand.proxy.ClientProxy;
 
 import net.minecraft.client.gui.ScreenManager;
@@ -25,6 +26,8 @@ public class ClientInit {
 		
 		ClientProxy proxy = (ClientProxy) PetCommand.GetProxy();
 		proxy.initKeybinds();
+		
+		PetGUIRenderHelperImpl.Register();
 	}
 	
 	// To get around bounds matching. D:

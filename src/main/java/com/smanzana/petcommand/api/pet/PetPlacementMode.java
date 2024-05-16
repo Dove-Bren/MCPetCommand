@@ -1,4 +1,4 @@
-package com.smanzana.petcommand.pet;
+package com.smanzana.petcommand.api.pet;
 
 public enum PetPlacementMode {
 	FREE, // No constraint; move as desired

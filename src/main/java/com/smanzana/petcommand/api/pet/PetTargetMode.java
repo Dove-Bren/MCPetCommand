@@ -1,4 +1,4 @@
-package com.smanzana.petcommand.pet;
+package com.smanzana.petcommand.api.pet;
 
 public enum PetTargetMode {
 	FREE, // Follow regular target rules for mob

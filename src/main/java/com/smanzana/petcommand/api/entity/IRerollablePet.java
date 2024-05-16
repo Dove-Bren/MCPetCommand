@@ -1,4 +1,4 @@
-package com.smanzana.petcommand.entity;
+package com.smanzana.petcommand.api.entity;
 
 public interface IRerollablePet {
 

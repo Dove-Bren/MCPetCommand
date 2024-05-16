@@ -1,4 +1,4 @@
-package com.smanzana.petcommand.entity.task;
+package com.smanzana.petcommand.entity.ai;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -8,7 +8,8 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.Lists;
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.pet.PetTargetMode;
+import com.smanzana.petcommand.api.PetFuncs;
+import com.smanzana.petcommand.api.pet.PetTargetMode;
 
 import net.minecraft.entity.CreatureEntity;
 import net.minecraft.entity.Entity;
@@ -36,7 +37,7 @@ public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 	 * Returns whether the Goal should begin execution.
 	 */
 	public boolean shouldExecute() {
-		final LivingEntity entitylivingbase = PetCommand.GetOwner(thePet);
+		final LivingEntity entitylivingbase = PetFuncs.GetOwner(thePet);
 		
 		if (entitylivingbase == null) {
 			return false;
@@ -58,15 +59,15 @@ public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 	}
 	
 	protected static @Nullable LivingEntity FindAggressiveTarget(MobEntity attacker, double range) {
-		LivingEntity owner = PetCommand.GetOwner(attacker);
-		List<LivingEntity> tamed = (owner == null ? Lists.newArrayList() : PetCommand.GetTamedEntities(owner));
+		LivingEntity owner = PetFuncs.GetOwner(attacker);
+		List<LivingEntity> tamed = (owner == null ? Lists.newArrayList() : PetFuncs.GetTamedEntities(owner));
 		List<Entity> entities = attacker.world.getEntitiesInAABBexcluding(attacker, attacker.getBoundingBox().grow(range), (e) -> {
 			return e instanceof LivingEntity
 					&& e != attacker
 					&& e != owner
 					&& !tamed.contains(e)
 					&& Filter.canTarget(attacker, (LivingEntity) e)
-					&& !PetCommand.IsSameTeam(attacker, (LivingEntity) e);
+					&& !PetFuncs.IsSameTeam(attacker, (LivingEntity) e);
 		});
 		Collections.sort(entities, (a, b) -> {
 			return (int) (a.getDistanceSq(attacker) - b.getDistanceSq(attacker));

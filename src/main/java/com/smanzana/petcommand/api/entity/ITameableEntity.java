@@ -1,4 +1,4 @@
-package com.smanzana.petcommand.entity;
+package com.smanzana.petcommand.api.entity;
 
 import javax.annotation.Nullable;
 

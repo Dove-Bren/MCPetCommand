@@ -7,12 +7,13 @@ import javax.annotation.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import com.smanzana.petcommand.PetCommand;
+import com.smanzana.petcommand.api.PetFuncs;
+import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.pet.PetPlacementMode;
+import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.client.overlay.OverlayRenderer;
-import com.smanzana.petcommand.entity.IEntityPet;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetCommandMessage;
-import com.smanzana.petcommand.pet.PetPlacementMode;
-import com.smanzana.petcommand.pet.PetTargetMode;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 import com.smanzana.petcommand.util.RayTrace;
 
@@ -120,7 +121,7 @@ public class ClientProxy extends CommonProxy {
 			final PlayerEntity player = getPlayer();
 			if (player != null && player.world != null) {
 				final float partialTicks = Minecraft.getInstance().getRenderPartialTicks();
-				final List<LivingEntity> tames = PetCommand.GetTamedEntities(player);
+				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
 				RayTraceResult result = RayTrace.raytraceApprox(
 						player.world, player,
 						player.getEyePosition(partialTicks),
@@ -139,7 +140,7 @@ public class ClientProxy extends CommonProxy {
 			final PlayerEntity player = getPlayer();
 			if (player != null && player.world != null) {
 				final float partialTicks = Minecraft.getInstance().getRenderPartialTicks();
-				final List<LivingEntity> tames = PetCommand.GetTamedEntities(player);
+				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
 				if (selectedPet == null) {
 					// Try and select a pet
 					RayTraceResult result = RayTrace.raytraceApprox(

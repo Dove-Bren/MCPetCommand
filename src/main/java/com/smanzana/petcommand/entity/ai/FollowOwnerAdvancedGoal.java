@@ -1,4 +1,4 @@
-package com.smanzana.petcommand.entity.task;
+package com.smanzana.petcommand.entity.ai;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -8,8 +8,9 @@ import javax.annotation.Nullable;
 
 import com.google.common.base.Predicate;
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.entity.ITameableEntity;
-import com.smanzana.petcommand.pet.PetPlacementMode;
+import com.smanzana.petcommand.api.PetFuncs;
+import com.smanzana.petcommand.api.entity.ITameableEntity;
+import com.smanzana.petcommand.api.pet.PetPlacementMode;
 
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
@@ -87,7 +88,7 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	 * @return
 	 */
 	protected int getPetPositionIndex(T pet, LivingEntity owner) {
-		List<LivingEntity> pets = PetCommand.GetTamedEntities(owner);
+		List<LivingEntity> pets = PetFuncs.GetTamedEntities(owner);
 		pets.removeIf((p) -> {
 			return p == null
 					|| IsPetSittingGeneric(p)
@@ -225,7 +226,7 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	 * Returns whether the Goal should begin execution.
 	 */
 	public boolean shouldExecute() {
-		final LivingEntity entitylivingbase = PetCommand.GetOwner(thePet);
+		final LivingEntity entitylivingbase = PetFuncs.GetOwner(thePet);
 		
 		if (entitylivingbase == null) {
 			return false;

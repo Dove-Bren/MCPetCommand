@@ -12,8 +12,12 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.entity.IEntityPet;
-import com.smanzana.petcommand.entity.IRerollablePet;
+import com.smanzana.petcommand.api.client.container.IPetContainer;
+import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
+import com.smanzana.petcommand.api.client.petgui.PetGUIRenderHelper;
+import com.smanzana.petcommand.api.client.petgui.PetGUIStatAdapter;
+import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.entity.IRerollablePet;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetGUIControlMessage;
 import com.smanzana.petcommand.network.message.PetGUISyncMessage;
@@ -23,6 +27,7 @@ import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.entity.Entity;
@@ -87,7 +92,7 @@ public class PetGUI {
 		}
 	}
 
-	public static class PetContainer<T extends IEntityPet> extends Container {
+	public static class PetContainer<T extends IEntityPet> extends Container implements IPetContainer<T> {
 		
 		public static final String ID = "pet_container";
 
@@ -167,6 +172,16 @@ public class PetGUI {
 			});
 		}
 		
+		@Override
+		public Container getContainer() {
+			return this;
+		}
+		
+		@Override
+		public T getPet() {
+			return this.pet;
+		}
+		
 //		public void overrideID(int id) {
 //			if (!this.player.world.isRemote) {
 //				throw new IllegalArgumentException("Can't reset id on the server!");
@@ -216,10 +231,12 @@ public class PetGUI {
 			}).collect(Collectors.toList());
 		}
 		
+		@Override
 		public IPetGUISheet<T> getCurrentSheet() {
 			return getSheets().get(currentSheet);
 		}
 		
+		@Override
 		public void setSheet(int index) {
 			if (this.currentSheet < this.getSheetCount()) {
 				// If we changed the number of sheets, we may have an invalid one to close. So just don't close it.
@@ -229,19 +246,23 @@ public class PetGUI {
 			this.getCurrentSheet().showSheet(pet, player, this, GUI_SHEET_WIDTH, GUI_SHEET_HEIGHT, guiOffsetX, guiOffsetY);
 		}
 		
+		@Override
 		public int getSheetIndex() {
 			return this.currentSheet;
 		}
 		
+		@Override
 		public void clearSlots() {
 			this.inventorySlots.clear();
 			// this.inventoryItemStacks.clear(); // uh oh? TODO does not having this cause pr oblems?
 		}
 		
+		@Override
 		public void dropContainerInventory(IInventory inv) {
 			this.clearContainer(player, player.world, inv);
 		}
 		
+		@Override
 		public void addSheetSlot(Slot slot) {
 			this.addSlot(slot);
 		}
@@ -250,6 +271,7 @@ public class PetGUI {
 			return this.id;
 		}
 		
+		@Override
 		public int getSheetCount() {
 			return this.getSheets().size();
 		}
@@ -289,12 +311,12 @@ public class PetGUI {
 			}
 		}
 		
-		// Sheets can call on their handle to the container to sync with the server.
-		// This call doesn't check if it's on the server. It'll just 'send' it. Know what you're doing!
+		@Override
 		public void sendSheetMessageToServer(CompoundNBT data) {
 			NetworkHelper.ClientSendSheetData(id, data);
 		}
 		
+		@Override
 		public void sendSheetMessageToClient(CompoundNBT data) {
 			NetworkHelper.ServerSendSheetData((ServerPlayerEntity) this.player, data);
 		}
@@ -303,19 +325,17 @@ public class PetGUI {
 	
 	public static int GUI_SHEET_WIDTH = 246;
 	public static int GUI_SHEET_HEIGHT = 191;
-	public static int GUI_TEX_WIDTH = 256;
-	public static int GUI_TEX_HEIGHT = 256;
-	public static int GUI_TEX_CELL_HOFFSET = 0;
-	public static int GUI_TEX_CELL_VOFFSET = 202;
-	public static int GUI_TEX_TOGGLE_HOFFSET = 0;
-	public static int GUI_TEX_TOGGLE_VOFFSET = 220;
-	public static int GUI_TEX_TOGGLE_LENGTH = 10;
 	
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class PetGUIContainer<T extends IEntityPet> extends AutoGuiContainer<PetContainer<T>> {
 		
 		public static final ResourceLocation TEXT = new ResourceLocation(PetCommand.MODID + ":textures/gui/container/tamed_pet_gui.png");
+
+		public static int GUI_TEX_WIDTH = 256;
+		public static int GUI_TEX_HEIGHT = 256;
+		public static int GUI_TEX_CELL_HOFFSET = 0;
+		public static int GUI_TEX_CELL_VOFFSET = 202;
 		
 		private static int GUI_LENGTH_PREVIEW = 48;
 		private static int GUI_INFO_HOFFSET = 12;
@@ -326,6 +346,43 @@ public class PetGUI {
 		private static int GUI_SHEET_BUTTON_HEIGHT = 20;
 		private static int GUI_SHEET_BUTTON_VOFFSET = 5;
 		private static int GUI_SHEET_VOFFSET = GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT + GUI_SHEET_BUTTON_VOFFSET;
+		
+		public static class PetGUIRenderHelperImpl extends PetGUIRenderHelper {
+			
+			public static final void Register() {
+				new PetGUIRenderHelperImpl();
+			}
+			
+			private PetGUIRenderHelperImpl() {
+				PetGUIRenderHelper.ProvideImpl(this);
+			}
+
+			protected void drawSlotRaw(MatrixStack matrixStackIn, int width, int height, int x, int y) {
+				Screen.blit(matrixStackIn, x, y,
+						width, height,
+						GUI_TEX_CELL_HOFFSET, GUI_TEX_CELL_VOFFSET, 
+						GUI_TEX_WIDTH, GUI_TEX_HEIGHT);
+			}
+
+			@Override
+			protected void drawSingleSlot(MatrixStack matrixStackIn, int width, int height) {
+				final Minecraft mc = Minecraft.getInstance();
+				mc.getTextureManager().bindTexture(PetGUI.PetGUIContainer.TEXT);
+				this.drawSlotRaw(matrixStackIn, width, height, 0, 0);
+			}
+
+			@Override
+			protected void drawSlots(MatrixStack matrixStackIn, int width, int height, int count, int columns) {
+				final Minecraft mc = Minecraft.getInstance();
+				mc.getTextureManager().bindTexture(PetGUI.PetGUIContainer.TEXT);
+				
+				for (int i = 0; i < count; i++) {
+					final int x = width * (i % columns);
+					final int y = height * (i / columns);
+					this.drawSlotRaw(matrixStackIn, width, height, x, y);
+				}
+			}
+		}
 		
 		//private static int GUI_OPEN_ANIM_TIME = 20 * 1;
 		
@@ -632,32 +689,6 @@ public class PetGUI {
 			
 			return super.mouseClicked(mouseX, mouseY, mouseButton);
 		}
-	}
-	
-	public static interface PetGUIStatAdapter<T> {
-		
-		// Health/first bar
-		default public float getHealth(T pet) { return ((LivingEntity) pet).getHealth(); }
-		default public float getMaxHealth(T pet) { return ((LivingEntity) pet).getMaxHealth(); }
-		default public String getHealthLabel(T pet) { return "Health"; }
-		
-		// Second bar (mana?)
-		default public boolean supportsSecondaryAmt(T pet) { return true; }
-		public float getSecondaryAmt(T pet);
-		public float getMaxSecondaryAmt(T pet);
-		public String getSecondaryLabel(T pet);
-		
-		// Third bar (bond?)
-		default public boolean supportsTertiaryAmt(T pet) { return true; };
-		public float getTertiaryAmt(T pet);
-		public float getMaxTertiaryAmt(T pet);
-		public String getTertiaryLabel(T pet);
-		
-		// Fourth bar (xp?)
-		default public boolean supportsQuaternaryAmt(T pet) { return true; };
-		public float getQuaternaryAmt(T pet);
-		public float getMaxQuaternaryAmt(T pet);
-		public String getQuaternaryLabel(T pet);
 	}
 	
 	private static enum PetContainerMessageType {

@@ -10,7 +10,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.entity.IEntityPet;
+import com.smanzana.petcommand.api.PetFuncs;
+import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.pet.PetPlacementMode;
+import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetCommandSettingsSyncMessage;
 
@@ -238,7 +241,7 @@ public class PetCommandManager extends WorldSavedData {
 			return;
 		}
 		
-		if (!PetCommand.GetOwner(pet).equals(owner)) {
+		if (!PetFuncs.GetOwner(pet).equals(owner)) {
 			return;
 		}
 		
@@ -246,7 +249,7 @@ public class PetCommandManager extends WorldSavedData {
 	}
 	
 	protected void forAllOwned(LivingEntity owner, Function<Entity, Integer> petAction) {
-		for (LivingEntity e : PetCommand.GetTamedEntities(owner)) {
+		for (LivingEntity e : PetFuncs.GetTamedEntities(owner)) {
 			if (owner.getDistance(e) > 100) {
 				continue;
 			}

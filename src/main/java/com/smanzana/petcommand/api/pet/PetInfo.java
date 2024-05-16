@@ -1,4 +1,4 @@
-package com.smanzana.petcommand.pet;
+package com.smanzana.petcommand.api.pet;
 
 import java.util.ArrayList;
 import java.util.List;

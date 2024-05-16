@@ -1,11 +1,12 @@
-package com.smanzana.petcommand.client.container;
+package com.smanzana.petcommand.api.client.petgui.sheet;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.smanzana.petcommand.client.container.PetGUI.PetContainer;
-import com.smanzana.petcommand.entity.IEntityPet;
+import com.smanzana.petcommand.api.client.container.IPetContainer;
+import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
+import com.smanzana.petcommand.api.client.petgui.PetGUIRenderHelper;
+import com.smanzana.petcommand.api.entity.IEntityPet;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.container.Slot;
@@ -22,7 +23,7 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 	}
 	
 	@Override
-	public void showSheet(T pet, PlayerEntity player, PetContainer<T> container, int width, int height, int offsetX, int offsetY) {
+	public void showSheet(T pet, PlayerEntity player, IPetContainer<T> container, int width, int height, int offsetX, int offsetY) {
 		final int cellWidth = 18;
 		final int invRow = 9;
 		final int invWidth = cellWidth * invRow;
@@ -45,14 +46,12 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 	}
 
 	@Override
-	public void hideSheet(T pet, PlayerEntity player, PetContainer<T> container) {
+	public void hideSheet(T pet, PlayerEntity player, IPetContainer<T> container) {
 		container.clearSlots();
 	}
 
 	@Override
 	public void draw(MatrixStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
-		mc.getTextureManager().bindTexture(PetGUI.PetGUIContainer.TEXT);
-		
 		// Draw sheet
 		matrixStackIn.push();
 		{
@@ -63,22 +62,42 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 			final int dragonTopOffset = 10;
 			final int playerInvSize = 27 + 9;
 			
-			for (int i = 0; i < petInv.getSizeInventory(); i++) {
-				Screen.blit(matrixStackIn, leftOffset - 1 + (cellWidth * (i % invRow)),
-						dragonTopOffset - 1 + (cellWidth * (i / invRow)),
-						cellWidth, cellWidth,
-						PetGUI.GUI_TEX_CELL_HOFFSET, PetGUI.GUI_TEX_CELL_VOFFSET, 
-						256, 256);
-			}
+			// Pet slots
+			matrixStackIn.push();
+			matrixStackIn.translate(leftOffset - 1, dragonTopOffset - 1, 0);
+			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, petInv.getSizeInventory(), invRow);
+			matrixStackIn.pop();
 			
-			final int playerTopOffset = 100;
-			for (int i = 0; i < playerInvSize; i++) {
-				Screen.blit(matrixStackIn, leftOffset - 1 + (cellWidth * (i % invRow)),
-						(i < 27 ? 0 : 10) + playerTopOffset - 1 + (cellWidth * (i / invRow)),
-						cellWidth, cellWidth,
-						PetGUI.GUI_TEX_CELL_HOFFSET, PetGUI.GUI_TEX_CELL_VOFFSET,
-						256, 256);
-			}
+			// Player slots
+			matrixStackIn.push();
+			matrixStackIn.translate(leftOffset - 1, dragonTopOffset - 1, 0);
+			// ... First 27
+			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, Math.min(27, playerInvSize), invRow);
+			
+			// Remaining (toolbar)
+			matrixStackIn.translate(0, 10, 0);
+			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, Math.max(0, playerInvSize-27), invRow);
+			
+			matrixStackIn.pop();
+			
+			
+			
+//			for (int i = 0; i < petInv.getSizeInventory(); i++) {
+//				Screen.blit(matrixStackIn, leftOffset - 1 + (cellWidth * (i % invRow)),
+//						dragonTopOffset - 1 + (cellWidth * (i / invRow)),
+//						cellWidth, cellWidth,
+//						PetGUI.GUI_TEX_CELL_HOFFSET, PetGUI.GUI_TEX_CELL_VOFFSET, 
+//						256, 256);
+//			}
+			
+//			final int playerTopOffset = 100;
+//			for (int i = 0; i < playerInvSize; i++) {
+//				Screen.blit(matrixStackIn, leftOffset - 1 + (cellWidth * (i % invRow)),
+//						(i < 27 ? 0 : 10) + playerTopOffset - 1 + (cellWidth * (i / invRow)),
+//						cellWidth, cellWidth,
+//						PetGUI.GUI_TEX_CELL_HOFFSET, PetGUI.GUI_TEX_CELL_VOFFSET,
+//						256, 256);
+//			}
 			
 		}
 		matrixStackIn.pop();
@@ -100,7 +119,7 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 	}
 
 	@Override
-	public abstract boolean shouldShow(T dragon, PetContainer<T> container);
+	public abstract boolean shouldShow(T dragon, IPetContainer<T> container);
 
 	@Override
 	public void overlay(MatrixStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {

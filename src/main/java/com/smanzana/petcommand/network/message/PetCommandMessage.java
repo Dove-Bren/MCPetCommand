@@ -6,8 +6,8 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.pet.PetPlacementMode;
-import com.smanzana.petcommand.pet.PetTargetMode;
+import com.smanzana.petcommand.api.pet.PetPlacementMode;
+import com.smanzana.petcommand.api.pet.PetTargetMode;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;

@@ -1,7 +1,8 @@
-package com.smanzana.petcommand.client.container;
+package com.smanzana.petcommand.api.client.petgui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.smanzana.petcommand.entity.IEntityPet;
+import com.smanzana.petcommand.api.client.container.IPetContainer;
+import com.smanzana.petcommand.api.entity.IEntityPet;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,10 +19,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public interface IPetGUISheet<T extends IEntityPet> {
 	
 	// Called when the sheet is first shown. Set up anything that's needed.
-	public void showSheet(T pet, PlayerEntity player, PetGUI.PetContainer<T> container, int width, int height, int offsetX, int offsetY);
+	public void showSheet(T pet, PlayerEntity player, IPetContainer<T> container, int width, int height, int offsetX, int offsetY);
 	
 	// Called when the sheet will no longer be shown.
-	public void hideSheet(T pet, PlayerEntity player, PetGUI.PetContainer<T> container);
+	public void hideSheet(T pet, PlayerEntity player, IPetContainer<T> container);
 	
 	// Draw the sheet
 	@OnlyIn(Dist.CLIENT)
@@ -42,6 +43,6 @@ public interface IPetGUISheet<T extends IEntityPet> {
 	@OnlyIn(Dist.CLIENT)
 	public String getButtonText();
 	
-	public boolean shouldShow(T pet, PetGUI.PetContainer<T> container);
+	public boolean shouldShow(T pet, IPetContainer<T> container);
 	
 }

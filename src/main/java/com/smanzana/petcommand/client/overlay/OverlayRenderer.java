@@ -8,13 +8,14 @@ import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
 import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.smanzana.petcommand.PetCommand;
+import com.smanzana.petcommand.api.PetFuncs;
+import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.pet.PetInfo;
+import com.smanzana.petcommand.api.pet.PetPlacementMode;
+import com.smanzana.petcommand.api.pet.PetTargetMode;
+import com.smanzana.petcommand.api.pet.PetInfo.PetAction;
+import com.smanzana.petcommand.api.pet.PetInfo.SecondaryFlavor;
 import com.smanzana.petcommand.config.ModConfig;
-import com.smanzana.petcommand.entity.IEntityPet;
-import com.smanzana.petcommand.pet.PetInfo;
-import com.smanzana.petcommand.pet.PetInfo.PetAction;
-import com.smanzana.petcommand.pet.PetInfo.SecondaryFlavor;
-import com.smanzana.petcommand.pet.PetPlacementMode;
-import com.smanzana.petcommand.pet.PetTargetMode;
 
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
@@ -123,7 +124,7 @@ public class OverlayRenderer extends AbstractGui {
 					xOffset = window.getScaledWidth() - (-xConfigOffset + healthbarWidth);
 				}
 				
-				List<LivingEntity> bigPets = PetCommand.GetTamedEntities(player, (ent) -> {
+				List<LivingEntity> bigPets = PetFuncs.GetTamedEntities(player, (ent) -> {
 					return ent != null && ent instanceof IEntityPet && ((IEntityPet) ent).isBigPet();
 				});
 				Collections.sort(bigPets, (left, right) -> {
@@ -144,7 +145,7 @@ public class OverlayRenderer extends AbstractGui {
 				xOffset = window.getScaledWidth() - (-xConfigOffset + healthbarWidth);
 			}
 			final boolean hideBigs = ModConfig.config.showBigHealthbars();
-			for (LivingEntity tamed : PetCommand.GetTamedEntities(player)) {
+			for (LivingEntity tamed : PetFuncs.GetTamedEntities(player)) {
 				if (hideBigs
 						&& tamed instanceof IEntityPet
 						&& ((IEntityPet) tamed).isBigPet()) {
