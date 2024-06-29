@@ -3,7 +3,9 @@ package com.smanzana.petcommand.api;
 import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.pet.ITargetManager;
 
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
 public abstract class PetCommandAPI {
@@ -12,6 +14,13 @@ public abstract class PetCommandAPI {
 		if (Impl != null) {
 			Impl.openPetGUI(player, pet);
 		}
+	}
+	
+	public static final ITargetManager GetTargetManager(LivingEntity entity) {
+		if (Impl != null) {
+			return Impl.getTargetManager(entity);
+		}
+		return null;
 	}
 	
 	
@@ -35,4 +44,6 @@ public abstract class PetCommandAPI {
 	}
 	
 	protected abstract void openPetGUI(PlayerEntity player, IEntityPet pet);
+
+	protected abstract ITargetManager getTargetManager(LivingEntity entity);
 }

@@ -3,18 +3,23 @@ package com.smanzana.petcommand.client.overlay;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
 import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import com.smanzana.petcommand.PetCommand;
+import com.smanzana.petcommand.api.PetCommandAPI;
 import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.pet.PetInfo;
-import com.smanzana.petcommand.api.pet.PetPlacementMode;
-import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.api.pet.PetInfo.PetAction;
 import com.smanzana.petcommand.api.pet.PetInfo.SecondaryFlavor;
+import com.smanzana.petcommand.api.pet.PetPlacementMode;
+import com.smanzana.petcommand.api.pet.PetTargetMode;
+import com.smanzana.petcommand.client.render.PetCommandRenderTypes;
 import com.smanzana.petcommand.config.ModConfig;
 
 import net.minecraft.client.MainWindow;
@@ -23,10 +28,17 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.inventory.InventoryScreen;
+import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.client.renderer.entity.model.EntityModel;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.passive.CatEntity;
+import net.minecraft.entity.passive.WolfEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
+import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -79,13 +91,15 @@ public class OverlayRenderer extends AbstractGui {
 	private static final int GUI_HEALTHBAR_ICON_ATTACK_VOFFSET = GUI_HEALTHBAR_ICON_STAY_VOFFSET + GUI_HEALTHBAR_ICON_LENGTH;
 	private static final int GUI_HEALTHBAR_ICON_WORK_VOFFSET = GUI_HEALTHBAR_ICON_ATTACK_VOFFSET + GUI_HEALTHBAR_ICON_LENGTH;
 	
-	private static final ResourceLocation GUI_PET_ICONS = new ResourceLocation(PetCommand.MODID, "textures/gui/pet_icons.png");
+	public static final ResourceLocation GUI_PET_ICONS = new ResourceLocation(PetCommand.MODID, "textures/gui/pet_icons.png");
 	//private static final int GUI_PET_ICONS_DIMS = 256;
 	private static final int GUI_PET_ICON_DIMS = 32;
 	private static final int GUI_PET_ICON_TARGET_HOFFSET = 0;
 	private static final int GUI_PET_ICON_TARGET_VOFFSET = 0;
 	private static final int GUI_PET_ICON_PLACEMENT_HOFFSET = 0;
-	private static final int GUI_PET_ICON_PLACEMENT_VOFFSET = GUI_PET_ICON_DIMS;
+	private static final int GUI_PET_ICON_PLACEMENT_VOFFSET = GUI_PET_ICON_TARGET_VOFFSET + GUI_PET_ICON_DIMS;
+	private static final int GUI_PET_ICON_FLOATTARGET_HOFFSET = 0;
+	private static final int GUI_PET_ICON_FLOATTARGET_VOFFSET = GUI_PET_ICON_PLACEMENT_VOFFSET + GUI_PET_ICON_DIMS;
 	
 	private int petTargetIndex; // Controls displaying pet target icon (fade in/out 50%)
 	private int petTargetAnimDur = 80;
@@ -176,6 +190,30 @@ public class OverlayRenderer extends AbstractGui {
 		}
 	}
 	
+	@SubscribeEvent
+	public void onWorldRender(RenderLivingEvent.Post<LivingEntity, EntityModel<LivingEntity>> event) {
+		List<MobEntity> targeters = PetCommandAPI.GetTargetManager(event.getEntity()).getEntitiesTargetting(event.getEntity());
+		if (!targeters.isEmpty()) {
+			int i = 0;
+			final MatrixStack matrixStackIn = event.getMatrixStack();
+			final Minecraft mc = Minecraft.getInstance();
+			final ActiveRenderInfo activeRenderInfo = mc.getRenderManager().info;
+			final IVertexBuilder buffer = event.getBuffers().getBuffer(PetCommandRenderTypes.PET_TARGET_ICON); // Could only grab this when rendering at least one?
+			matrixStackIn.push();
+			matrixStackIn.translate(0, event.getEntity().getHeight() + .15f, 0);
+			matrixStackIn.rotate(activeRenderInfo.getRotation());
+			matrixStackIn.translate(-event.getEntity().getWidth()/2f, 0, 0);
+			for (MobEntity targeter : targeters) {
+				@Nullable LivingEntity owner = PetFuncs.GetOwner(targeter);
+				if (owner != null && owner == mc.player) {
+					matrixStackIn.translate(0, .25f /* *i*/, 0);
+					renderPetTargetIcon(matrixStackIn, buffer, targeter, i++, event.getPartialRenderTick());
+				}
+			}
+			matrixStackIn.pop();
+		}
+	}
+
 	private void renderPetActionTargetMode(MatrixStack matrixStackIn, ClientPlayerEntity player, MainWindow scaledResolution, PetTargetMode mode, float prog) {
 		Minecraft mc = Minecraft.getInstance();
 		final float alpha;
@@ -503,6 +541,64 @@ public class OverlayRenderer extends AbstractGui {
 		matrixStackIn.pop();
 		
 		RenderSystem.disableBlend();
+		matrixStackIn.pop();
+	}
+	
+	protected float[] getTargetColor(MobEntity targeter) {
+		if (targeter instanceof IEntityPet) {
+			final int raw = ((IEntityPet) targeter).getPetColor();
+			return new float[] {
+				(float) ((raw >> 16) & 0xFF) / 256f,
+				(float) ((raw >> 8) & 0xFF) / 256f,
+				(float) ((raw >> 0) & 0xFF) / 256f,
+				(float) ((raw >> 24) & 0xFF) / 256f,
+			};
+		} else if (targeter instanceof WolfEntity) {
+			final float[] rgb = ((WolfEntity) targeter).getCollarColor().getColorComponentValues();
+			return new float[] {
+					rgb[0], rgb[1], rgb[2], 1f
+			};
+		} else if (targeter instanceof CatEntity) {
+			final float[] rgb = ((CatEntity) targeter).getCollarColor().getColorComponentValues();
+			return new float[] {
+					rgb[0], rgb[1], rgb[2], 1f
+			};
+		} else {
+			final int raw = IEntityPet.MakeColorFromID(targeter.getUniqueID());
+			return new float[] {
+				(float) ((raw >> 16) & 0xFF) / 256f,
+				(float) ((raw >> 8) & 0xFF) / 256f,
+				(float) ((raw >> 0) & 0xFF) / 256f,
+				(float) ((raw >> 24) & 0xFF) / 256f,
+			};
+		}
+	}
+	
+	private void renderPetTargetIcon(MatrixStack matrixStackIn, IVertexBuilder buffer, MobEntity targeter, int i, float partialRenderTick) {
+		
+		final float scale = 1f / (16f * (256f / (float) GUI_HEALTHBAR_ICON_LENGTH));
+		//final Minecraft mc = Minecraft.getInstance();
+		//mc.getTextureManager().bindTexture(GUI_PET_ICONS);
+		matrixStackIn.push();
+		matrixStackIn.scale(scale, scale, 1f);
+		matrixStackIn.translate(-(GUI_HEALTHBAR_ICON_LENGTH/2f), 0, 0);
+		
+		final float[] color = getTargetColor(targeter);
+		
+		final float width = GUI_HEALTHBAR_ICON_LENGTH;
+		final float height = GUI_HEALTHBAR_ICON_LENGTH;
+		final float minU = ((float) GUI_PET_ICON_FLOATTARGET_HOFFSET / 256f);
+		final float maxU = minU + ((float) GUI_HEALTHBAR_ICON_LENGTH / 256f);
+		final float minV = ((float) GUI_PET_ICON_FLOATTARGET_VOFFSET / 256f);
+		final float maxV = minV + ((float) GUI_HEALTHBAR_ICON_LENGTH / 256f);
+		{
+			final Matrix4f transform = matrixStackIn.getLast().getMatrix();
+			//blit(matrixStackIn, 0, 0, GUI_PET_ICON_FLOATTARGET_HOFFSET, GUI_PET_ICON_FLOATTARGET_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
+			buffer.pos(transform, 0f, height, 0).color(color[0], color[1], color[2], color[3]).tex(minU, maxV).endVertex();
+			buffer.pos(transform, width, height, 0).color(color[0], color[1], color[2], color[3]).tex(maxU, maxV).endVertex();
+			buffer.pos(transform, width, 0f, 0).color(color[0], color[1], color[2], color[3]).tex(maxU, minV).endVertex();
+			buffer.pos(transform, 0f, 0f, 0).color(color[0], color[1], color[2], color[3]).tex(minU, minV).endVertex();
+		}
 		matrixStackIn.pop();
 	}
 	

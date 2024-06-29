@@ -3,6 +3,10 @@ package com.smanzana.petcommand.api.pet;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
+import com.smanzana.petcommand.api.PetCommandAPI;
+
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.TameableEntity;
 
@@ -256,8 +260,10 @@ public class PetInfo {
 	
 	public static PetInfo Wrap(LivingEntity entity) {
 		if (entity instanceof TameableEntity) {
+			final @Nullable LivingEntity target = PetCommandAPI.GetTargetManager(entity).getTarget((TameableEntity) entity);
 			final PetAction action = ((TameableEntity) entity).isEntitySleeping()
 					? PetAction.SITTING
+					: (target != null && target.isAlive()) ? PetAction.ATTACKING		
 					: PetAction.IDLING;
 			return claim(entity.getHealth(), entity.getMaxHealth(), action);
 		} else {

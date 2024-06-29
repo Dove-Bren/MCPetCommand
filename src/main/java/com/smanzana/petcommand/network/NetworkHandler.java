@@ -1,12 +1,18 @@
 package com.smanzana.petcommand.network;
 
+import javax.annotation.Nullable;
+
 import com.smanzana.petcommand.PetCommand;
+import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.network.message.PetCommandMessage;
 import com.smanzana.petcommand.network.message.PetCommandSettingsSyncMessage;
 import com.smanzana.petcommand.network.message.PetGUIControlMessage;
 import com.smanzana.petcommand.network.message.PetGUISyncMessage;
+import com.smanzana.petcommand.network.message.TargetUpdateMessage;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
@@ -52,6 +58,7 @@ public class NetworkHandler {
 		syncChannel.registerMessage(discriminator++, PetGUISyncMessage.class, PetGUISyncMessage::encode, PetGUISyncMessage::decode, PetGUISyncMessage::handle);
 		syncChannel.registerMessage(discriminator++, PetCommandMessage.class, PetCommandMessage::encode, PetCommandMessage::decode, PetCommandMessage::handle);
 		syncChannel.registerMessage(discriminator++, PetCommandSettingsSyncMessage.class, PetCommandSettingsSyncMessage::encode, PetCommandSettingsSyncMessage::decode, PetCommandSettingsSyncMessage::handle);
+		syncChannel.registerMessage(discriminator++, TargetUpdateMessage.class, TargetUpdateMessage::encode, TargetUpdateMessage::decode, TargetUpdateMessage::handle);
 	}
 	
 	//NetworkHandler.sendTo(new ClientCastReplyMessage(false, att.getMana(), 0, null),
@@ -79,6 +86,13 @@ public class NetworkHandler {
 
 	public static <T> void sendToAllTracking(T msg, Entity ent) {
 		NetworkHandler.syncChannel.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> ent), msg);
+	}
+	
+	public static <T> void sendToOwner(T msg, MobEntity entity) {
+		@Nullable LivingEntity owner = PetFuncs.GetOwner(entity);
+		if (owner != null && owner instanceof ServerPlayerEntity) {
+			sendTo(msg, (ServerPlayerEntity) owner);
+		}
 	}
 
 }

@@ -1,5 +1,6 @@
 package com.smanzana.petcommand.api.entity;
 
+import java.awt.Color;
 import java.util.UUID;
 
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
@@ -25,5 +26,15 @@ public interface IEntityPet extends ITameableEntity {
 	public IPetGUISheet<? extends IEntityPet>[] getContainerSheets(PlayerEntity player);
 	
 	public PetGUIStatAdapter<? extends IEntityPet> getGUIAdapter();
+	
+	public default int getPetColor() {
+		return MakeColorFromID(this.getPetID());
+	}
+	
+	public static int MakeColorFromID(UUID id) {
+		// By default, return random color based on UUID (so it's consistent)
+		final float hue = (float) (id.hashCode() % 1000) / 1000f;
+		return 0xFF000000 | Color.HSBtoRGB(hue, .7f, 1f);
+	}
 	
 }

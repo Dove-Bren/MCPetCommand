@@ -9,6 +9,7 @@ import org.lwjgl.glfw.GLFW;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.pet.ITargetManager;
 import com.smanzana.petcommand.api.pet.PetPlacementMode;
 import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.client.overlay.OverlayRenderer;
@@ -86,6 +87,14 @@ public class ClientProxy extends CommonProxy {
 //			FMLCommonHandler.instance().showGuiScreen(gui);
 			super.openPetGUI(player, pet);
 		//}
+	}
+	
+	@Override
+	public ITargetManager getTargetManager(LivingEntity entity) {
+		if (entity.getEntityWorld().isRemote()) {
+			return PetCommand.GetClientTargetManager();
+		}
+		return super.getTargetManager(entity);
 	}
 	
 	@SubscribeEvent

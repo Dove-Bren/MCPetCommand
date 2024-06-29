@@ -17,7 +17,9 @@ import com.smanzana.petcommand.entity.BoundIronGolemEntity;
 import com.smanzana.petcommand.entity.ai.FollowOwnerAdvancedGoal;
 import com.smanzana.petcommand.entity.ai.PetTargetGoal;
 import com.smanzana.petcommand.listener.MovementListener;
+import com.smanzana.petcommand.listener.TargetListener;
 import com.smanzana.petcommand.pet.PetCommandManager;
+import com.smanzana.petcommand.pet.TargetManager;
 import com.smanzana.petcommand.proxy.ClientProxy;
 import com.smanzana.petcommand.proxy.CommonProxy;
 
@@ -52,6 +54,10 @@ public class PetCommand
 	private CommonProxy proxy;
 	private PetCommandManager petCommandManager;
 	private MovementListener movementListener;
+	private TargetListener targetListener;
+
+	private final TargetManager serverTargetManager;
+	private final TargetManager clientTargetManager;
 
 	public PetCommand() {
 		instance = this;
@@ -60,8 +66,12 @@ public class PetCommand
 		
 		(new ModConfig()).register();
 		
+		serverTargetManager = new TargetManager();
+		clientTargetManager = new TargetManager();
+		
 		MinecraftForge.EVENT_BUS.register(this);
 		movementListener = new MovementListener();
+		targetListener = new TargetListener();
 		MinecraftForge.EVENT_BUS.addListener(BoundIronGolemEntity::EntityInteractListener);
 	}
 	
@@ -82,6 +92,18 @@ public class PetCommand
 	
 	public static MovementListener GetMovementListener() {
 		return instance.movementListener;
+	}
+	
+	public static TargetListener GetTargetListener() {
+		return instance.targetListener;
+	}
+	
+	public static TargetManager GetServerTargetManager() {
+		return instance.serverTargetManager;
+	}
+	
+	public static TargetManager GetClientTargetManager() {
+		return instance.clientTargetManager;
 	}
 	
 	public static @Nullable Entity GetEntityByUUID(World world, UUID id) {
