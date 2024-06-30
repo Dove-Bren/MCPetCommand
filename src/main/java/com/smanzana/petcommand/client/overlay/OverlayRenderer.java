@@ -60,7 +60,7 @@ public class OverlayRenderer extends AbstractGui {
 	private static final int GUI_HEALTHBAR_ORB_SECONDARY_WIDTH = 105;
 	private static final int GUI_HEALTHBAR_ORB_SECONDARY_HEIGHT = 8;
 	private static final int GUI_HEALTHBAR_ORB_ENTITY_HOFFSET = 177;
-	private static final int GUI_HEALTHBAR_ORB_ENTITY_VOFFSET = 40;
+	private static final int GUI_HEALTHBAR_ORB_ENTITY_VOFFSET = 45;
 	private static final int GUI_HEALTHBAR_ORB_ENTITY_WIDTH = 12;
 	private static final int GUI_HEALTHBAR_ORB_NAME_WIDTH = 160;
 	private static final int GUI_HEALTHBAR_ORB_NAME_HEIGHT = 30;
@@ -311,6 +311,7 @@ public class OverlayRenderer extends AbstractGui {
 		float secondaryMeter = (float) info.getSecondaryPercent();
 		final SecondaryFlavor flavor = info.getSecondaryFlavor();
 		final PetAction action = info.getPetAction();
+		final float[] petColor = getTargetColor((MobEntity) pet);
 		
 		info.release();
 		info = null;
@@ -330,8 +331,10 @@ public class OverlayRenderer extends AbstractGui {
 		this.fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
 				GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
 				0x50000000, 0xA0000000); //nameplate background
+		RenderSystem.color4f(petColor[0], petColor[1], petColor[2], petColor[3]);
 		blit(matrixStackIn, 0, 0,
 				0, GUI_HEALTHBAR_ORB_BACK_HEIGHT, GUI_HEALTHBAR_ORB_BACK_WIDTH, GUI_HEALTHBAR_ORB_BACK_HEIGHT);
+		RenderSystem.color4f(1f, 1f, 1f, 1f);
 		matrixStackIn.pop();
 		
 		// Draw middle
@@ -369,10 +372,14 @@ public class OverlayRenderer extends AbstractGui {
 		}
 	
 		//	-> Icon
+		matrixStackIn.push();
+		matrixStackIn.translate(GUI_HEALTHBAR_ORB_ENTITY_HOFFSET, GUI_HEALTHBAR_ORB_ENTITY_VOFFSET, 0);
+		//matrixStackIn.rotate(Vector3f.YP.rotationDegrees(-30f));
 		RenderSystem.pushMatrix();
 		RenderSystem.multMatrix(matrixStackIn.getLast().getMatrix());
-		InventoryScreen.drawEntityOnScreen(GUI_HEALTHBAR_ORB_ENTITY_HOFFSET, GUI_HEALTHBAR_ORB_ENTITY_VOFFSET, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, 0, 0, pet);
+		InventoryScreen.drawEntityOnScreen(0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, window.getScaledWidth()/2, -20, pet);
 		RenderSystem.popMatrix();
+		matrixStackIn.pop();
 		mc.getTextureManager().bindTexture(GUI_HEALTHBARS);
 		
 		//	-> Status
@@ -444,6 +451,7 @@ public class OverlayRenderer extends AbstractGui {
 //				: false);
 //		final boolean attacking = (pet instanceof MobEntity ? ((MobEntity) pet).getAttackTarget() != null : false);
 		final PetAction action = info.getPetAction();
+		final float[] petColor = getTargetColor((MobEntity) pet);
 		
 		info.release();
 		info = null;
@@ -460,11 +468,13 @@ public class OverlayRenderer extends AbstractGui {
 		// Draw background
 		matrixStackIn.push();
 		matrixStackIn.translate(0, 0, -100);
+		RenderSystem.color4f(petColor[0], petColor[1], petColor[2], petColor[3]);
 //		this.drawGradientRect(GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
 //				GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
 //				0x50000000, 0xA0000000); //nameplate background
 		blit(matrixStackIn, 0, 0,
 				0, GUI_HEALTHBAR_BOX_BACK_VOFFSET + GUI_HEALTHBAR_BOX_BACK_HEIGHT, GUI_HEALTHBAR_BOX_BACK_WIDTH, GUI_HEALTHBAR_BOX_BACK_HEIGHT);
+		RenderSystem.color4f(1f, 1f, 1f, 1f);
 		matrixStackIn.pop();
 		
 		// Draw middle
