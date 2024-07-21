@@ -2,8 +2,8 @@ package com.smanzana.petcommand.api.entity;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
  * Like Vanilla's EntityTameable, but an interface instead

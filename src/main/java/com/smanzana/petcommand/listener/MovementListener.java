@@ -5,8 +5,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.event.TickEvent.ServerTickEvent;
@@ -14,8 +14,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class MovementListener {
 
-	protected Map<Entity, Vector3d> lastPosCache = new HashMap<>();
-	protected Map<Entity, Vector3d> lastMoveCache = new HashMap<>();
+	protected Map<Entity, Vec3> lastPosCache = new HashMap<>();
+	protected Map<Entity, Vec3> lastMoveCache = new HashMap<>();
 	
 	public MovementListener() {
 		MinecraftForge.EVENT_BUS.register(this);
@@ -42,26 +42,26 @@ public class MovementListener {
 	 * @param ent
 	 * @return
 	 */
-	public Vector3d getLastTickPos(Entity ent) {
+	public Vec3 getLastTickPos(Entity ent) {
 		addEntity(ent);
 		return lastPosCache.get(ent);
 	}
 	
-	public Vector3d getLastMove(Entity ent) {
+	public Vec3 getLastMove(Entity ent) {
 		addEntity(ent);
 		return lastMoveCache.get(ent);
 	}
 	
 	protected void updateTrackedEntities() {
 		// Look at entities being tracked. If dead or removed, remove from tracking. Else stash their current positions.
-		Iterator<Entry<Entity, Vector3d>> it = lastPosCache.entrySet().iterator();
+		Iterator<Entry<Entity, Vec3>> it = lastPosCache.entrySet().iterator();
 		while (it.hasNext()) {
-			Entry<Entity, Vector3d> entry = it.next();
+			Entry<Entity, Vec3> entry = it.next();
 			if (entry.getKey() == null || !entry.getKey().isAlive()) {
 				it.remove();
 			} else {
-				Vector3d last = entry.getValue();
-				Vector3d cur = entry.getKey().position();
+				Vec3 last = entry.getValue();
+				Vec3 cur = entry.getKey().position();
 				entry.setValue(cur);
 				if (last.distanceToSqr(cur) > .025) {
 					// Update movement

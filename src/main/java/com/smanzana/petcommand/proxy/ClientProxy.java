@@ -18,23 +18,23 @@ import com.smanzana.petcommand.network.message.PetCommandMessage;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 import com.smanzana.petcommand.util.RayTrace;
 
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.event.InputEvent.KeyInputEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fmlclient.registry.ClientRegistry;
 
 public class ClientProxy extends CommonProxy {
 	
-	private KeyBinding bindingPetPlacementModeCycle;
-	private KeyBinding bindingPetTargetModeCycle;
-	private KeyBinding bindingPetAttackAll;
-	private KeyBinding bindingPetAttack;
-	private KeyBinding bindingPetAllStop;
+	private KeyMapping bindingPetPlacementModeCycle;
+	private KeyMapping bindingPetTargetModeCycle;
+	private KeyMapping bindingPetAttackAll;
+	private KeyMapping bindingPetAttack;
+	private KeyMapping bindingPetAllStop;
 	private OverlayRenderer overlayRenderer;
 	
 	private @Nullable LivingEntity selectedPet; // Used for directing pets to do actions on key releases
@@ -47,15 +47,15 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	public void initKeybinds() {
-		bindingPetPlacementModeCycle = new KeyBinding("key.pet.placementmode.desc", GLFW.GLFW_KEY_G, "key.PetCommand.desc");
+		bindingPetPlacementModeCycle = new KeyMapping("key.pet.placementmode.desc", GLFW.GLFW_KEY_G, "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetPlacementModeCycle);
-		bindingPetTargetModeCycle = new KeyBinding("key.pet.targetmode.desc", GLFW.GLFW_KEY_H, "key.PetCommand.desc");
+		bindingPetTargetModeCycle = new KeyMapping("key.pet.targetmode.desc", GLFW.GLFW_KEY_H, "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetTargetModeCycle);
-		bindingPetAttackAll = new KeyBinding("key.pet.attackall.desc", GLFW.GLFW_KEY_X, "key.PetCommand.desc");
+		bindingPetAttackAll = new KeyMapping("key.pet.attackall.desc", GLFW.GLFW_KEY_X, "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetAttackAll);
-		bindingPetAttack = new KeyBinding("key.pet.attack.desc", GLFW.GLFW_KEY_C, "key.PetCommand.desc");
+		bindingPetAttack = new KeyMapping("key.pet.attack.desc", GLFW.GLFW_KEY_C, "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetAttack);
-		bindingPetAllStop = new KeyBinding("key.pet.stopall.desc", GLFW.GLFW_KEY_L, "key.PetCommand.desc");
+		bindingPetAllStop = new KeyMapping("key.pet.stopall.desc", GLFW.GLFW_KEY_L, "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetAllStop);
 	}
 	
@@ -65,13 +65,13 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	@Override
-	public @Nullable PlayerEntity getPlayer() {
+	public @Nullable Player getPlayer() {
 		final Minecraft mc = Minecraft.getInstance();
 		return mc.player;
 	}
 	
 	@Override
-	public void openContainer(PlayerEntity player, IPackedContainerProvider provider) {
+	public void openContainer(Player player, IPackedContainerProvider provider) {
 		if (!player.level.isClientSide) {
 			super.openContainer(player, provider);
 		}
@@ -79,7 +79,7 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	@Override
-	public void openPetGUI(PlayerEntity player, IEntityPet pet) {
+	public void openPetGUI(Player player, IEntityPet pet) {
 		// Integrated clients still need to open the gui...
 		//if (!player.world.isRemote) {
 //			DragonContainer container = dragon.getGUIContainer();
@@ -127,17 +127,17 @@ public class ClientProxy extends CommonProxy {
 			NetworkHandler.sendToServer(PetCommandMessage.AllTargetMode(next));
 		} else if (bindingPetAttackAll.consumeClick()) {
 			// Raytrace, find tar get, and set all to attack
-			final PlayerEntity player = getPlayer();
+			final Player player = getPlayer();
 			if (player != null && player.level != null) {
 				final float partialTicks = Minecraft.getInstance().getFrameTime();
 				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
-				RayTraceResult result = RayTrace.raytraceApprox(
+				HitResult result = RayTrace.raytraceApprox(
 						player.level, player,
 						player.getEyePosition(partialTicks),
 						player.getViewVector(partialTicks),
 						100, (e) -> { return e != player && e instanceof LivingEntity && !player.isAlliedTo(e) && !tames.contains(e);},
 						1);
-				if (result != null && result.getType() == RayTraceResult.Type.ENTITY) {
+				if (result != null && result.getType() == HitResult.Type.ENTITY) {
 					NetworkHandler.sendToServer(PetCommandMessage.AllAttack(RayTrace.livingFromRaytrace(result)));
 				}
 			}
@@ -146,39 +146,39 @@ public class ClientProxy extends CommonProxy {
 			// Probably could be same button but if raytrace is our pet,
 			// have them hold it down and release on an enemy? Or 'select' them
 			// and have them press again to select enemy?
-			final PlayerEntity player = getPlayer();
+			final Player player = getPlayer();
 			if (player != null && player.level != null) {
 				final float partialTicks = Minecraft.getInstance().getFrameTime();
 				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
 				if (selectedPet == null) {
 					// Try and select a pet
-					RayTraceResult result = RayTrace.raytraceApprox(
+					HitResult result = RayTrace.raytraceApprox(
 							player.level, player,
 							player.getEyePosition(partialTicks),
 							player.getViewVector(partialTicks),
 							100, (e) -> { return e != player && tames.contains(e);},
 							.1);
-					if (result != null && result.getType() == RayTraceResult.Type.ENTITY) {
+					if (result != null && result.getType() == HitResult.Type.ENTITY) {
 						selectedPet = RayTrace.livingFromRaytrace(result);
 						if (selectedPet.level.isClientSide) {
-							selectedPet.setGlowing(true);
+							selectedPet.setGlowingTag(true);
 						}
 					}
 				} else {
 					// Find target
-					RayTraceResult result = RayTrace.raytraceApprox(
+					HitResult result = RayTrace.raytraceApprox(
 							player.level, player,
 							player.getEyePosition(partialTicks),
 							player.getViewVector(partialTicks),
 							100, (e) -> { return e != player && e instanceof LivingEntity && !player.isAlliedTo(e) && !tames.contains(e);},
 							1);
-					if (result != null && result.getType() == RayTraceResult.Type.ENTITY) {
+					if (result != null && result.getType() == HitResult.Type.ENTITY) {
 						NetworkHandler.sendToServer(PetCommandMessage.PetAttack(selectedPet, RayTrace.livingFromRaytrace(result)));
 					}
 					
 					// Clear out pet
 					if (selectedPet.level.isClientSide) {
-						selectedPet.setGlowing(false);
+						selectedPet.setGlowingTag(false);
 					}
 					selectedPet = null;
 				}

@@ -18,58 +18,58 @@ import com.smanzana.petcommand.api.pet.PetInfo.PetAction;
 import com.smanzana.petcommand.api.pet.PetInfo.SecondaryFlavor;
 import com.smanzana.petcommand.util.ArrayUtil;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.goal.HurtByTargetGoal;
-import net.minecraft.entity.ai.goal.LookAtGoal;
-import net.minecraft.entity.ai.goal.LookRandomlyGoal;
-import net.minecraft.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.entity.ai.goal.MoveTowardsTargetGoal;
-import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
-import net.minecraft.entity.ai.goal.ResetAngerGoal;
-import net.minecraft.entity.ai.goal.ShowVillagerFlowerGoal;
-import net.minecraft.entity.ai.goal.WaterAvoidingRandomWalkingGoal;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.monster.CreeperEntity;
-import net.minecraft.entity.monster.IMob;
-import net.minecraft.entity.passive.IronGolemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.MoveTowardsTargetGoal;
+import net.minecraft.world.entity.ai.goal.OfferFlowerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.ResetUniversalAngerTargetGoal;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 
-public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet {
+public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	
 	public static final String ID = "bound_iron_golem";
 	
 	private static final String NBT_OWNER_ID = "bound_owner_id";
 	private static final String NBT_INVENTORY = "inventory";
-	protected static final DataParameter<Boolean> ATTACKING = EntityDataManager.defineId(BoundIronGolemEntity.class, DataSerializers.BOOLEAN);
-	protected static final DataParameter<Optional<UUID>> OWNER_UNIQUE_ID = EntityDataManager.defineId(BoundIronGolemEntity.class, DataSerializers.OPTIONAL_UUID);
+	protected static final EntityDataAccessor<Boolean> ATTACKING = SynchedEntityData.defineId(BoundIronGolemEntity.class, EntityDataSerializers.BOOLEAN);
+	protected static final EntityDataAccessor<Optional<UUID>> OWNER_UNIQUE_ID = SynchedEntityData.defineId(BoundIronGolemEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 	private static final int INVENTORY_SIZE = 9;
 	
-	protected IInventory inventory;
+	protected Container inventory;
 
-	public BoundIronGolemEntity(EntityType<? extends IronGolemEntity> type, World worldIn) {
+	public BoundIronGolemEntity(EntityType<? extends BoundIronGolemEntity> type, Level worldIn) {
 		super(type, worldIn);
 		this.setPlayerCreated(false);
-		this.inventory = new Inventory(INVENTORY_SIZE);
+		this.inventory = new SimpleContainer(INVENTORY_SIZE);
 	}
 	
 	@Override
@@ -78,19 +78,19 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 		this.goalSelector.addGoal(priority++, new MeleeAttackGoal(this, 1.0D, true));
 		this.goalSelector.addGoal(priority++, new MoveTowardsTargetGoal(this, 0.9D, 32.0F));
 		this.goalSelector.addGoal(priority++, new DummyFollowOwnerGoal()); // Adding dummy to influence where advanced follow is inserted by advanced follow
-		this.goalSelector.addGoal(priority, new WaterAvoidingRandomWalkingGoal(this, 1.0D)); // Note not increasing priority like in base to make it a choice
-		this.goalSelector.addGoal(priority++, new ShowVillagerFlowerGoal(this));
-		this.goalSelector.addGoal(priority, new LookAtGoal(this, PlayerEntity.class, 6.0F));
-		this.goalSelector.addGoal(priority++, new LookRandomlyGoal(this));
+		this.goalSelector.addGoal(priority, new WaterAvoidingRandomStrollGoal(this, 1.0D)); // Note not increasing priority like in base to make it a choice
+		this.goalSelector.addGoal(priority++, new OfferFlowerGoal(this));
+		this.goalSelector.addGoal(priority, new LookAtPlayerGoal(this, Player.class, 6.0F));
+		this.goalSelector.addGoal(priority++, new RandomLookAroundGoal(this));
 		
 
 		priority = 1;
 		this.targetSelector.addGoal(priority++, new HurtByTargetGoal(this));
-		this.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(this, PlayerEntity.class, 10, true, false, this::canAttackEntity));
-		this.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(this, MobEntity.class, 5, false, false, (p_234199_0_) -> {
-			return p_234199_0_ instanceof IMob && !(p_234199_0_ instanceof CreeperEntity);
+		this.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, this::canAttackEntity));
+		this.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(this, Mob.class, 5, false, false, (p_234199_0_) -> {
+			return p_234199_0_ instanceof Enemy && !(p_234199_0_ instanceof Creeper);
 		}));
-		this.targetSelector.addGoal(priority++, new ResetAngerGoal<>(this, false));
+		this.targetSelector.addGoal(priority++, new ResetUniversalAngerTargetGoal<>(this, false));
 	}
 	
 	@Override
@@ -102,7 +102,7 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 	
 	@Override
-	public void addAdditionalSaveData(CompoundNBT compound) {
+	public void addAdditionalSaveData(CompoundTag compound) {
 		super.addAdditionalSaveData(compound);
 		
 		if (this.getOwnerID() != null) {
@@ -111,9 +111,9 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 		
 		// Write inventory
 		{
-			ListNBT invTag = new ListNBT();
+			ListTag invTag = new ListTag();
 			for (int i = 0; i < inventory.getContainerSize(); i++) {
-				CompoundNBT tag = new CompoundNBT();
+				CompoundTag tag = new CompoundTag();
 				ItemStack stack = inventory.getItem(i);
 				if (!stack.isEmpty()) {
 					stack.save(tag);
@@ -127,7 +127,7 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 	
 	@Override
-	public void readAdditionalSaveData(CompoundNBT compound) {
+	public void readAdditionalSaveData(CompoundTag compound) {
 		super.readAdditionalSaveData(compound);
 		
 		this.setOwnerID(compound.hasUUID(NBT_OWNER_ID)
@@ -136,11 +136,11 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 				
 		// Read inventory
 		{
-			ListNBT list = compound.getList(NBT_INVENTORY, NBT.TAG_COMPOUND);
-			this.inventory = new Inventory(INVENTORY_SIZE);
+			ListTag list = compound.getList(NBT_INVENTORY, Tag.TAG_COMPOUND);
+			this.inventory = new SimpleContainer(INVENTORY_SIZE);
 			
 			for (int i = 0; i < INVENTORY_SIZE; i++) {
-				CompoundNBT tag = list.getCompound(i);
+				CompoundTag tag = list.getCompound(i);
 				ItemStack stack = ItemStack.EMPTY;
 				if (tag != null) {
 					stack = ItemStack.of(tag);
@@ -217,15 +217,15 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 	
 	@Override
-	public ActionResultType /*processInteract*/ mobInteract(PlayerEntity player, Hand hand) {
-		ActionResultType parent = super.mobInteract(player, hand);
-		if (parent != ActionResultType.PASS) {
+	public InteractionResult /*processInteract*/ mobInteract(Player player, InteractionHand hand) {
+		InteractionResult parent = super.mobInteract(player, hand);
+		if (parent != InteractionResult.PASS) {
 			return parent;
 		}
 		if (!level.isClientSide()) {
 			PetCommandAPI.OpenPetGUI(player, this);
 		}
-		return ActionResultType.SUCCESS;
+		return InteractionResult.SUCCESS;
 	} 
 
 	@Override
@@ -275,7 +275,7 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 
 	@Override
-	public IPetGUISheet<BoundIronGolemEntity>[] getContainerSheets(PlayerEntity player) {
+	public IPetGUISheet<BoundIronGolemEntity>[] getContainerSheets(Player player) {
 		return ArrayUtil.MakeArray(
 			new PetInventorySheet<BoundIronGolemEntity>(this, this.inventory) {
 				@Override
@@ -300,7 +300,7 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 			ent.setCustomNameVisible(this.isCustomNameVisible());
 		}
 		level.addFreshEntity(ent);
-		this.remove();
+		this.remove(RemovalReason.DISCARDED);
 	}
 
 	protected static final class DummyFollowOwnerGoal extends Goal implements IFollowOwnerGoal {
@@ -382,20 +382,20 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	
 	public static void EntityInteractListener(PlayerInteractEvent.EntityInteract event) {
 		if (!event.isCanceled() && !event.getEntity().level.isClientSide()) {
-			if (event.getTarget() instanceof IronGolemEntity
+			if (event.getTarget() instanceof IronGolem
 					&& !(event.getTarget() instanceof BoundIronGolemEntity)) {
 				ItemStack stack = event.getItemStack();
 				if (!stack.isEmpty() && stack.getItem() == Items.POPPY) {
-					event.getWorld().playSound(null, event.getPos(), SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundCategory.NEUTRAL, 1f, 1f);
-					TransformToBound((IronGolemEntity) event.getTarget(), event.getPlayer());
+					event.getWorld().playSound(null, event.getPos(), SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.NEUTRAL, 1f, 1f);
+					TransformToBound((IronGolem) event.getTarget(), event.getPlayer());
 					stack.shrink(1);
-					event.setCancellationResult(ActionResultType.SUCCESS);
+					event.setCancellationResult(InteractionResult.SUCCESS);
 				}
 			}
 		}
 	}
 	
-	public static final void TransformToBound(IronGolemEntity entity, @Nullable LivingEntity owner) {
+	public static final void TransformToBound(IronGolem entity, @Nullable LivingEntity owner) {
 		BoundIronGolemEntity ent = PetCommandEntities.BOUND_IRON_GOLEM.create(entity.level);
 		ent.copyPosition(entity);
 		if (entity.hasCustomName()) {
@@ -404,6 +404,6 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 		}
 		ent.setOwner(owner);
 		entity.level.addFreshEntity(ent);
-		entity.remove();
+		entity.remove(RemovalReason.DISCARDED);
 	}
 }

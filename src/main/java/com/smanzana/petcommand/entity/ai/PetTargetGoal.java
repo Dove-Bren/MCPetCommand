@@ -11,17 +11,14 @@ import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.api.pet.PetTargetMode;
 
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityPredicate;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.goal.TargetGoal;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 
-public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
-	
-	public static final EntityPredicate Filter = new EntityPredicate().allowUnseeable();
+public class PetTargetGoal<T extends PathfinderMob> extends TargetGoal {
 	
 	protected T thePet;
 	protected LivingEntity theOwner;
@@ -58,7 +55,7 @@ public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 		return this.canUse();
 	}
 	
-	protected static @Nullable LivingEntity FindAggressiveTarget(MobEntity attacker, double range) {
+	protected static @Nullable LivingEntity FindAggressiveTarget(Mob attacker, double range) {
 		LivingEntity owner = PetFuncs.GetOwner(attacker);
 		List<LivingEntity> tamed = (owner == null ? Lists.newArrayList() : PetFuncs.GetTamedEntities(owner));
 		List<Entity> entities = attacker.level.getEntities(attacker, attacker.getBoundingBox().inflate(range), (e) -> {
@@ -66,7 +63,6 @@ public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 					&& e != attacker
 					&& e != owner
 					&& !tamed.contains(e)
-					&& Filter.test(attacker, (LivingEntity) e)
 					&& !PetFuncs.IsSameTeam(attacker, (LivingEntity) e);
 		});
 		Collections.sort(entities, (a, b) -> {

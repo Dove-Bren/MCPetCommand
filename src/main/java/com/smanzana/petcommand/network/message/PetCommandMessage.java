@@ -9,12 +9,12 @@ import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.pet.PetPlacementMode;
 import com.smanzana.petcommand.api.pet.PetTargetMode;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 /**
  * Client has issued a pet command.
@@ -25,13 +25,13 @@ import net.minecraftforge.fml.network.NetworkEvent;
 public class PetCommandMessage {
 
 	public static void handle(PetCommandMessage message, Supplier<NetworkEvent.Context> ctx) {
-		final ServerPlayerEntity sp = ctx.get().getSender();
+		final ServerPlayer sp = ctx.get().getSender();
 		ctx.get().setPacketHandled(true);
 		// Can't call from network threads because manager doesn't sync entity target modification
 		
 		ctx.get().enqueueWork(() -> {
 			final @Nullable LivingEntity target;
-			final @Nullable MobEntity pet;
+			final @Nullable Mob pet;
 			
 			if (message.targetUUID != null) {
 				Entity e = PetCommand.GetEntityByUUID(sp.level, message.targetUUID);
@@ -46,8 +46,8 @@ public class PetCommandMessage {
 			
 			if (message.petUUID != null) {
 				Entity e = PetCommand.GetEntityByUUID(sp.level, message.petUUID);
-				if (e instanceof MobEntity) {
-					pet = (MobEntity) e;
+				if (e instanceof Mob) {
+					pet = (Mob) e;
 				} else {
 					pet = null;
 				}
@@ -143,7 +143,7 @@ public class PetCommandMessage {
 		return new PetCommandMessage(PetCommandMessageType.SET_TARGET_MODE, null, null, null, mode);
 	}
 	
-	public static PetCommandMessage decode(PacketBuffer buf) {
+	public static PetCommandMessage decode(FriendlyByteBuf buf) {
 		final PetCommandMessageType type;
 		final @Nullable UUID petUUID;
 		final @Nullable UUID targetUUID;
@@ -159,7 +159,7 @@ public class PetCommandMessage {
 		return new PetCommandMessage(type, petUUID, targetUUID, placementMode, targetMode);
 	}
 
-	public static void encode(PetCommandMessage msg, PacketBuffer buf) {
+	public static void encode(PetCommandMessage msg, FriendlyByteBuf buf) {
 		buf.writeEnum(msg.type);
 		
 		buf.writeBoolean(msg.petUUID != null);

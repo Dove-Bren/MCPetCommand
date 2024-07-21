@@ -5,12 +5,12 @@ import javax.annotation.Nullable;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.pet.ITargetManager;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 public abstract class PetCommandAPI {
 
-	public static final void OpenPetGUI(PlayerEntity player, IEntityPet pet) {
+	public static final void OpenPetGUI(Player player, IEntityPet pet) {
 		if (Impl != null) {
 			Impl.openPetGUI(player, pet);
 		}
@@ -43,7 +43,7 @@ public abstract class PetCommandAPI {
 		Impl = api;
 	}
 	
-	protected abstract void openPetGUI(PlayerEntity player, IEntityPet pet);
+	protected abstract void openPetGUI(Player player, IEntityPet pet);
 
 	protected abstract ITargetManager getTargetManager(LivingEntity entity);
 }

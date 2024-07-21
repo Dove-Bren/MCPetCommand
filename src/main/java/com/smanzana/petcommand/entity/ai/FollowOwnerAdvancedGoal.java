@@ -12,30 +12,31 @@ import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.api.entity.ITameableEntity;
 import com.smanzana.petcommand.api.pet.PetPlacementMode;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.pathfinding.PathNavigator;
-import net.minecraft.pathfinding.PathNodeType;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.phys.Vec3;
 
-public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
+public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 	
 	private final T thePet;
 	private LivingEntity theOwner;
-	private World theWorld;
+	private Level theWorld;
 	private final double followSpeed;
-	private final PathNavigator petPathfinder;
+	private final PathNavigation petPathfinder;
 	private int timeToRecalcPath;
 	private float maxDist;
 	private float minDist;
 	private float oldWaterCost;
 	
-	private @Nullable Vector3d lastPosition;
+	private @Nullable Vec3 lastPosition;
 	private int timeToRecalcPosition; // measured in existTicks of pet
 	
 	protected Predicate<? super T> filter;
@@ -65,8 +66,8 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			sitting = false;
 		} else if (pet instanceof ITameableEntity) {
 			sitting = ((ITameableEntity) pet).isEntitySitting();
-		} else if (pet instanceof TameableEntity) {
-			sitting = ((TameableEntity) pet).isOrderedToSit();
+		} else if (pet instanceof TamableAnimal) {
+			sitting = ((TamableAnimal) pet).isOrderedToSit();
 		} else {
 			sitting = false;
 		}
@@ -115,9 +116,9 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	 * @param mode
 	 * @return
 	 */
-	protected Vector3d getIdealTargetPosition(T pet, LivingEntity owner, PetPlacementMode mode) {
+	protected Vec3 getIdealTargetPosition(T pet, LivingEntity owner, PetPlacementMode mode) {
 		final int index = getPetPositionIndex(pet, owner);
-		final Vector3d target;
+		final Vec3 target;
 		
 		switch (mode) {
 		case HEEL_DEFENSIVE:
@@ -144,11 +145,11 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			final float adjX = Math.signum(offsetX) * spacing * shell;
 			
 			// Get owner rotation to apply to
-			final Vector3d ownerMoveVec = PetCommand.GetMovementListener().getLastMove(owner);
+			final Vec3 ownerMoveVec = PetCommand.GetMovementListener().getLastMove(owner);
 			final float yawOwnerRad = (float) Math.atan2(ownerMoveVec.x, ownerMoveVec.z);
 			
 			// Get offset first as if owner was facing 
-			Vector3d offset = new Vector3d(offsetX + adjX, 0, offsetZ);
+			Vec3 offset = new Vec3(offsetX + adjX, 0, offsetZ);
 			offset = offset.yRot(yawOwnerRad + .0f * (float) Math.PI);
 			target = owner.position().add(offset);
 			
@@ -179,11 +180,11 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			final float magnitude = 1.5f + (1.5f * row);
 			
 			// Get owner rotation to apply to
-			final Vector3d ownerMoveVec = PetCommand.GetMovementListener().getLastMove(owner);
+			final Vec3 ownerMoveVec = PetCommand.GetMovementListener().getLastMove(owner);
 			final float yawOwnerRad = (float) Math.atan2(ownerMoveVec.x, ownerMoveVec.z);
 			
 			// Get offset first as if owner was facing 
-			Vector3d offset = new Vector3d(magnitude * Math.cos(angleRad), 0, magnitude * Math.sin(angleRad));
+			Vec3 offset = new Vec3(magnitude * Math.cos(angleRad), 0, magnitude * Math.sin(angleRad));
 			offset = offset.yRot(yawOwnerRad + .75f * (float) Math.PI);
 			target = owner.position().add(offset);
 			
@@ -199,12 +200,12 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 		return target;
 	}
 	
-	protected Vector3d getTargetPosition(T pet, LivingEntity owner, PetPlacementMode mode) {
+	protected Vec3 getTargetPosition(T pet, LivingEntity owner, PetPlacementMode mode) {
 		if (timeToRecalcPosition == 0 || timeToRecalcPosition < pet.tickCount) {
 			timeToRecalcPosition = pet.tickCount + 20;
 			lastPosition = getIdealTargetPosition(pet, owner, mode);
 			
-			BlockPos.Mutable cursor = new BlockPos.Mutable();
+			MutableBlockPos cursor = new MutableBlockPos();
 			cursor.set(lastPosition.x, lastPosition.y, lastPosition.z);
 			if (!isEmptyBlock(cursor) || isEmptyBlock(cursor.below())) {
 				if (isEmptyBlock(cursor.below()) && !isEmptyBlock(cursor.below().below())) {
@@ -243,9 +244,9 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 		}
 		
 		final boolean sitting = this.isPetSitting(thePet);
-		final Vector3d targetPos = getTargetPosition(thePet, entitylivingbase, mode);
+		final Vec3 targetPos = getTargetPosition(thePet, entitylivingbase, mode);
 
-		if (entitylivingbase instanceof PlayerEntity && ((PlayerEntity)entitylivingbase).isSpectator()) {
+		if (entitylivingbase instanceof Player && ((Player)entitylivingbase).isSpectator()) {
 			return false;
 		} else if (sitting) {
 			return false;
@@ -277,7 +278,7 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			return false;
 		}
 		
-		final Vector3d targetPos = getTargetPosition(thePet, theOwner, mode);
+		final Vec3 targetPos = getTargetPosition(thePet, theOwner, mode);
 		return !this.petPathfinder.isDone() && this.thePet.distanceToSqr(targetPos.x, targetPos.y, targetPos.z) > (double)(this.maxDist * this.maxDist);
 	}
 
@@ -287,8 +288,8 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	public void start() {
 		this.timeToRecalcPath = 0;
 		this.timeToRecalcPosition = 0;
-		this.oldWaterCost = this.thePet.getPathfindingMalus(PathNodeType.WATER);
-		this.thePet.setPathfindingMalus(PathNodeType.WATER, 0.0F);
+		this.oldWaterCost = this.thePet.getPathfindingMalus(BlockPathTypes.WATER);
+		this.thePet.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
 	}
 
 	/**
@@ -297,7 +298,7 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	public void stop() {
 		this.theOwner = null;
 		this.petPathfinder.stop();
-		this.thePet.setPathfindingMalus(PathNodeType.WATER, this.oldWaterCost);
+		this.thePet.setPathfindingMalus(BlockPathTypes.WATER, this.oldWaterCost);
 	}
 
 	/**
@@ -307,7 +308,7 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 		//this.thePet.getLookHelper().setLookPositionWithEntity(this.theOwner, 10.0F, (float)this.thePet.getVerticalFaceSpeed());
 
 		if (!isPetSitting(thePet)) {
-//			final Vector3d ownerMoveVec = NostrumMagica.playerListener.getLastMove(theOwner);
+//			final Vec3 ownerMoveVec = NostrumMagica.playerListener.getLastMove(theOwner);
 //			final float yawOwner = (float) -Math.atan2(ownerMoveVec.x, ownerMoveVec.z) * 180f / (float)Math.PI;
 //			this.thePet.getLookHelper().setLookPosition(x, y, z, deltaYaw, deltaPitch);
 			
@@ -315,13 +316,13 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			if (--this.timeToRecalcPath <= 0) {
 				this.timeToRecalcPath = 10;
 				final PetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(this.theOwner);
-				final Vector3d targetPos = this.getTargetPosition(thePet, theOwner, mode);
+				final Vec3 targetPos = this.getTargetPosition(thePet, theOwner, mode);
 
 				//thePet.setLocationAndAngles(targetPos.x, targetPos.y, targetPos.z, this.thePet.rotationYaw, this.thePet.rotationPitch);
 				if (!this.petPathfinder.moveTo(targetPos.x, targetPos.y, targetPos.z, this.followSpeed)) {
 					if (!this.thePet.isLeashed()) {
 						if (this.thePet.distanceToSqr(this.theOwner) >= 144.0D) {
-							thePet.moveTo(targetPos.x, targetPos.y, targetPos.z, this.thePet.yRot, this.thePet.xRot);
+							thePet.moveTo(targetPos.x, targetPos.y, targetPos.z, this.thePet.getYRot(), this.thePet.getXRot());
 						}
 					}
 				}

@@ -3,7 +3,7 @@ package com.smanzana.petcommand.listener;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetCommandAPI;
 
-import net.minecraft.entity.MobEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
@@ -24,8 +24,8 @@ public class TargetListener {
 	
 	@SubscribeEvent
 	public void onAITarget(LivingSetAttackTargetEvent event) {
-		if (event.getEntityLiving() instanceof MobEntity) {
-			MobEntity mob = (MobEntity) event.getEntityLiving();
+		if (event.getEntityLiving() instanceof Mob) {
+			Mob mob = (Mob) event.getEntityLiving();
 			PetCommandAPI.GetTargetManager(mob).updateTarget(mob, event.getTarget());
 		}
 	}

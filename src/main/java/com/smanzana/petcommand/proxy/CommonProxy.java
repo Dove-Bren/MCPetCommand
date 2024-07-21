@@ -8,10 +8,10 @@ import com.smanzana.petcommand.api.pet.ITargetManager;
 import com.smanzana.petcommand.client.petgui.PetGUI;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraftforge.fml.network.NetworkHooks;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.fmllegacy.network.NetworkHooks;
 
 public class CommonProxy {
 
@@ -23,19 +23,19 @@ public class CommonProxy {
 		return true;
 	}
 	
-	public @Nullable PlayerEntity getPlayer() {
+	public @Nullable Player getPlayer() {
 		return null;
 	}
 	
-	public <T extends IEntityPet> void openPetGUI(PlayerEntity player, T pet) {
+	public <T extends IEntityPet> void openPetGUI(Player player, T pet) {
 		if (!player.level.isClientSide()) {
 			this.openContainer(player, PetGUI.PetContainer.Make(pet, player));
 		}
 	}
 	
-	public void openContainer(PlayerEntity player, IPackedContainerProvider provider) {
-		if (!player.level.isClientSide() && player instanceof ServerPlayerEntity) {
-			NetworkHooks.openGui((ServerPlayerEntity) player, provider, provider.getData());
+	public void openContainer(Player player, IPackedContainerProvider provider) {
+		if (!player.level.isClientSide() && player instanceof ServerPlayer) {
+			NetworkHooks.openGui((ServerPlayer) player, provider, provider.getData());
 		}
 	}
 	

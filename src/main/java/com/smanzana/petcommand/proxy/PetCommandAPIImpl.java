@@ -5,8 +5,8 @@ import com.smanzana.petcommand.api.PetCommandAPI;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.pet.ITargetManager;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 public class PetCommandAPIImpl extends PetCommandAPI {
 	
@@ -19,7 +19,7 @@ public class PetCommandAPIImpl extends PetCommandAPI {
 	}
 
 	@Override
-	protected void openPetGUI(PlayerEntity player, IEntityPet pet) {
+	protected void openPetGUI(Player player, IEntityPet pet) {
 		PetCommand.GetProxy().openPetGUI(player, pet);
 	}
 

@@ -5,9 +5,9 @@ import java.util.function.Supplier;
 import com.smanzana.petcommand.client.petgui.PetGUI;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 /**
  * Server is sending some syncing data to the client GUI
@@ -24,17 +24,17 @@ public class PetGUISyncMessage {
 		});
 	}
 
-	private final CompoundNBT data;
+	private final CompoundTag data;
 	
-	public PetGUISyncMessage(CompoundNBT data) {
+	public PetGUISyncMessage(CompoundTag data) {
 		this.data = data;
 	}
 
-	public static PetGUISyncMessage decode(PacketBuffer buf) {
+	public static PetGUISyncMessage decode(FriendlyByteBuf buf) {
 		return new PetGUISyncMessage(buf.readNbt());
 	}
 
-	public static void encode(PetGUISyncMessage msg, PacketBuffer buf) {
+	public static void encode(PetGUISyncMessage msg, FriendlyByteBuf buf) {
 		buf.writeNbt(msg.data);
 	}
 

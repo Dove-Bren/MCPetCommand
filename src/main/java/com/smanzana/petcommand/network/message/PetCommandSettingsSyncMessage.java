@@ -5,9 +5,9 @@ import java.util.function.Supplier;
 import com.smanzana.petcommand.PetCommand;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 /**
  * Client player's attribtes are being refreshed from server
@@ -23,17 +23,17 @@ public class PetCommandSettingsSyncMessage {
 		});
 	}
 		
-	private final CompoundNBT data;
+	private final CompoundTag data;
 	
-	public PetCommandSettingsSyncMessage(CompoundNBT nbt) {
+	public PetCommandSettingsSyncMessage(CompoundTag nbt) {
 		data = nbt;
 	}
 
-	public static PetCommandSettingsSyncMessage decode(PacketBuffer buf) {
+	public static PetCommandSettingsSyncMessage decode(FriendlyByteBuf buf) {
 		return new PetCommandSettingsSyncMessage(buf.readNbt());
 	}
 
-	public static void encode(PetCommandSettingsSyncMessage msg, PacketBuffer buf) {
+	public static void encode(PetCommandSettingsSyncMessage msg, FriendlyByteBuf buf) {
 		buf.writeNbt(msg.data);
 	}
 

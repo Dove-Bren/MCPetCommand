@@ -10,18 +10,18 @@ import com.smanzana.petcommand.network.message.PetGUIControlMessage;
 import com.smanzana.petcommand.network.message.PetGUISyncMessage;
 import com.smanzana.petcommand.network.message.TargetUpdateMessage;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkDirection;
-import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.PacketDistributor;
-import net.minecraftforge.fml.network.PacketDistributor.TargetPoint;
-import net.minecraftforge.fml.network.simple.SimpleChannel;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.fmllegacy.network.NetworkDirection;
+import net.minecraftforge.fmllegacy.network.NetworkRegistry;
+import net.minecraftforge.fmllegacy.network.PacketDistributor;
+import net.minecraftforge.fmllegacy.network.PacketDistributor.TargetPoint;
+import net.minecraftforge.fmllegacy.network.simple.SimpleChannel;
 
 public class NetworkHandler {
 
@@ -64,7 +64,7 @@ public class NetworkHandler {
 	//NetworkHandler.sendTo(new ClientCastReplyMessage(false, att.getMana(), 0, null),
 	//ctx.get().getSender());
 	
-	public static <T> void sendTo(T msg, ServerPlayerEntity player) {
+	public static <T> void sendTo(T msg, ServerPlayer player) {
 		NetworkHandler.syncChannel.sendTo(msg, player.connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT);
 	}
 	
@@ -76,7 +76,7 @@ public class NetworkHandler {
 		NetworkHandler.syncChannel.send(PacketDistributor.ALL.noArg(), msg);
 	}
 
-	public static <T> void sendToDimension(T msg, RegistryKey<World> dimension) {
+	public static <T> void sendToDimension(T msg, ResourceKey<Level> dimension) {
 		NetworkHandler.syncChannel.send(PacketDistributor.DIMENSION.with(() -> dimension), msg);
 	}
 	
@@ -88,10 +88,10 @@ public class NetworkHandler {
 		NetworkHandler.syncChannel.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> ent), msg);
 	}
 	
-	public static <T> void sendToOwner(T msg, MobEntity entity) {
+	public static <T> void sendToOwner(T msg, Mob entity) {
 		@Nullable LivingEntity owner = PetFuncs.GetOwner(entity);
-		if (owner != null && owner instanceof ServerPlayerEntity) {
-			sendTo(msg, (ServerPlayerEntity) owner);
+		if (owner != null && owner instanceof ServerPlayer) {
+			sendTo(msg, (ServerPlayer) owner);
 		}
 	}
 

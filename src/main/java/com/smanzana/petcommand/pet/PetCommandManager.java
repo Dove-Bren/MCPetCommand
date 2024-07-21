@@ -17,12 +17,12 @@ import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetCommandSettingsSyncMessage;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.world.storage.WorldSavedData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
@@ -36,7 +36,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  * @author Skyler
  *
  */
-public class PetCommandManager extends WorldSavedData {
+public class PetCommandManager extends SavedData {
 	
 	private static final class PetCommandSettings {
 		
@@ -53,9 +53,9 @@ public class PetCommandManager extends WorldSavedData {
 			targetMode = PetTargetMode.FREE;
 		}
 		
-		public CompoundNBT writeToNBT(@Nullable CompoundNBT nbt) {
+		public CompoundTag writeToNBT(@Nullable CompoundTag nbt) {
 			if (nbt == null) {
-				nbt = new CompoundNBT();
+				nbt = new CompoundTag();
 			}
 			
 			nbt.putString(NBT_ENTRY_PLACEMENT, placementMode.name());
@@ -64,7 +64,7 @@ public class PetCommandManager extends WorldSavedData {
 			return nbt;
 		}
 		
-		public static PetCommandSettings FromNBT(CompoundNBT nbt) {
+		public static PetCommandSettings FromNBT(CompoundTag nbt) {
 			PetCommandSettings settings = new PetCommandSettings();
 			
 			try {
@@ -90,42 +90,34 @@ public class PetCommandManager extends WorldSavedData {
 	private Map<UUID, PetCommandSettings> playerSettings;
 	
 	public PetCommandManager() {
-		this(DATA_NAME);
-	}
-	
-	public PetCommandManager(String name) {
-		super(name);
 		this.playerSettings = new HashMap<>();
 	}
 	
-	@Override
-	public void load(CompoundNBT nbt) {
-		synchronized(playerSettings) {
-			playerSettings.clear();
-			
-			CompoundNBT subtag = nbt.getCompound(NBT_SETTINGS);
-			for (String key : subtag.getAllKeys()) {
-				UUID uuid = null;
-				try {
-					uuid = UUID.fromString(key);
-				} catch (Exception e) {
-					e.printStackTrace();
-					uuid = null;
-				}
-				
-				if (uuid == null) {
-					continue;
-				}
-				
-				playerSettings.put(uuid, PetCommandSettings.FromNBT(subtag.getCompound(key)));
+	public static PetCommandManager Load(CompoundTag nbt) {
+		PetCommandManager manager = new PetCommandManager();
+		CompoundTag subtag = nbt.getCompound(NBT_SETTINGS);
+		for (String key : subtag.getAllKeys()) {
+			UUID uuid = null;
+			try {
+				uuid = UUID.fromString(key);
+			} catch (Exception e) {
+				e.printStackTrace();
+				uuid = null;
 			}
+			
+			if (uuid == null) {
+				continue;
+			}
+			
+			manager.playerSettings.put(uuid, PetCommandSettings.FromNBT(subtag.getCompound(key)));
 		}
+		return manager;
 	}
 	
 	@Override
-	public CompoundNBT save(CompoundNBT compound) {
+	public CompoundTag save(CompoundTag compound) {
 		synchronized(playerSettings) {
-			CompoundNBT subtag = new CompoundNBT();
+			CompoundTag subtag = new CompoundTag();
 			for (Entry<UUID, PetCommandSettings> entry : playerSettings.entrySet()) {
 				subtag.put(entry.getKey().toString(), entry.getValue().writeToNBT(null));
 			}
@@ -136,7 +128,7 @@ public class PetCommandManager extends WorldSavedData {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public void overrideClientSettings(CompoundNBT settingsNBT) {
+	public void overrideClientSettings(CompoundTag settingsNBT) {
 		PetCommandSettings settings = PetCommandSettings.FromNBT(settingsNBT);
 		final UUID ID = PetCommand.GetProxy().getPlayer().getUUID();
 		synchronized(playerSettings) {
@@ -144,8 +136,8 @@ public class PetCommandManager extends WorldSavedData {
 		}
 	}
 	
-	protected CompoundNBT generateClientSettings(UUID clientID) {
-		CompoundNBT nbt = new CompoundNBT();
+	protected CompoundTag generateClientSettings(UUID clientID) {
+		CompoundTag nbt = new CompoundTag();
 		
 		PetCommandSettings settings = getSettings(clientID);
 		nbt = settings.writeToNBT(nbt);
@@ -161,7 +153,7 @@ public class PetCommandManager extends WorldSavedData {
 		
 		NetworkHandler.sendTo(
 				new PetCommandSettingsSyncMessage(generateClientSettings(event.getPlayer().getUUID())),
-				(ServerPlayerEntity) event.getPlayer());
+				(ServerPlayer) event.getPlayer());
 	}
 	
 	protected @Nonnull PetCommandSettings getSettings(@Nonnull UUID uuid) {
@@ -235,7 +227,7 @@ public class PetCommandManager extends WorldSavedData {
 		pet.onAttackCommand(target);
 	}
 	
-	public void commandToAttack(LivingEntity owner, MobEntity pet, LivingEntity target) {
+	public void commandToAttack(LivingEntity owner, Mob pet, LivingEntity target) {
 		if (pet instanceof IEntityPet) {
 			commandToAttack(owner, (IEntityPet) pet, target);
 			return;
@@ -262,8 +254,8 @@ public class PetCommandManager extends WorldSavedData {
 		forAllOwned(owner, (e) -> {
 			if (e instanceof IEntityPet) {
 				((IEntityPet) e).onAttackCommand(target);
-			} else if (e instanceof MobEntity) {
-				((MobEntity) e).setTarget(target);
+			} else if (e instanceof Mob) {
+				((Mob) e).setTarget(target);
 			}
 			return 0;
 		});
@@ -273,8 +265,8 @@ public class PetCommandManager extends WorldSavedData {
 		forAllOwned(owner, (e) -> {
 			if (e instanceof IEntityPet) {
 				((IEntityPet) e).onStopCommand();
-			} else if (e instanceof MobEntity) {
-				((MobEntity) e).setTarget(null);
+			} else if (e instanceof Mob) {
+				((Mob) e).setTarget(null);
 			}
 			return 0;
 		});

@@ -16,24 +16,24 @@ import com.smanzana.petcommand.api.pet.ITargetManager;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.TargetUpdateMessage;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 
 public class TargetManager implements ITargetManager {
 	
-	private final Map<MobEntity, LivingEntity> targets;
-	private final Map<LivingEntity, List<MobEntity>> targeters;
+	private final Map<Mob, LivingEntity> targets;
+	private final Map<LivingEntity, List<Mob>> targeters;
 	
 	public TargetManager() {
 		targets = new HashMap<>();
 		targeters = new HashMap<>();
 	}
 	
-	public @Nullable LivingEntity getTarget(MobEntity entity) {
+	public @Nullable LivingEntity getTarget(Mob entity) {
 		return targets.get(entity);
 	}
 	
-	protected @Nullable LivingEntity removeMapping(MobEntity mob) {
+	protected @Nullable LivingEntity removeMapping(Mob mob) {
 		@Nullable LivingEntity target = targets.remove(mob); // Easy part
 		if (target != null) {
 			targeters.computeIfAbsent(target, t -> new ArrayList<>()).remove(mob);
@@ -41,14 +41,14 @@ public class TargetManager implements ITargetManager {
 		return target;
 	}
 	
-	protected void addMapping(MobEntity mob, @Nullable LivingEntity target) {
+	protected void addMapping(Mob mob, @Nullable LivingEntity target) {
 		targets.put(mob, target);
 		if (target != null) {
 			targeters.computeIfAbsent(target, t -> new ArrayList<>()).add(mob);
 		}
 	}
 	
-	public void updateTarget(MobEntity mob, @Nullable LivingEntity target) {
+	public void updateTarget(Mob mob, @Nullable LivingEntity target) {
 		if (shouldTrack(mob)) {
 			final LivingEntity prev = removeMapping(mob);
 			addMapping(mob, target);
@@ -59,28 +59,28 @@ public class TargetManager implements ITargetManager {
 	}
 
 	@Override
-	public List<MobEntity> getEntitiesTargetting(LivingEntity target) {
+	public List<Mob> getEntitiesTargetting(LivingEntity target) {
 		return targeters.computeIfAbsent(target, t -> new ArrayList<>());
 	}
 	
 	public void clean(boolean deepClean) {
-		List<MobEntity> sources = Lists.newArrayList(targets.keySet());
-		for (MobEntity source : sources) {
+		List<Mob> sources = Lists.newArrayList(targets.keySet());
+		for (Mob source : sources) {
 			if (!source.isAlive()) {
 				removeMapping(source);
 			}
 		}
 		
 		if (deepClean) {
-			Iterator<Entry<LivingEntity, List<MobEntity>>> it = targeters.entrySet().iterator();
+			Iterator<Entry<LivingEntity, List<Mob>>> it = targeters.entrySet().iterator();
 			while (it.hasNext()) {
-				final Entry<LivingEntity, List<MobEntity>> row = it.next();
+				final Entry<LivingEntity, List<Mob>> row = it.next();
 				if (!row.getKey().isAlive()) {
 					it.remove();
 				} else {
-					Iterator<MobEntity> listIt = row.getValue().iterator();
+					Iterator<Mob> listIt = row.getValue().iterator();
 					while (listIt.hasNext()) {
-						MobEntity targeter = listIt.next();
+						Mob targeter = listIt.next();
 						if (!targeter.isAlive()) {
 							PetCommand.LOGGER.debug("Found stale entry in targetter map for entity: " + row.getKey() + " => " + row.getValue());
 							listIt.remove();
@@ -91,11 +91,11 @@ public class TargetManager implements ITargetManager {
 		}
 	}
 	
-	protected boolean shouldTrack(MobEntity entity) {
+	protected boolean shouldTrack(Mob entity) {
 		return PetFuncs.GetOwner(entity) != null;
 	}
 	
-	protected void broadcastChange(MobEntity entity, @Nullable LivingEntity target) {
+	protected void broadcastChange(Mob entity, @Nullable LivingEntity target) {
 		NetworkHandler.sendToOwner(new TargetUpdateMessage(entity, target), entity);
 	}
 }

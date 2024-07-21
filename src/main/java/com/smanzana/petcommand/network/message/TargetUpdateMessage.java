@@ -7,10 +7,10 @@ import javax.annotation.Nullable;
 import com.smanzana.petcommand.PetCommand;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 /**
  * Server is sending info about a change in targets to a client
@@ -27,7 +27,7 @@ public class TargetUpdateMessage {
 				return;
 			}
 			try {
-				MobEntity mob = (MobEntity) mc.player.level.getEntity(message.sourceID);
+				Mob mob = (Mob) mc.player.level.getEntity(message.sourceID);
 				LivingEntity target = message.targetID == null ? null : (LivingEntity) mc.player.level.getEntity(message.targetID);
 				PetCommand.GetClientTargetManager().updateTarget(mob, target);
 			} catch (Exception e) {
@@ -45,15 +45,15 @@ public class TargetUpdateMessage {
 		this.targetID = targetID;
 	}
 	
-	public TargetUpdateMessage(MobEntity source, @Nullable LivingEntity target) {
+	public TargetUpdateMessage(Mob source, @Nullable LivingEntity target) {
 		this(source.getId(), target == null ? null : target.getId());
 	}
 
-	public static TargetUpdateMessage decode(PacketBuffer buf) {
+	public static TargetUpdateMessage decode(FriendlyByteBuf buf) {
 		return new TargetUpdateMessage(buf.readVarInt(), buf.readBoolean() ? buf.readVarInt() : null);
 	}
 
-	public static void encode(TargetUpdateMessage msg, PacketBuffer buf) {
+	public static void encode(TargetUpdateMessage msg, FriendlyByteBuf buf) {
 		buf.writeVarInt(msg.sourceID);
 		buf.writeBoolean(msg.targetID != null);
 		if (msg.targetID != null) {

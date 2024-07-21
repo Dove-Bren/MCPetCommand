@@ -7,8 +7,8 @@ import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.api.PetCommandAPI;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
 
 public class PetInfo {
 	
@@ -259,9 +259,9 @@ public class PetInfo {
 	}
 	
 	public static PetInfo Wrap(LivingEntity entity) {
-		if (entity instanceof TameableEntity) {
-			final @Nullable LivingEntity target = PetCommandAPI.GetTargetManager(entity).getTarget((TameableEntity) entity);
-			final PetAction action = ((TameableEntity) entity).isInSittingPose()
+		if (entity instanceof TamableAnimal) {
+			final @Nullable LivingEntity target = PetCommandAPI.GetTargetManager(entity).getTarget((TamableAnimal) entity);
+			final PetAction action = ((TamableAnimal) entity).isInSittingPose()
 					? PetAction.SITTING
 					: (target != null && target.isAlive()) ? PetAction.ATTACKING		
 					: PetAction.IDLING;

@@ -1,29 +1,29 @@
 package com.smanzana.petcommand.api.client.petgui.sheet;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.api.client.container.IPetContainer;
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
 import com.smanzana.petcommand.api.client.petgui.PetGUIRenderHelper;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
 
 public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUISheet<T> {
 	
 	protected final T pet;
-	protected final IInventory petInv;
+	protected final Container petInv;
 	
-	public PetInventorySheet(T pet, IInventory petInventory) {
+	public PetInventorySheet(T pet, Container petInventory) {
 		this.pet = pet;
 		this.petInv = petInventory;
 	}
 	
 	@Override
-	public void showSheet(T pet, PlayerEntity player, IPetContainer<T> container, int width, int height, int offsetX, int offsetY) {
+	public void showSheet(T pet, Player player, IPetContainer<T> container, int width, int height, int offsetX, int offsetY) {
 		final int cellWidth = 18;
 		final int invRow = 9;
 		final int invWidth = cellWidth * invRow;
@@ -37,7 +37,7 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 		}
 		
 		final int playerTopOffset = 100;
-		IInventory playerInv = player.inventory;
+		Container playerInv = player.getInventory();
 		for (int i = 0; i < playerInvSize; i++) {
 			Slot slotIn = new Slot(playerInv, (i + 9) % 36, leftOffset + offsetX + (cellWidth * (i % invRow)),
 					(i < 27 ? 0 : 10) + playerTopOffset + offsetY + (cellWidth * (i / invRow)));
@@ -46,12 +46,12 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 	}
 
 	@Override
-	public void hideSheet(T pet, PlayerEntity player, IPetContainer<T> container) {
+	public void hideSheet(T pet, Player player, IPetContainer<T> container) {
 		container.clearSlots();
 	}
 
 	@Override
-	public void draw(MatrixStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
+	public void draw(PoseStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
 		// Draw sheet
 		matrixStackIn.pushPose();
 		{
@@ -91,7 +91,7 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 	}
 
 	@Override
-	public void handleMessage(CompoundNBT data) {
+	public void handleMessage(CompoundTag data) {
 		
 	}
 
@@ -104,7 +104,7 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 	public abstract boolean shouldShow(T dragon, IPetContainer<T> container);
 
 	@Override
-	public void overlay(MatrixStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
+	public void overlay(PoseStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
 		
 	}
 

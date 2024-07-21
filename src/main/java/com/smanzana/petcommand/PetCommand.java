@@ -1,7 +1,7 @@
 package com.smanzana.petcommand;
 
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -23,23 +23,21 @@ import com.smanzana.petcommand.pet.TargetManager;
 import com.smanzana.petcommand.proxy.ClientProxy;
 import com.smanzana.petcommand.proxy.CommonProxy;
 
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.CreatureEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.goal.FollowOwnerGoal;
-import net.minecraft.entity.ai.goal.GoalSelector;
-import net.minecraft.entity.ai.goal.PrioritizedGoal;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(PetCommand.MODID)
@@ -106,24 +104,24 @@ public class PetCommand
 		return instance.clientTargetManager;
 	}
 	
-	public static @Nullable Entity GetEntityByUUID(World world, UUID id) {
+	public static @Nullable Entity GetEntityByUUID(Level world, UUID id) {
 		// Copied out of NostrumMagica's Entities util
-		if (world.isClientSide() && world instanceof ClientWorld) {
-			Iterable<Entity> entities = ((ClientWorld)world).entitiesForRendering();
+		if (world.isClientSide() && world instanceof ClientLevel) {
+			Iterable<Entity> entities = ((ClientLevel)world).entitiesForRendering();
 			for (Entity ent : entities) {
 				if (ent.getUUID().equals(id)) {
 					return ent;
 				}
 			}
-		} else if (world instanceof ServerWorld) {
-			return ((ServerWorld) world).getEntity(id);
+		} else if (world instanceof ServerLevel) {
+			return ((ServerLevel) world).getEntity(id);
 		}
 		
 		return null;
 	}
 	
-	private void initPetCommandManager(World world) {
-		petCommandManager = (PetCommandManager) ((ServerWorld) world).getServer().getLevel(World.OVERWORLD).getDataStorage().computeIfAbsent(PetCommandManager::new,
+	private void initPetCommandManager(Level world) {
+		petCommandManager = (PetCommandManager) ((ServerLevel) world).getServer().getLevel(Level.OVERWORLD).getDataStorage().computeIfAbsent(PetCommandManager::Load, PetCommandManager::new,
 				PetCommandManager.DATA_NAME);
 
 		// TODO I think this is automatic now?
@@ -137,7 +135,7 @@ public class PetCommand
 	public void onWorldLoad(WorldEvent.Load event) {
 		if (!event.getWorld().isClientSide()) {
 			// force an exception here if this is wrong
-			ServerWorld world = (ServerWorld) event.getWorld();
+			ServerLevel world = (ServerLevel) event.getWorld();
 			
 			// Do the correct initialization for persisted data
 			//initPetSoulRegistry(world);
@@ -151,26 +149,27 @@ public class PetCommand
 			return;
 		}
 
-		if (!(e.getEntity() instanceof MobEntity)) {
+		if (!(e.getEntity() instanceof Mob)) {
 			return;
 		}
 		
-		if (!(e.getEntity() instanceof TameableEntity) && !(e.getEntity() instanceof ITameableEntity)) {
+		if (!(e.getEntity() instanceof TamableAnimal) && !(e.getEntity() instanceof ITameableEntity)) {
 			return;
 		}
 
-		final MobEntity living = (MobEntity) e.getEntity();
+		final Mob living = (Mob) e.getEntity();
 
 		// Follow task for pets
 		{
-			PrioritizedGoal existingTask = null;
-			PrioritizedGoal followTask = null;
+			WrappedGoal existingTask = null;
+			WrappedGoal followTask = null;
 			
 			// Get private goal list
-			LinkedHashSet<PrioritizedGoal> goals = ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.goalSelector, "availableGoals"); 
+			living.goalSelector.getAvailableGoals();
+			Set<WrappedGoal> goals = living.goalSelector.getAvailableGoals();//ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.goalSelector, "f_25345_"); 
 
 			// Scan for existing task
-			for (PrioritizedGoal entry : goals) {
+			for (WrappedGoal entry : goals) {
 				if (entry.getGoal() instanceof FollowOwnerAdvancedGoal) {
 					if (existingTask == null) {
 						existingTask = entry;
@@ -189,20 +188,20 @@ public class PetCommand
 
 			if (existingTask == null) {
 				// Gotta inject task. May have to make space for it.
-				FollowOwnerAdvancedGoal<MobEntity> task = new FollowOwnerAdvancedGoal<MobEntity>(living,
+				FollowOwnerAdvancedGoal<Mob> task = new FollowOwnerAdvancedGoal<Mob>(living,
 						1.5f, 0f, .5f);
 				if (followTask == null) {
 					// Can just add at end
 					living.goalSelector.addGoal(100, task);
 				} else {
-					List<PrioritizedGoal> removes = Lists.newArrayList(goals);
+					List<WrappedGoal> removes = Lists.newArrayList(goals);
 					final int priority = followTask.getPriority();
 					removes.removeIf((entry) -> {
 						return entry.getPriority() < priority;
 					});
 
 					living.goalSelector.addGoal(priority, task);
-					for (PrioritizedGoal entry : removes) {
+					for (WrappedGoal entry : removes) {
 						living.goalSelector.removeGoal(entry.getGoal());
 						living.goalSelector.addGoal(entry.getPriority() + 1, entry.getGoal());
 					}
@@ -211,15 +210,15 @@ public class PetCommand
 		}
 
 		// Target task for pets
-		if (living instanceof CreatureEntity) {
-			CreatureEntity creature = (CreatureEntity) living;
+		if (living instanceof PathfinderMob) {
+			PathfinderMob creature = (PathfinderMob) living;
 			boolean hasTaskAlready = false;
 			
 			// Get private goal list
-			LinkedHashSet<PrioritizedGoal> targetGoals = ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.targetSelector, "availableGoals"); 
+			Set<WrappedGoal> targetGoals = living.targetSelector.getAvailableGoals(); 
 
 			// Scan for existing task
-			for (PrioritizedGoal entry : targetGoals) {
+			for (WrappedGoal entry : targetGoals) {
 				if (entry.getGoal() instanceof PetTargetGoal) {
 					hasTaskAlready = true;
 					break;
@@ -227,10 +226,10 @@ public class PetCommand
 			}
 
 			if (!hasTaskAlready) {
-				List<PrioritizedGoal> removes = Lists.newArrayList(targetGoals);
+				List<WrappedGoal> removes = Lists.newArrayList(targetGoals);
 
-				living.targetSelector.addGoal(1, new PetTargetGoal<CreatureEntity>(creature));
-				for (PrioritizedGoal entry : removes) {
+				living.targetSelector.addGoal(1, new PetTargetGoal<PathfinderMob>(creature));
+				for (WrappedGoal entry : removes) {
 					living.targetSelector.removeGoal(entry.getGoal());
 					living.targetSelector.addGoal(entry.getPriority() + 1, entry.getGoal());
 				}

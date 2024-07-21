@@ -3,19 +3,18 @@ package com.smanzana.petcommand.api;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.api.entity.ITameableEntity;
 
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.player.Player;
 
 public class PetFuncs {
 	
@@ -28,10 +27,10 @@ public class PetFuncs {
 		
 		Iterable<Entity> entities;
 		
-		if (owner.level instanceof ServerWorld) {
-			entities = ((ServerWorld) owner.level).getEntities().collect(Collectors.toList());
+		if (owner.level instanceof ServerLevel) {
+			entities = ((ServerLevel) owner.level).getEntities().getAll();
 		} else {
-			entities = ((ClientWorld) owner.level).entitiesForRendering();
+			entities = ((ClientLevel) owner.level).entitiesForRendering();
 		}
 		
 		for (Entity e : entities) {
@@ -49,8 +48,8 @@ public class PetFuncs {
 				if (tame.isEntityTamed() && tame.getLivingOwner() != null && tame.getLivingOwner().equals(owner)) {
 					ents.add(ent);
 				}
-			} else if (ent instanceof TameableEntity) {
-				TameableEntity tame = (TameableEntity) ent;
+			} else if (ent instanceof TamableAnimal) {
+				TamableAnimal tame = (TamableAnimal) ent;
 				if (tame.isTame() && tame.isOwnedBy(owner)) {
 					ents.add(ent);
 				}
@@ -59,21 +58,21 @@ public class PetFuncs {
 		return ents;
 	}
 
-	public static @Nullable LivingEntity GetOwner(MobEntity entity) {
+	public static @Nullable LivingEntity GetOwner(Mob entity) {
 		LivingEntity ent = (LivingEntity) entity;
 		if (ent instanceof ITameableEntity) {
 			ITameableEntity tame = (ITameableEntity) ent;
 			return tame.getLivingOwner();
-		} else if (ent instanceof TameableEntity) {
-			TameableEntity tame = (TameableEntity) ent;
+		} else if (ent instanceof TamableAnimal) {
+			TamableAnimal tame = (TamableAnimal) ent;
 			return tame.getOwner();
 		}
 		return null;
 	}
 	
 	public static @Nullable LivingEntity GetOwner(Entity entity) {
-		if (entity instanceof MobEntity) {
-			return GetOwner((MobEntity) entity);
+		if (entity instanceof Mob) {
+			return GetOwner((Mob) entity);
 		}
 		
 		return null;
@@ -109,7 +108,7 @@ public class PetFuncs {
 		// return (ent1 instanceof IMob == ent2 instanceof IMob);
 	
 		// If both are players and teams aren't involved, assume they can work together
-		if (ent1 instanceof PlayerEntity && ent2 instanceof PlayerEntity) {
+		if (ent1 instanceof Player && ent2 instanceof Player) {
 			return true;
 		}
 	

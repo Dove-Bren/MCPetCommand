@@ -4,9 +4,9 @@ import java.util.function.Supplier;
 
 import com.smanzana.petcommand.client.petgui.PetGUI;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 /**
  * Client has performed some action in a dragon GUI
@@ -24,18 +24,18 @@ public class PetGUIControlMessage {
 	}
 
 	private final int id;
-	private CompoundNBT data;
+	private CompoundTag data;
 	
-	public PetGUIControlMessage(int id, CompoundNBT data) {
+	public PetGUIControlMessage(int id, CompoundTag data) {
 		this.id = id;
 		this.data = data;
 	}
 
-	public static PetGUIControlMessage decode(PacketBuffer buf) {
+	public static PetGUIControlMessage decode(FriendlyByteBuf buf) {
 		return new PetGUIControlMessage(buf.readVarInt(), buf.readNbt());
 	}
 
-	public static void encode(PetGUIControlMessage msg, PacketBuffer buf) {
+	public static void encode(PetGUIControlMessage msg, FriendlyByteBuf buf) {
 		buf.writeVarInt(msg.id);
 		buf.writeNbt(msg.data);
 	}

@@ -2,9 +2,9 @@ package com.smanzana.petcommand.entity;
 
 import com.smanzana.petcommand.PetCommand;
 
-import net.minecraft.entity.EntityClassification;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.passive.IronGolemEntity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -23,14 +23,14 @@ public class PetCommandEntities {
 		final IForgeRegistry<EntityType<?>> registry = event.getRegistry();
 		
 		// Values copied from EntityType.IRON_GOLEM
-		registry.register(EntityType.Builder.<BoundIronGolemEntity>of(BoundIronGolemEntity::new, EntityClassification.MISC)
+		registry.register(EntityType.Builder.<BoundIronGolemEntity>of(BoundIronGolemEntity::new, MobCategory.MISC)
 				.sized(1.4F, 2.7F).clientTrackingRange(10)
 			.build("").setRegistryName(BoundIronGolemEntity.ID));
 	}
 	
 	@SubscribeEvent
 	public static void registerAttributes(EntityAttributeCreationEvent event) {
-		event.put(BOUND_IRON_GOLEM, IronGolemEntity.createAttributes().build());
+		event.put(BOUND_IRON_GOLEM, IronGolem.createAttributes().build());
 	}
 	
 }
