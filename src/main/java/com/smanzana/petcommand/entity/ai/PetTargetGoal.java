@@ -21,7 +21,7 @@ import net.minecraft.entity.ai.goal.TargetGoal;
 
 public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 	
-	public static final EntityPredicate Filter = new EntityPredicate().setLineOfSiteRequired();
+	public static final EntityPredicate Filter = new EntityPredicate().allowUnseeable();
 	
 	protected T thePet;
 	protected LivingEntity theOwner;
@@ -30,13 +30,13 @@ public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 	public PetTargetGoal(T petIn) {
 		super(petIn, false);
 		this.thePet = petIn;
-		this.setMutexFlags(EnumSet.of(Goal.Flag.TARGET));
+		this.setFlags(EnumSet.of(Goal.Flag.TARGET));
 	}
 
 	/**
 	 * Returns whether the Goal should begin execution.
 	 */
-	public boolean shouldExecute() {
+	public boolean canUse() {
 		final LivingEntity entitylivingbase = PetFuncs.GetOwner(thePet);
 		
 		if (entitylivingbase == null) {
@@ -54,23 +54,23 @@ public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 	}
 	
 	@Override
-	public boolean shouldContinueExecuting() {
-		return this.shouldExecute();
+	public boolean canContinueToUse() {
+		return this.canUse();
 	}
 	
 	protected static @Nullable LivingEntity FindAggressiveTarget(MobEntity attacker, double range) {
 		LivingEntity owner = PetFuncs.GetOwner(attacker);
 		List<LivingEntity> tamed = (owner == null ? Lists.newArrayList() : PetFuncs.GetTamedEntities(owner));
-		List<Entity> entities = attacker.world.getEntitiesInAABBexcluding(attacker, attacker.getBoundingBox().grow(range), (e) -> {
+		List<Entity> entities = attacker.level.getEntities(attacker, attacker.getBoundingBox().inflate(range), (e) -> {
 			return e instanceof LivingEntity
 					&& e != attacker
 					&& e != owner
 					&& !tamed.contains(e)
-					&& Filter.canTarget(attacker, (LivingEntity) e)
+					&& Filter.test(attacker, (LivingEntity) e)
 					&& !PetFuncs.IsSameTeam(attacker, (LivingEntity) e);
 		});
 		Collections.sort(entities, (a, b) -> {
-			return (int) (a.getDistanceSq(attacker) - b.getDistanceSq(attacker));
+			return (int) (a.distanceToSqr(attacker) - b.distanceToSqr(attacker));
 		});
 		return entities.isEmpty() ? null : (LivingEntity)entities.get(0);
 	}
@@ -85,23 +85,23 @@ public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 			targetTicks--;
 		}
 		
-		if (thePet.getAttackTarget() != null) {
-			if (!thePet.getAttackTarget().isAlive()) {
-				thePet.setAttackTarget(null);
+		if (thePet.getTarget() != null) {
+			if (!thePet.getTarget().isAlive()) {
+				thePet.setTarget(null);
 			}
 		}
 		
 		final PetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(theOwner);
 		switch (mode) {
 		case AGGRESSIVE:
-			if (thePet.getAttackTarget() == null && targetTicks <= 0) {
+			if (thePet.getTarget() == null && targetTicks <= 0) {
 				targetTicks = 20;
-				thePet.setAttackTarget(findAggressiveTarget(thePet));
+				thePet.setTarget(findAggressiveTarget(thePet));
 			}
 			break;
 		case DEFENSIVE:
-			if (theOwner.getRevengeTarget() != null) {
-				thePet.setAttackTarget(theOwner.getRevengeTarget());
+			if (theOwner.getLastHurtByMob() != null) {
+				thePet.setTarget(theOwner.getLastHurtByMob());
 			}
 			break;
 		case FREE:
@@ -117,9 +117,9 @@ public class PetTargetGoal<T extends CreatureEntity> extends TargetGoal {
 	 * Execute a one shot task or start executing a continuous task
 	 */
 	@Override
-	public void startExecuting() {
+	public void start() {
 		tick();
 
-		super.startExecuting();
+		super.start();
 	}
 }

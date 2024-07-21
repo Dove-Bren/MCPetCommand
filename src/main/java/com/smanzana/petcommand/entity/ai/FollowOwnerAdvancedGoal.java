@@ -46,15 +46,15 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	
 	public FollowOwnerAdvancedGoal(T thePetIn, double followSpeedIn, float minDistIn, float maxDistIn, Predicate<? super T> filter) {
 		this.thePet = thePetIn;
-		this.theWorld = thePetIn.world;
+		this.theWorld = thePetIn.level;
 		this.followSpeed = followSpeedIn;
-		this.petPathfinder = thePetIn.getNavigator();
+		this.petPathfinder = thePetIn.getNavigation();
 		this.minDist = minDistIn;
 		this.maxDist = maxDistIn;
 		lastPosition = null;
 		timeToRecalcPosition = 0;
 		
-		this.setMutexFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+		this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
 		
 		this.filter = filter;
 	}
@@ -66,7 +66,7 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 		} else if (pet instanceof ITameableEntity) {
 			sitting = ((ITameableEntity) pet).isEntitySitting();
 		} else if (pet instanceof TameableEntity) {
-			sitting = ((TameableEntity) pet).isSitting();
+			sitting = ((TameableEntity) pet).isOrderedToSit();
 		} else {
 			sitting = false;
 		}
@@ -93,13 +93,13 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			return p == null
 					|| IsPetSittingGeneric(p)
 					|| thePet.isPassenger()
-					|| thePet.isRidingOrBeingRiddenBy(this.theOwner);
+					|| thePet.hasIndirectPassenger(this.theOwner);
 		});
 		if (!pets.contains(pet)) {
 			return 0;
 		}
 		Collections.sort(pets, (a, b) -> {
-			return a.getUniqueID().compareTo(b.getUniqueID());
+			return a.getUUID().compareTo(b.getUUID());
 		});
 		return pets.indexOf(pet);
 	}
@@ -149,8 +149,8 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			
 			// Get offset first as if owner was facing 
 			Vector3d offset = new Vector3d(offsetX + adjX, 0, offsetZ);
-			offset = offset.rotateYaw(yawOwnerRad + .0f * (float) Math.PI);
-			target = owner.getPositionVec().add(offset);
+			offset = offset.yRot(yawOwnerRad + .0f * (float) Math.PI);
+			target = owner.position().add(offset);
 			
 			break;
 		}
@@ -184,15 +184,15 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			
 			// Get offset first as if owner was facing 
 			Vector3d offset = new Vector3d(magnitude * Math.cos(angleRad), 0, magnitude * Math.sin(angleRad));
-			offset = offset.rotateYaw(yawOwnerRad + .75f * (float) Math.PI);
-			target = owner.getPositionVec().add(offset);
+			offset = offset.yRot(yawOwnerRad + .75f * (float) Math.PI);
+			target = owner.position().add(offset);
 			
 			break;
 		}
 		case FREE:
 		default:
 			// Free shouldn't ever get here, but return owner position just in case
-			target = owner.getPositionVec();
+			target = owner.position();
 			break;
 		}
 		
@@ -200,16 +200,16 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	}
 	
 	protected Vector3d getTargetPosition(T pet, LivingEntity owner, PetPlacementMode mode) {
-		if (timeToRecalcPosition == 0 || timeToRecalcPosition < pet.ticksExisted) {
-			timeToRecalcPosition = pet.ticksExisted + 20;
+		if (timeToRecalcPosition == 0 || timeToRecalcPosition < pet.tickCount) {
+			timeToRecalcPosition = pet.tickCount + 20;
 			lastPosition = getIdealTargetPosition(pet, owner, mode);
 			
 			BlockPos.Mutable cursor = new BlockPos.Mutable();
-			cursor.setPos(lastPosition.x, lastPosition.y, lastPosition.z);
-			if (!isEmptyBlock(cursor) || isEmptyBlock(cursor.down())) {
-				if (isEmptyBlock(cursor.down()) && !isEmptyBlock(cursor.down().down())) {
+			cursor.set(lastPosition.x, lastPosition.y, lastPosition.z);
+			if (!isEmptyBlock(cursor) || isEmptyBlock(cursor.below())) {
+				if (isEmptyBlock(cursor.below()) && !isEmptyBlock(cursor.below().below())) {
 					lastPosition = lastPosition.add(0, -1, 0);
-				} else if (isEmptyBlock(cursor.up()) && !isEmptyBlock(cursor)) {
+				} else if (isEmptyBlock(cursor.above()) && !isEmptyBlock(cursor)) {
 					lastPosition = lastPosition.add(0, 1, 0);
 				}
 			}
@@ -219,20 +219,20 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	}
 
 	private boolean isEmptyBlock(BlockPos pos) {
-		return this.theWorld.isAirBlock(pos);
+		return this.theWorld.isEmptyBlock(pos);
 	}
 
 	/**
 	 * Returns whether the Goal should begin execution.
 	 */
-	public boolean shouldExecute() {
+	public boolean canUse() {
 		final LivingEntity entitylivingbase = PetFuncs.GetOwner(thePet);
 		
 		if (entitylivingbase == null) {
 			return false;
 		}
 		
-		if (thePet.getAttackTarget() != null) {
+		if (thePet.getTarget() != null) {
 			return false;
 		}
 		
@@ -249,7 +249,7 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 			return false;
 		} else if (sitting) {
 			return false;
-		} else if (this.thePet.getDistanceSq(targetPos.x, targetPos.y, targetPos.z) < (double)(this.minDist * this.minDist)) {
+		} else if (this.thePet.distanceToSqr(targetPos.x, targetPos.y, targetPos.z) < (double)(this.minDist * this.minDist)) {
 			return false;
 		} else if (this.filter != null && !this.filter.apply(this.thePet)) {
 			return false;
@@ -262,8 +262,8 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 	/**
 	 * Returns whether an in-progress Goal should continue executing
 	 */
-	public boolean shouldContinueExecuting() {
-		if (this.thePet.getAttackTarget() != null) {
+	public boolean canContinueToUse() {
+		if (this.thePet.getTarget() != null) {
 			return false;
 		}
 		
@@ -273,31 +273,31 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 		}
 		final boolean sitting = this.isPetSitting(thePet);
 		
-		if (sitting || thePet.isPassenger() || thePet.isRidingOrBeingRiddenBy(this.theOwner)) {
+		if (sitting || thePet.isPassenger() || thePet.hasIndirectPassenger(this.theOwner)) {
 			return false;
 		}
 		
 		final Vector3d targetPos = getTargetPosition(thePet, theOwner, mode);
-		return !this.petPathfinder.noPath() && this.thePet.getDistanceSq(targetPos.x, targetPos.y, targetPos.z) > (double)(this.maxDist * this.maxDist);
+		return !this.petPathfinder.isDone() && this.thePet.distanceToSqr(targetPos.x, targetPos.y, targetPos.z) > (double)(this.maxDist * this.maxDist);
 	}
 
 	/**
 	 * Execute a one shot task or start executing a continuous task
 	 */
-	public void startExecuting() {
+	public void start() {
 		this.timeToRecalcPath = 0;
 		this.timeToRecalcPosition = 0;
-		this.oldWaterCost = this.thePet.getPathPriority(PathNodeType.WATER);
-		this.thePet.setPathPriority(PathNodeType.WATER, 0.0F);
+		this.oldWaterCost = this.thePet.getPathfindingMalus(PathNodeType.WATER);
+		this.thePet.setPathfindingMalus(PathNodeType.WATER, 0.0F);
 	}
 
 	/**
 	 * Resets the task
 	 */
-	public void resetTask() {
+	public void stop() {
 		this.theOwner = null;
-		this.petPathfinder.clearPath();
-		this.thePet.setPathPriority(PathNodeType.WATER, this.oldWaterCost);
+		this.petPathfinder.stop();
+		this.thePet.setPathfindingMalus(PathNodeType.WATER, this.oldWaterCost);
 	}
 
 	/**
@@ -318,10 +318,10 @@ public class FollowOwnerAdvancedGoal<T extends MobEntity> extends Goal {
 				final Vector3d targetPos = this.getTargetPosition(thePet, theOwner, mode);
 
 				//thePet.setLocationAndAngles(targetPos.x, targetPos.y, targetPos.z, this.thePet.rotationYaw, this.thePet.rotationPitch);
-				if (!this.petPathfinder.tryMoveToXYZ(targetPos.x, targetPos.y, targetPos.z, this.followSpeed)) {
-					if (!this.thePet.getLeashed()) {
-						if (this.thePet.getDistanceSq(this.theOwner) >= 144.0D) {
-							thePet.setLocationAndAngles(targetPos.x, targetPos.y, targetPos.z, this.thePet.rotationYaw, this.thePet.rotationPitch);
+				if (!this.petPathfinder.moveTo(targetPos.x, targetPos.y, targetPos.z, this.followSpeed)) {
+					if (!this.thePet.isLeashed()) {
+						if (this.thePet.distanceToSqr(this.theOwner) >= 144.0D) {
+							thePet.moveTo(targetPos.x, targetPos.y, targetPos.z, this.thePet.yRot, this.thePet.xRot);
 						}
 					}
 				}

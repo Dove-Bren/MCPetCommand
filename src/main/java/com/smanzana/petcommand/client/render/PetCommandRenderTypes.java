@@ -19,9 +19,9 @@ public class PetCommandRenderTypes {
 	
 	static {
 		
-		//final RenderState.TransparencyState TRANSLUCENT_TRANSPARENCY = ObfuscationReflectionHelper.getPrivateValue(RenderState.class, null, "field_228515_g_");
-		final RenderState.TargetState ITEM_ENTITY_TARGET = ObfuscationReflectionHelper.getPrivateValue(RenderState.class, null, "field_241712_U_");
-		final RenderState.LayerState VIEW_OFFSET_Z_LAYERING = ObfuscationReflectionHelper.getPrivateValue(RenderState.class, null, "field_239235_M_");
+		//final RenderState.TransparencyState TRANSLUCENT_TRANSPARENCY = ObfuscationReflectionHelper.getPrivateValue(RenderState.class, null, "TRANSLUCENT_TRANSPARENCY");
+		final RenderState.TargetState ITEM_ENTITY_TARGET = ObfuscationReflectionHelper.getPrivateValue(RenderState.class, null, "ITEM_ENTITY_TARGET");
+		final RenderState.LayerState VIEW_OFFSET_Z_LAYERING = ObfuscationReflectionHelper.getPrivateValue(RenderState.class, null, "VIEW_OFFSET_Z_LAYERING");
 		final RenderState.CullState NO_CULL = new RenderState.CullState(false);
 		//final RenderState.DepthTestState DEPTH_EQUAL = new RenderState.DepthTestState("==", GL11.GL_EQUAL);
 		//final RenderState.DepthTestState NO_DEPTH = new RenderState.DepthTestState("none", GL11.GL_ALWAYS);
@@ -38,14 +38,14 @@ public class PetCommandRenderTypes {
 		// Define render types
 		RenderType.State glState;
 				
-		glState = RenderType.State.getBuilder()
-				.texture(new RenderState.TextureState(OverlayRenderer.GUI_PET_ICONS, false, false))
-				.cull(NO_CULL)
-				.lightmap(NO_LIGHTING)
-				.alpha(HALF_ALPHA) // cutout
-				.target(ITEM_ENTITY_TARGET)
-				.layer(VIEW_OFFSET_Z_LAYERING)
-			.build(false);
-		PET_TARGET_ICON = RenderType.makeType(Name("TargetIcon"), DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 32, glState);
+		glState = RenderType.State.builder()
+				.setTextureState(new RenderState.TextureState(OverlayRenderer.GUI_PET_ICONS, false, false))
+				.setCullState(NO_CULL)
+				.setLightmapState(NO_LIGHTING)
+				.setAlphaState(HALF_ALPHA) // cutout
+				.setOutputState(ITEM_ENTITY_TARGET)
+				.setLayeringState(VIEW_OFFSET_Z_LAYERING)
+			.createCompositeState(false);
+		PET_TARGET_ICON = RenderType.create(Name("TargetIcon"), DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 32, glState);
 	}
 }

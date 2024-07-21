@@ -26,7 +26,7 @@ public class ClientInit {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@SubscribeEvent
 	public static void clientSetup(FMLClientSetupEvent event) {
-		ScreenManager.registerFactory(PetCommandContainers.PetGui, new PetGUIFactory());
+		ScreenManager.register(PetCommandContainers.PetGui, new PetGUIFactory());
 		
 		registerEntityRenderers();
 		

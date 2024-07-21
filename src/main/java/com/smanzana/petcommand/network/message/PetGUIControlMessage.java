@@ -32,12 +32,12 @@ public class PetGUIControlMessage {
 	}
 
 	public static PetGUIControlMessage decode(PacketBuffer buf) {
-		return new PetGUIControlMessage(buf.readVarInt(), buf.readCompoundTag());
+		return new PetGUIControlMessage(buf.readVarInt(), buf.readNbt());
 	}
 
 	public static void encode(PetGUIControlMessage msg, PacketBuffer buf) {
 		buf.writeVarInt(msg.id);
-		buf.writeCompoundTag(msg.data);
+		buf.writeNbt(msg.data);
 	}
 
 }

@@ -15,9 +15,9 @@ public interface IEntityPet extends ITameableEntity {
 
 	public PetInfo getPetSummary();
 	
-	default public void onAttackCommand(LivingEntity target) { if (this instanceof MobEntity) ((MobEntity) this).setAttackTarget(target); };
+	default public void onAttackCommand(LivingEntity target) { if (this instanceof MobEntity) ((MobEntity) this).setTarget(target); };
 	
-	default public void onStopCommand() { if (this instanceof MobEntity) ((MobEntity) this).setAttackTarget(null); };
+	default public void onStopCommand() { if (this instanceof MobEntity) ((MobEntity) this).setTarget(null); };
 	
 	public UUID getPetID();
 	

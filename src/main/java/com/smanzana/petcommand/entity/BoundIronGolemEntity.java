@@ -60,8 +60,8 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	
 	private static final String NBT_OWNER_ID = "bound_owner_id";
 	private static final String NBT_INVENTORY = "inventory";
-	protected static final DataParameter<Boolean> ATTACKING = EntityDataManager.createKey(BoundIronGolemEntity.class, DataSerializers.BOOLEAN);
-	protected static final DataParameter<Optional<UUID>> OWNER_UNIQUE_ID = EntityDataManager.createKey(BoundIronGolemEntity.class, DataSerializers.OPTIONAL_UNIQUE_ID);
+	protected static final DataParameter<Boolean> ATTACKING = EntityDataManager.defineId(BoundIronGolemEntity.class, DataSerializers.BOOLEAN);
+	protected static final DataParameter<Optional<UUID>> OWNER_UNIQUE_ID = EntityDataManager.defineId(BoundIronGolemEntity.class, DataSerializers.OPTIONAL_UUID);
 	private static final int INVENTORY_SIZE = 9;
 	
 	protected IInventory inventory;
@@ -94,29 +94,29 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 	
 	@Override
-	protected void registerData() {
-		super.registerData();
+	protected void defineSynchedData() {
+		super.defineSynchedData();
 		
-		dataManager.register(ATTACKING, false);
-		dataManager.register(OWNER_UNIQUE_ID, Optional.empty());
+		entityData.define(ATTACKING, false);
+		entityData.define(OWNER_UNIQUE_ID, Optional.empty());
 	}
 	
 	@Override
-	public void writeAdditional(CompoundNBT compound) {
-		super.writeAdditional(compound);
+	public void addAdditionalSaveData(CompoundNBT compound) {
+		super.addAdditionalSaveData(compound);
 		
 		if (this.getOwnerID() != null) {
-			compound.putUniqueId(NBT_OWNER_ID, this.getOwnerID());
+			compound.putUUID(NBT_OWNER_ID, this.getOwnerID());
 		}
 		
 		// Write inventory
 		{
 			ListNBT invTag = new ListNBT();
-			for (int i = 0; i < inventory.getSizeInventory(); i++) {
+			for (int i = 0; i < inventory.getContainerSize(); i++) {
 				CompoundNBT tag = new CompoundNBT();
-				ItemStack stack = inventory.getStackInSlot(i);
+				ItemStack stack = inventory.getItem(i);
 				if (!stack.isEmpty()) {
-					stack.write(tag);
+					stack.save(tag);
 				}
 				
 				invTag.add(tag);
@@ -127,11 +127,11 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 	
 	@Override
-	public void readAdditional(CompoundNBT compound) {
-		super.readAdditional(compound);
+	public void readAdditionalSaveData(CompoundNBT compound) {
+		super.readAdditionalSaveData(compound);
 		
-		this.setOwnerID(compound.hasUniqueId(NBT_OWNER_ID)
-				? compound.getUniqueId(NBT_OWNER_ID)
+		this.setOwnerID(compound.hasUUID(NBT_OWNER_ID)
+				? compound.getUUID(NBT_OWNER_ID)
 				: null);
 				
 		// Read inventory
@@ -143,51 +143,51 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 				CompoundNBT tag = list.getCompound(i);
 				ItemStack stack = ItemStack.EMPTY;
 				if (tag != null) {
-					stack = ItemStack.read(tag);
+					stack = ItemStack.of(tag);
 				}
-				this.inventory.setInventorySlotContents(i, stack);
+				this.inventory.setItem(i, stack);
 			}
 		}
 	}
 	
 	@Override
-	public void livingTick() {
-		super.livingTick();
+	public void aiStep() {
+		super.aiStep();
 		
-		if (!world.isRemote) {
+		if (!level.isClientSide) {
 			if (this.getOwnerID() == null) {
 				// Revert to normal iron golem
 				transformBack();
 			}
 			
-			this.setAttacking(this.getAttackTarget() != null
-					|| this.getAngerTarget() != null);
+			this.setAttacking(this.getTarget() != null
+					|| this.getPersistentAngerTarget() != null);
 		}
 	}
 	
 	@Override
-	protected void dropInventory() {
-		if (!this.world.isRemote) {
+	protected void dropEquipment() {
+		if (!this.level.isClientSide) {
 			if (this.inventory != null) {
-				for (int i = 0; i < inventory.getSizeInventory(); i++) {
-					ItemStack stack = inventory.getStackInSlot(i);
+				for (int i = 0; i < inventory.getContainerSize(); i++) {
+					ItemStack stack = inventory.getItem(i);
 					if (!stack.isEmpty()) {
-						ItemEntity item = new ItemEntity(this.world, this.getPosX(), this.getPosY(), this.getPosZ(), stack);
-						this.world.addEntity(item);
+						ItemEntity item = new ItemEntity(this.level, this.getX(), this.getY(), this.getZ(), stack);
+						this.level.addFreshEntity(item);
 					}
 				}
 			}
 			
-			inventory.clear();
+			inventory.clearContent();
 		}
 	}
 	
 	protected @Nullable UUID getOwnerID() {
-		return this.dataManager.get(OWNER_UNIQUE_ID).orElse(null);
+		return this.entityData.get(OWNER_UNIQUE_ID).orElse(null);
 	}
 	
 	protected void setOwnerID(UUID ownerID) {
-		this.dataManager.set(OWNER_UNIQUE_ID, Optional.ofNullable(ownerID));
+		this.entityData.set(OWNER_UNIQUE_ID, Optional.ofNullable(ownerID));
 	}
 	
 	protected void setOwner(@Nullable Entity owner) {
@@ -195,21 +195,21 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 		if (owner == null) {
 			id = null;
 		} else {
-			id = owner.getUniqueID();
+			id = owner.getUUID();
 		}
 		this.setOwnerID(id);
 	}
 	
 	protected void setAttacking(boolean isAttacking) {
-		this.dataManager.set(ATTACKING, isAttacking);
+		this.entityData.set(ATTACKING, isAttacking);
 	}
 	
 	public boolean isAttacking() {
-		return this.dataManager.get(ATTACKING);
+		return this.entityData.get(ATTACKING);
 	}
 	
 	protected boolean canAttackEntity(LivingEntity entity) {
-		return !isOwner(entity) && func_233680_b_(entity);
+		return !isOwner(entity) && isAngryAt(entity);
 	}
 	
 	protected boolean isOwner(LivingEntity entity) {
@@ -217,12 +217,12 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 	
 	@Override
-	public ActionResultType /*processInteract*/ func_230254_b_(PlayerEntity player, Hand hand) {
-		ActionResultType parent = super.func_230254_b_(player, hand);
+	public ActionResultType /*processInteract*/ mobInteract(PlayerEntity player, Hand hand) {
+		ActionResultType parent = super.mobInteract(player, hand);
 		if (parent != ActionResultType.PASS) {
 			return parent;
 		}
-		if (!world.isRemote()) {
+		if (!level.isClientSide()) {
 			PetCommandAPI.OpenPetGUI(player, this);
 		}
 		return ActionResultType.SUCCESS;
@@ -235,7 +235,7 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 			return null;
 		}
 		
-		return PetCommand.GetEntityByUUID(world, ownerID);
+		return PetCommand.GetEntityByUUID(level, ownerID);
 	}
 
 	@Override
@@ -251,7 +251,7 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	protected PetAction getCurrentAction() {
 		if (this.isAttacking()) {
 			return PetAction.ATTACKING;
-		} else if (this.getHoldRoseTick() > 0) {
+		} else if (this.getOfferFlowerTick() > 0) {
 			return PetAction.WORKING;
 		} else {
 			return PetAction.IDLING;
@@ -261,12 +261,12 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	@Override
 	public PetInfo getPetSummary() {
 		final int maxAttack = 10; // Copied from IronGolemEntity. This is max cooldown
-		return PetInfo.claim(this.getHealth(), this.getMaxHealth(), Math.max(0, maxAttack - this.getAttackTimer()), maxAttack, SecondaryFlavor.GOOD, getCurrentAction());
+		return PetInfo.claim(this.getHealth(), this.getMaxHealth(), Math.max(0, maxAttack - this.getAttackAnimationTick()), maxAttack, SecondaryFlavor.GOOD, getCurrentAction());
 	}
 
 	@Override
 	public UUID getPetID() {
-		return this.getUniqueID();
+		return this.getUUID();
 	}
 
 	@Override
@@ -293,20 +293,20 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	
 	protected void transformBack() {
 		// Transform into the given entity
-		Entity ent = EntityType.IRON_GOLEM.create(world);
-		ent.copyLocationAndAnglesFrom(this);
+		Entity ent = EntityType.IRON_GOLEM.create(level);
+		ent.copyPosition(this);
 		if (this.hasCustomName()) {
 			ent.setCustomName(this.getCustomName());
 			ent.setCustomNameVisible(this.isCustomNameVisible());
 		}
-		world.addEntity(ent);
+		level.addFreshEntity(ent);
 		this.remove();
 	}
 
 	protected static final class DummyFollowOwnerGoal extends Goal implements IFollowOwnerGoal {
 
 		@Override
-		public boolean shouldExecute() {
+		public boolean canUse() {
 			return false;
 		}
 		
@@ -381,12 +381,12 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 	
 	public static void EntityInteractListener(PlayerInteractEvent.EntityInteract event) {
-		if (!event.isCanceled() && !event.getEntity().world.isRemote()) {
+		if (!event.isCanceled() && !event.getEntity().level.isClientSide()) {
 			if (event.getTarget() instanceof IronGolemEntity
 					&& !(event.getTarget() instanceof BoundIronGolemEntity)) {
 				ItemStack stack = event.getItemStack();
 				if (!stack.isEmpty() && stack.getItem() == Items.POPPY) {
-					event.getWorld().playSound(null, event.getPos(), SoundEvents.ENTITY_ZOMBIE_VILLAGER_CONVERTED, SoundCategory.NEUTRAL, 1f, 1f);
+					event.getWorld().playSound(null, event.getPos(), SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundCategory.NEUTRAL, 1f, 1f);
 					TransformToBound((IronGolemEntity) event.getTarget(), event.getPlayer());
 					stack.shrink(1);
 					event.setCancellationResult(ActionResultType.SUCCESS);
@@ -396,14 +396,14 @@ public class BoundIronGolemEntity extends IronGolemEntity implements IEntityPet 
 	}
 	
 	public static final void TransformToBound(IronGolemEntity entity, @Nullable LivingEntity owner) {
-		BoundIronGolemEntity ent = PetCommandEntities.BOUND_IRON_GOLEM.create(entity.world);
-		ent.copyLocationAndAnglesFrom(entity);
+		BoundIronGolemEntity ent = PetCommandEntities.BOUND_IRON_GOLEM.create(entity.level);
+		ent.copyPosition(entity);
 		if (entity.hasCustomName()) {
 			ent.setCustomName(entity.getCustomName());
 			ent.setCustomNameVisible(entity.isCustomNameVisible());
 		}
 		ent.setOwner(owner);
-		entity.world.addEntity(ent);
+		entity.level.addFreshEntity(ent);
 		entity.remove();
 	}
 }

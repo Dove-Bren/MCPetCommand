@@ -30,8 +30,8 @@ public class MovementListener {
 	
 	protected void addEntity(Entity ent) {
 		if (!lastPosCache.containsKey(ent)) {
-			lastPosCache.put(ent, ent.getPositionVec());
-			lastMoveCache.put(ent, ent.getLook(.5f));
+			lastPosCache.put(ent, ent.position());
+			lastMoveCache.put(ent, ent.getViewVector(.5f));
 		}
 	}
 	
@@ -61,9 +61,9 @@ public class MovementListener {
 				it.remove();
 			} else {
 				Vector3d last = entry.getValue();
-				Vector3d cur = entry.getKey().getPositionVec();
+				Vector3d cur = entry.getKey().position();
 				entry.setValue(cur);
-				if (last.squareDistanceTo(cur) > .025) {
+				if (last.distanceToSqr(cur) > .025) {
 					// Update movement
 					lastMoveCache.put(entry.getKey(), cur.subtract(last));
 				}

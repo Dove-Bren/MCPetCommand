@@ -18,7 +18,7 @@ public class PetCommandSettingsSyncMessage {
 
 	public static void handle(PetCommandSettingsSyncMessage message, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().setPacketHandled(true);
-		Minecraft.getInstance().runAsync(() -> {
+		Minecraft.getInstance().submit(() -> {
 			PetCommand.GetPetCommandManager().overrideClientSettings(message.data);
 		});
 	}
@@ -30,11 +30,11 @@ public class PetCommandSettingsSyncMessage {
 	}
 
 	public static PetCommandSettingsSyncMessage decode(PacketBuffer buf) {
-		return new PetCommandSettingsSyncMessage(buf.readCompoundTag());
+		return new PetCommandSettingsSyncMessage(buf.readNbt());
 	}
 
 	public static void encode(PetCommandSettingsSyncMessage msg, PacketBuffer buf) {
-		buf.writeCompoundTag(msg.data);
+		buf.writeNbt(msg.data);
 	}
 
 }

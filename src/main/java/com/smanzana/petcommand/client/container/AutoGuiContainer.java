@@ -26,7 +26,7 @@ public abstract class AutoGuiContainer<T extends Container> extends ContainerScr
 	public void render(MatrixStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 		this.renderBackground(matrixStackIn);
 		super.render(matrixStackIn, mouseX, mouseY, partialTicks);
-		this.renderHoveredTooltip(matrixStackIn, mouseX, mouseY);
+		this.renderTooltip(matrixStackIn, mouseX, mouseY);
 	}
 
 }

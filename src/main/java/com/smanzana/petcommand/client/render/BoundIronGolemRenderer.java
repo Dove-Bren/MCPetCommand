@@ -16,7 +16,7 @@ public class BoundIronGolemRenderer extends IronGolemRenderer {
 	}
 	
 	@Override
-	public ResourceLocation getEntityTexture(IronGolemEntity entity) {
+	public ResourceLocation getTextureLocation(IronGolemEntity entity) {
 		return BOUND_GOLEM_TEXTURES;
 	}
 

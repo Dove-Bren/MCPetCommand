@@ -135,14 +135,14 @@ public class OverlayRenderer extends AbstractGui {
 				if (xConfigOffset >= 0) {
 					xOffset = xConfigOffset;
 				} else {
-					xOffset = window.getScaledWidth() - (-xConfigOffset + healthbarWidth);
+					xOffset = window.getGuiScaledWidth() - (-xConfigOffset + healthbarWidth);
 				}
 				
 				List<LivingEntity> bigPets = PetFuncs.GetTamedEntities(player, (ent) -> {
 					return ent != null && ent instanceof IEntityPet && ((IEntityPet) ent).isBigPet();
 				});
 				Collections.sort(bigPets, (left, right) -> {
-					return ((LivingEntity) (left)).getUniqueID().compareTo(((LivingEntity) right).getUniqueID());
+					return ((LivingEntity) (left)).getUUID().compareTo(((LivingEntity) right).getUUID());
 				});
 				for (LivingEntity bigPet: bigPets) {
 					renderHealthbarOrb(matrixStackIn, player, window, bigPet, xOffset, y, scale);
@@ -156,7 +156,7 @@ public class OverlayRenderer extends AbstractGui {
 			if (xConfigOffset >= 0) {
 				xOffset = xConfigOffset;
 			} else {
-				xOffset = window.getScaledWidth() - (-xConfigOffset + healthbarWidth);
+				xOffset = window.getGuiScaledWidth() - (-xConfigOffset + healthbarWidth);
 			}
 			final boolean hideBigs = ModConfig.config.showBigHealthbars();
 			for (LivingEntity tamed : PetFuncs.GetTamedEntities(player)) {
@@ -169,7 +169,7 @@ public class OverlayRenderer extends AbstractGui {
 				y += healthbarHeight;
 			}
 		} else if (event.getType() == ElementType.CROSSHAIRS) {
-			final float ticks = player.ticksExisted + event.getPartialTicks();
+			final float ticks = player.tickCount + event.getPartialTicks();
 			if (petTargetIndex >= 0) {
 				PetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(player);
 				renderPetActionTargetMode(matrixStackIn, player, window, mode, (ticks - petTargetIndex) / (float) petTargetAnimDur);
@@ -197,12 +197,12 @@ public class OverlayRenderer extends AbstractGui {
 			int i = 0;
 			final MatrixStack matrixStackIn = event.getMatrixStack();
 			final Minecraft mc = Minecraft.getInstance();
-			final ActiveRenderInfo activeRenderInfo = mc.getRenderManager().info;
+			final ActiveRenderInfo activeRenderInfo = mc.getEntityRenderDispatcher().camera;
 			final IVertexBuilder buffer = event.getBuffers().getBuffer(PetCommandRenderTypes.PET_TARGET_ICON); // Could only grab this when rendering at least one?
-			matrixStackIn.push();
-			matrixStackIn.translate(0, event.getEntity().getHeight() + .15f, 0);
-			matrixStackIn.rotate(activeRenderInfo.getRotation());
-			matrixStackIn.translate(-event.getEntity().getWidth()/2f, 0, 0);
+			matrixStackIn.pushPose();
+			matrixStackIn.translate(0, event.getEntity().getBbHeight() + .15f, 0);
+			matrixStackIn.mulPose(activeRenderInfo.rotation());
+			matrixStackIn.translate(-event.getEntity().getBbWidth()/2f, 0, 0);
 			for (MobEntity targeter : targeters) {
 				@Nullable LivingEntity owner = PetFuncs.GetOwner(targeter);
 				if (owner != null && owner == mc.player) {
@@ -210,7 +210,7 @@ public class OverlayRenderer extends AbstractGui {
 					renderPetTargetIcon(matrixStackIn, buffer, targeter, i++, event.getPartialRenderTick());
 				}
 			}
-			matrixStackIn.pop();
+			matrixStackIn.popPose();
 		}
 	}
 
@@ -228,12 +228,12 @@ public class OverlayRenderer extends AbstractGui {
 		final int u = GUI_PET_ICON_TARGET_HOFFSET + (mode.ordinal() * GUI_PET_ICON_DIMS);
 		final int v = GUI_PET_ICON_TARGET_VOFFSET; // + (mode.ordinal() * GUI_PET_ICON_DIMS);
 		
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		RenderSystem.enableBlend();
 		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
-		mc.getTextureManager().bindTexture(GUI_PET_ICONS);
+		mc.getTextureManager().bind(GUI_PET_ICONS);
 		
-		matrixStackIn.translate(scaledResolution.getScaledWidth() / 2, scaledResolution.getScaledHeight() / 2, 0);
+		matrixStackIn.translate(scaledResolution.getGuiScaledWidth() / 2, scaledResolution.getGuiScaledHeight() / 2, 0);
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.translate(1, 1, 0);
 		
@@ -242,7 +242,7 @@ public class OverlayRenderer extends AbstractGui {
 		RenderSystem.color4f(1f, 1f, 1f, 1f);
 		
 		RenderSystem.disableBlend();
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 	}
 	
 	private void renderPetActionPlacementMode(MatrixStack matrixStackIn, ClientPlayerEntity player, MainWindow scaledResolution, PetPlacementMode mode, float prog) {
@@ -258,12 +258,12 @@ public class OverlayRenderer extends AbstractGui {
 		final int u = GUI_PET_ICON_PLACEMENT_HOFFSET + (mode.ordinal() * GUI_PET_ICON_DIMS);
 		final int v = GUI_PET_ICON_PLACEMENT_VOFFSET; // + (mode.ordinal() * GUI_PET_ICON_DIMS);
 		
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		RenderSystem.enableBlend();
 		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
-		mc.getTextureManager().bindTexture(GUI_PET_ICONS);
+		mc.getTextureManager().bind(GUI_PET_ICONS);
 		
-		matrixStackIn.translate(scaledResolution.getScaledWidth() / 2, scaledResolution.getScaledHeight() / 2, 0);
+		matrixStackIn.translate(scaledResolution.getGuiScaledWidth() / 2, scaledResolution.getGuiScaledHeight() / 2, 0);
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.translate(-(GUI_PET_ICON_DIMS + 1), 1, 0);
 		
@@ -272,7 +272,7 @@ public class OverlayRenderer extends AbstractGui {
 		RenderSystem.color4f(1f, 1f, 1f, 1f);
 		
 		RenderSystem.disableBlend();
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 	}
 	
 	private void renderHealthbarOrb(MatrixStack matrixStackIn, ClientPlayerEntity player, MainWindow window, LivingEntity pet, int xoffset, int yoffset, float scale) {
@@ -283,7 +283,7 @@ public class OverlayRenderer extends AbstractGui {
 		// 1) healthbar
 		// 2) pet head/icon
 		// 3) pet status icon
-		FontRenderer fonter = mc.fontRenderer;
+		FontRenderer fonter = mc.font;
 //		final boolean sitting = (pet instanceof EntityTameable ? ((EntityTameable) pet).isSitting()
 //				: pet instanceof IEntityTameable ? ((IEntityTameable) pet).isSitting()
 //				: false);
@@ -316,9 +316,9 @@ public class OverlayRenderer extends AbstractGui {
 		info.release();
 		info = null;
 		
-		mc.getTextureManager().bindTexture(GUI_HEALTHBARS);
+		mc.getTextureManager().bind(GUI_HEALTHBARS);
 		
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		
 		matrixStackIn.translate(xoffset, yoffset, 0);
 		matrixStackIn.scale(scale, scale, 1);
@@ -326,7 +326,7 @@ public class OverlayRenderer extends AbstractGui {
 		RenderSystem.enableBlend();
 		
 		// Draw background
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, -100);
 		this.fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
 				GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
@@ -335,10 +335,10 @@ public class OverlayRenderer extends AbstractGui {
 		blit(matrixStackIn, 0, 0,
 				0, GUI_HEALTHBAR_ORB_BACK_HEIGHT, GUI_HEALTHBAR_ORB_BACK_WIDTH, GUI_HEALTHBAR_ORB_BACK_HEIGHT);
 		RenderSystem.color4f(1f, 1f, 1f, 1f);
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 		
 		// Draw middle
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		// 	-> Health bar
 		blit(matrixStackIn,
 				GUI_HEALTHBAR_ORB_HEALTH_BAR_INNER_HOFFSET + Math.round(GUI_HEALTHBAR_ORB_HEALTH_WIDTH * (1f-health)),
@@ -372,19 +372,19 @@ public class OverlayRenderer extends AbstractGui {
 		}
 	
 		//	-> Icon
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.translate(GUI_HEALTHBAR_ORB_ENTITY_HOFFSET, GUI_HEALTHBAR_ORB_ENTITY_VOFFSET, 0);
 		//matrixStackIn.rotate(Vector3f.YP.rotationDegrees(-30f));
 		RenderSystem.pushMatrix();
-		RenderSystem.multMatrix(matrixStackIn.getLast().getMatrix());
-		InventoryScreen.drawEntityOnScreen(0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, window.getScaledWidth()/2, -20, pet);
+		RenderSystem.multMatrix(matrixStackIn.last().pose());
+		InventoryScreen.renderEntityInInventory(0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, window.getGuiScaledWidth()/2, -20, pet);
 		RenderSystem.popMatrix();
-		matrixStackIn.pop();
-		mc.getTextureManager().bindTexture(GUI_HEALTHBARS);
+		matrixStackIn.popPose();
+		mc.getTextureManager().bind(GUI_HEALTHBARS);
 		
 		//	-> Status
 		matrixStackIn.translate(0, 0, 100);
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.scale(.6f, .6f, .6f);
 		matrixStackIn.translate(0, 0, 0);
 		if (action == PetAction.ATTACKING) {
@@ -397,31 +397,31 @@ public class OverlayRenderer extends AbstractGui {
 			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
 					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_WORK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
 		}
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 		
 		//	-> Name
 		final String name = pet.hasCustomName() ? pet.getCustomName().getString() : pet.getName().getString();
-		final int nameLen = fonter.getStringWidth(name);
+		final int nameLen = fonter.width(name);
 		//final float fontScale = (1f/scale) * .6f;
 		final float fontScale = scale * 2.4f;
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.scale(fontScale, fontScale, fontScale);
-		fonter.drawString(matrixStackIn, name, 123 - (nameLen), 25 - (fonter.FONT_HEIGHT + 2), 0xFFFFFFFF);
-		mc.getTextureManager().bindTexture(GUI_HEALTHBARS);
-		matrixStackIn.pop();
+		fonter.draw(matrixStackIn, name, 123 - (nameLen), 25 - (fonter.lineHeight + 2), 0xFFFFFFFF);
+		mc.getTextureManager().bind(GUI_HEALTHBARS);
+		matrixStackIn.popPose();
 		
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 		
 		// Draw foreground
 		RenderSystem.enableBlend();
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, 100);
 		blit(matrixStackIn, 0, 0,
 				0, 0, GUI_HEALTHBAR_ORB_BACK_WIDTH, GUI_HEALTHBAR_ORB_BACK_HEIGHT);
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 		
 		RenderSystem.disableBlend();
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 	}
 	
 	private void renderHealthbarBox(MatrixStack matrixStackIn, ClientPlayerEntity player, MainWindow window, LivingEntity pet, int xoffset, int yoffset, float scale) {
@@ -432,7 +432,7 @@ public class OverlayRenderer extends AbstractGui {
 		// 1) healthbar
 		// 2) pet head/icon
 		// 3) pet status icon
-		FontRenderer fonter = mc.fontRenderer;
+		FontRenderer fonter = mc.font;
 		
 		PetInfo info;
 		if (pet instanceof IEntityPet) {
@@ -456,9 +456,9 @@ public class OverlayRenderer extends AbstractGui {
 		info.release();
 		info = null;
 		
-		mc.getTextureManager().bindTexture(GUI_HEALTHBARS);
+		mc.getTextureManager().bind(GUI_HEALTHBARS);
 		
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		
 		matrixStackIn.translate(xoffset, yoffset, 0);
 		matrixStackIn.scale(scale, scale, 1);
@@ -466,7 +466,7 @@ public class OverlayRenderer extends AbstractGui {
 		RenderSystem.enableBlend();
 		
 		// Draw background
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, -100);
 		RenderSystem.color4f(petColor[0], petColor[1], petColor[2], petColor[3]);
 //		this.drawGradientRect(GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
@@ -475,10 +475,10 @@ public class OverlayRenderer extends AbstractGui {
 		blit(matrixStackIn, 0, 0,
 				0, GUI_HEALTHBAR_BOX_BACK_VOFFSET + GUI_HEALTHBAR_BOX_BACK_HEIGHT, GUI_HEALTHBAR_BOX_BACK_WIDTH, GUI_HEALTHBAR_BOX_BACK_HEIGHT);
 		RenderSystem.color4f(1f, 1f, 1f, 1f);
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 		
 		// Draw middle
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		// 	-> Health bar
 		blit(matrixStackIn, 
 				GUI_HEALTHBAR_BOX_HEALTH_BAR_INNER_HOFFSET + Math.round(GUI_HEALTHBAR_BOX_HEALTH_WIDTH * (1f-health)),
@@ -514,7 +514,7 @@ public class OverlayRenderer extends AbstractGui {
 		
 		//		-> Status
 		matrixStackIn.translate(0, 0, 100);
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.scale(.6f, .6f, .6f);
 		matrixStackIn.translate(0, 0, 0);
 		if (action == PetAction.ATTACKING) {
@@ -527,31 +527,31 @@ public class OverlayRenderer extends AbstractGui {
 			blit(matrixStackIn, 282, 6,
 					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_WORK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
 		}
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 
 		//	-> Name
 		final String name = pet.hasCustomName() ? pet.getCustomName().getString() : pet.getName().getString();
-		final int nameLen = fonter.getStringWidth(name);
+		final int nameLen = fonter.width(name);
 		//final float fontScale = (1f/scale) * .6f;
 		final float fontScale = scale * 2.4f;
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.scale(fontScale, fontScale, fontScale);
-		fonter.drawStringWithShadow(matrixStackIn, name, 135 - (nameLen), 14 - (fonter.FONT_HEIGHT + 2), 0xFFFFFFFF);
-		mc.getTextureManager().bindTexture(GUI_HEALTHBARS);
-		matrixStackIn.pop();
+		fonter.drawShadow(matrixStackIn, name, 135 - (nameLen), 14 - (fonter.lineHeight + 2), 0xFFFFFFFF);
+		mc.getTextureManager().bind(GUI_HEALTHBARS);
+		matrixStackIn.popPose();
 		
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 		
 		// Draw foreground
 		RenderSystem.enableBlend();
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, 100);
 		blit(matrixStackIn, 0, 0,
 				0, GUI_HEALTHBAR_BOX_BACK_VOFFSET, GUI_HEALTHBAR_BOX_BACK_WIDTH, GUI_HEALTHBAR_BOX_BACK_HEIGHT);
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 		
 		RenderSystem.disableBlend();
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 	}
 	
 	protected float[] getTargetColor(MobEntity targeter) {
@@ -564,17 +564,17 @@ public class OverlayRenderer extends AbstractGui {
 				(float) ((raw >> 24) & 0xFF) / 256f,
 			};
 		} else if (targeter instanceof WolfEntity) {
-			final float[] rgb = ((WolfEntity) targeter).getCollarColor().getColorComponentValues();
+			final float[] rgb = ((WolfEntity) targeter).getCollarColor().getTextureDiffuseColors();
 			return new float[] {
 					rgb[0], rgb[1], rgb[2], 1f
 			};
 		} else if (targeter instanceof CatEntity) {
-			final float[] rgb = ((CatEntity) targeter).getCollarColor().getColorComponentValues();
+			final float[] rgb = ((CatEntity) targeter).getCollarColor().getTextureDiffuseColors();
 			return new float[] {
 					rgb[0], rgb[1], rgb[2], 1f
 			};
 		} else {
-			final int raw = IEntityPet.MakeColorFromID(targeter.getUniqueID());
+			final int raw = IEntityPet.MakeColorFromID(targeter.getUUID());
 			return new float[] {
 				(float) ((raw >> 16) & 0xFF) / 256f,
 				(float) ((raw >> 8) & 0xFF) / 256f,
@@ -589,7 +589,7 @@ public class OverlayRenderer extends AbstractGui {
 		final float scale = 1f / (16f * (256f / (float) GUI_HEALTHBAR_ICON_LENGTH));
 		//final Minecraft mc = Minecraft.getInstance();
 		//mc.getTextureManager().bindTexture(GUI_PET_ICONS);
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		matrixStackIn.scale(scale, scale, 1f);
 		matrixStackIn.translate(-(GUI_HEALTHBAR_ICON_LENGTH/2f), 0, 0);
 		
@@ -602,14 +602,14 @@ public class OverlayRenderer extends AbstractGui {
 		final float minV = ((float) GUI_PET_ICON_FLOATTARGET_VOFFSET / 256f);
 		final float maxV = minV + ((float) GUI_HEALTHBAR_ICON_LENGTH / 256f);
 		{
-			final Matrix4f transform = matrixStackIn.getLast().getMatrix();
+			final Matrix4f transform = matrixStackIn.last().pose();
 			//blit(matrixStackIn, 0, 0, GUI_PET_ICON_FLOATTARGET_HOFFSET, GUI_PET_ICON_FLOATTARGET_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-			buffer.pos(transform, 0f, height, 0).color(color[0], color[1], color[2], color[3]).tex(minU, maxV).endVertex();
-			buffer.pos(transform, width, height, 0).color(color[0], color[1], color[2], color[3]).tex(maxU, maxV).endVertex();
-			buffer.pos(transform, width, 0f, 0).color(color[0], color[1], color[2], color[3]).tex(maxU, minV).endVertex();
-			buffer.pos(transform, 0f, 0f, 0).color(color[0], color[1], color[2], color[3]).tex(minU, minV).endVertex();
+			buffer.vertex(transform, 0f, height, 0).color(color[0], color[1], color[2], color[3]).uv(minU, maxV).endVertex();
+			buffer.vertex(transform, width, height, 0).color(color[0], color[1], color[2], color[3]).uv(maxU, maxV).endVertex();
+			buffer.vertex(transform, width, 0f, 0).color(color[0], color[1], color[2], color[3]).uv(maxU, minV).endVertex();
+			buffer.vertex(transform, 0f, 0f, 0).color(color[0], color[1], color[2], color[3]).uv(minU, minV).endVertex();
 		}
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 	}
 	
 	public void changePetTargetIcon() {
@@ -617,10 +617,10 @@ public class OverlayRenderer extends AbstractGui {
 		final ClientPlayerEntity player = mc.player;
 		if (petTargetIndex < 0) {
 			// Brand new animation
-			petTargetIndex = player.ticksExisted;
-		} else if (player.ticksExisted - petTargetIndex > petTargetAnimDur/2) {
+			petTargetIndex = player.tickCount;
+		} else if (player.tickCount - petTargetIndex > petTargetAnimDur/2) {
 			// Reset to halfway point
-			petTargetIndex = player.ticksExisted - petTargetAnimDur/2;
+			petTargetIndex = player.tickCount - petTargetAnimDur/2;
 		} else {
 			; // Fading in, leave alone and just swap out the icon
 		}
@@ -631,10 +631,10 @@ public class OverlayRenderer extends AbstractGui {
 		final ClientPlayerEntity player = mc.player;
 		if (petPlacementIndex < 0) {
 			// Brand new animation
-			petPlacementIndex = player.ticksExisted;
-		} else if (player.ticksExisted - petPlacementIndex > petPlacementAnimDur/2) {
+			petPlacementIndex = player.tickCount;
+		} else if (player.tickCount - petPlacementIndex > petPlacementAnimDur/2) {
 			// Reset to halfway point
-			petPlacementIndex = player.ticksExisted - petPlacementAnimDur/2;
+			petPlacementIndex = player.tickCount - petPlacementAnimDur/2;
 		} else {
 			; // Fading in, leave alone and just swap out the icon
 		}

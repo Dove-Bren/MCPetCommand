@@ -23,14 +23,14 @@ public class PetCommandEntities {
 		final IForgeRegistry<EntityType<?>> registry = event.getRegistry();
 		
 		// Values copied from EntityType.IRON_GOLEM
-		registry.register(EntityType.Builder.<BoundIronGolemEntity>create(BoundIronGolemEntity::new, EntityClassification.MISC)
-				.size(1.4F, 2.7F).trackingRange(10)
+		registry.register(EntityType.Builder.<BoundIronGolemEntity>of(BoundIronGolemEntity::new, EntityClassification.MISC)
+				.sized(1.4F, 2.7F).clientTrackingRange(10)
 			.build("").setRegistryName(BoundIronGolemEntity.ID));
 	}
 	
 	@SubscribeEvent
 	public static void registerAttributes(EntityAttributeCreationEvent event) {
-		event.put(BOUND_IRON_GOLEM, IronGolemEntity.func_234200_m_().create());
+		event.put(BOUND_IRON_GOLEM, IronGolemEntity.createAttributes().build());
 	}
 	
 }

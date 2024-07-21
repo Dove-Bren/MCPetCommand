@@ -19,7 +19,7 @@ public class PetGUISyncMessage {
 	public static void handle(PetGUISyncMessage message, Supplier<NetworkEvent.Context> ctx) {
 		// Get ID
 		ctx.get().setPacketHandled(true);
-		Minecraft.getInstance().runAsync(() -> {
+		Minecraft.getInstance().submit(() -> {
 			PetGUI.updateClientContainer(message.data);
 		});
 	}
@@ -31,11 +31,11 @@ public class PetGUISyncMessage {
 	}
 
 	public static PetGUISyncMessage decode(PacketBuffer buf) {
-		return new PetGUISyncMessage(buf.readCompoundTag());
+		return new PetGUISyncMessage(buf.readNbt());
 	}
 
 	public static void encode(PetGUISyncMessage msg, PacketBuffer buf) {
-		buf.writeCompoundTag(msg.data);
+		buf.writeNbt(msg.data);
 	}
 
 }

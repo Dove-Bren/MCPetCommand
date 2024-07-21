@@ -99,12 +99,12 @@ public class PetCommandManager extends WorldSavedData {
 	}
 	
 	@Override
-	public void read(CompoundNBT nbt) {
+	public void load(CompoundNBT nbt) {
 		synchronized(playerSettings) {
 			playerSettings.clear();
 			
 			CompoundNBT subtag = nbt.getCompound(NBT_SETTINGS);
-			for (String key : subtag.keySet()) {
+			for (String key : subtag.getAllKeys()) {
 				UUID uuid = null;
 				try {
 					uuid = UUID.fromString(key);
@@ -123,7 +123,7 @@ public class PetCommandManager extends WorldSavedData {
 	}
 	
 	@Override
-	public CompoundNBT write(CompoundNBT compound) {
+	public CompoundNBT save(CompoundNBT compound) {
 		synchronized(playerSettings) {
 			CompoundNBT subtag = new CompoundNBT();
 			for (Entry<UUID, PetCommandSettings> entry : playerSettings.entrySet()) {
@@ -138,7 +138,7 @@ public class PetCommandManager extends WorldSavedData {
 	@OnlyIn(Dist.CLIENT)
 	public void overrideClientSettings(CompoundNBT settingsNBT) {
 		PetCommandSettings settings = PetCommandSettings.FromNBT(settingsNBT);
-		final UUID ID = PetCommand.GetProxy().getPlayer().getUniqueID();
+		final UUID ID = PetCommand.GetProxy().getPlayer().getUUID();
 		synchronized(playerSettings) {
 			playerSettings.put(ID, settings);
 		}
@@ -155,12 +155,12 @@ public class PetCommandManager extends WorldSavedData {
 	
 	@SubscribeEvent
 	public void onConnect(PlayerLoggedInEvent event) {
-		if (event.getPlayer().world.isRemote) {
+		if (event.getPlayer().level.isClientSide) {
 			return;
 		}
 		
 		NetworkHandler.sendTo(
-				new PetCommandSettingsSyncMessage(generateClientSettings(event.getPlayer().getUniqueID())),
+				new PetCommandSettingsSyncMessage(generateClientSettings(event.getPlayer().getUUID())),
 				(ServerPlayerEntity) event.getPlayer());
 	}
 	
@@ -174,7 +174,7 @@ public class PetCommandManager extends WorldSavedData {
 	}
 	
 	public PetPlacementMode getPlacementMode(LivingEntity entity) {
-		return getPlacementMode(entity.getUniqueID());
+		return getPlacementMode(entity.getUUID());
 	}
 	
 	public PetPlacementMode getPlacementMode(UUID uuid) {
@@ -183,7 +183,7 @@ public class PetCommandManager extends WorldSavedData {
 	}
 	
 	public PetTargetMode getTargetMode(LivingEntity entity) {
-		return getTargetMode(entity.getUniqueID());
+		return getTargetMode(entity.getUUID());
 	}
 	
 	public PetTargetMode getTargetMode(UUID uuid) {
@@ -192,7 +192,7 @@ public class PetCommandManager extends WorldSavedData {
 	}
 	
 	public void setPlacementMode(LivingEntity entity, PetPlacementMode mode) {
-		setPlacementMode(entity.getUniqueID(), mode);
+		setPlacementMode(entity.getUUID(), mode);
 	}
 	
 	public void setPlacementMode(UUID uuid, PetPlacementMode mode) {
@@ -206,11 +206,11 @@ public class PetCommandManager extends WorldSavedData {
 			settings.placementMode = mode;
 		}
 		
-		this.markDirty();
+		this.setDirty();
 	}
 	
 	public void setTargetMode(LivingEntity entity, PetTargetMode mode) {
-		setTargetMode(entity.getUniqueID(), mode);
+		setTargetMode(entity.getUUID(), mode);
 	}
 	
 	public void setTargetMode(UUID uuid, PetTargetMode mode) {
@@ -224,7 +224,7 @@ public class PetCommandManager extends WorldSavedData {
 			settings.targetMode = mode;
 		}
 		
-		this.markDirty();
+		this.setDirty();
 	}
 	
 	public void commandToAttack(LivingEntity owner, IEntityPet pet, LivingEntity target) {
@@ -245,12 +245,12 @@ public class PetCommandManager extends WorldSavedData {
 			return;
 		}
 		
-		pet.setAttackTarget(target);
+		pet.setTarget(target);
 	}
 	
 	protected void forAllOwned(LivingEntity owner, Function<Entity, Integer> petAction) {
 		for (LivingEntity e : PetFuncs.GetTamedEntities(owner)) {
-			if (owner.getDistance(e) > 100) {
+			if (owner.distanceTo(e) > 100) {
 				continue;
 			}
 			
@@ -263,7 +263,7 @@ public class PetCommandManager extends WorldSavedData {
 			if (e instanceof IEntityPet) {
 				((IEntityPet) e).onAttackCommand(target);
 			} else if (e instanceof MobEntity) {
-				((MobEntity) e).setAttackTarget(target);
+				((MobEntity) e).setTarget(target);
 			}
 			return 0;
 		});
@@ -274,7 +274,7 @@ public class PetCommandManager extends WorldSavedData {
 			if (e instanceof IEntityPet) {
 				((IEntityPet) e).onStopCommand();
 			} else if (e instanceof MobEntity) {
-				((MobEntity) e).setAttackTarget(null);
+				((MobEntity) e).setTarget(null);
 			}
 			return 0;
 		});

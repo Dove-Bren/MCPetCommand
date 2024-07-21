@@ -261,7 +261,7 @@ public class PetInfo {
 	public static PetInfo Wrap(LivingEntity entity) {
 		if (entity instanceof TameableEntity) {
 			final @Nullable LivingEntity target = PetCommandAPI.GetTargetManager(entity).getTarget((TameableEntity) entity);
-			final PetAction action = ((TameableEntity) entity).isEntitySleeping()
+			final PetAction action = ((TameableEntity) entity).isInSittingPose()
 					? PetAction.SITTING
 					: (target != null && target.isAlive()) ? PetAction.ATTACKING		
 					: PetAction.IDLING;

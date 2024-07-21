@@ -72,7 +72,7 @@ public class ClientProxy extends CommonProxy {
 	
 	@Override
 	public void openContainer(PlayerEntity player, IPackedContainerProvider provider) {
-		if (!player.world.isRemote) {
+		if (!player.level.isClientSide) {
 			super.openContainer(player, provider);
 		}
 		; // On client, do nothing
@@ -91,7 +91,7 @@ public class ClientProxy extends CommonProxy {
 	
 	@Override
 	public ITargetManager getTargetManager(LivingEntity entity) {
-		if (entity.getEntityWorld().isRemote()) {
+		if (entity.getCommandSenderWorld().isClientSide()) {
 			return PetCommand.GetClientTargetManager();
 		}
 		return super.getTargetManager(entity);
@@ -99,7 +99,7 @@ public class ClientProxy extends CommonProxy {
 	
 	@SubscribeEvent
 	public void onKey(KeyInputEvent event) {
-		if (bindingPetPlacementModeCycle.isPressed()) {
+		if (bindingPetPlacementModeCycle.consumeClick()) {
 			// Cycle placement mode
 			final PetPlacementMode current = PetCommand.GetPetCommandManager().getPlacementMode(this.getPlayer());
 			final PetPlacementMode next = PetPlacementMode.values()[(current.ordinal() + 1) % PetPlacementMode.values().length];
@@ -112,7 +112,7 @@ public class ClientProxy extends CommonProxy {
 			
 			// Send change to server
 			NetworkHandler.sendToServer(PetCommandMessage.AllPlacementMode(next));
-		} else if (bindingPetTargetModeCycle.isPressed()) {
+		} else if (bindingPetTargetModeCycle.consumeClick()) {
 			// Cycle target mode
 			final PetTargetMode current = PetCommand.GetPetCommandManager().getTargetMode(this.getPlayer());
 			final PetTargetMode next = PetTargetMode.values()[(current.ordinal() + 1) % PetTargetMode.values().length];
@@ -125,65 +125,65 @@ public class ClientProxy extends CommonProxy {
 			
 			// Send change to server
 			NetworkHandler.sendToServer(PetCommandMessage.AllTargetMode(next));
-		} else if (bindingPetAttackAll.isPressed()) {
+		} else if (bindingPetAttackAll.consumeClick()) {
 			// Raytrace, find tar get, and set all to attack
 			final PlayerEntity player = getPlayer();
-			if (player != null && player.world != null) {
-				final float partialTicks = Minecraft.getInstance().getRenderPartialTicks();
+			if (player != null && player.level != null) {
+				final float partialTicks = Minecraft.getInstance().getFrameTime();
 				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
 				RayTraceResult result = RayTrace.raytraceApprox(
-						player.world, player,
+						player.level, player,
 						player.getEyePosition(partialTicks),
-						player.getLook(partialTicks),
-						100, (e) -> { return e != player && e instanceof LivingEntity && !player.isOnSameTeam(e) && !tames.contains(e);},
+						player.getViewVector(partialTicks),
+						100, (e) -> { return e != player && e instanceof LivingEntity && !player.isAlliedTo(e) && !tames.contains(e);},
 						1);
 				if (result != null && result.getType() == RayTraceResult.Type.ENTITY) {
 					NetworkHandler.sendToServer(PetCommandMessage.AllAttack(RayTrace.livingFromRaytrace(result)));
 				}
 			}
-		} else if (bindingPetAttack.isPressed()) {
+		} else if (bindingPetAttack.consumeClick()) {
 			// Raytrace, find target, and then make single one attack
 			// Probably could be same button but if raytrace is our pet,
 			// have them hold it down and release on an enemy? Or 'select' them
 			// and have them press again to select enemy?
 			final PlayerEntity player = getPlayer();
-			if (player != null && player.world != null) {
-				final float partialTicks = Minecraft.getInstance().getRenderPartialTicks();
+			if (player != null && player.level != null) {
+				final float partialTicks = Minecraft.getInstance().getFrameTime();
 				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
 				if (selectedPet == null) {
 					// Try and select a pet
 					RayTraceResult result = RayTrace.raytraceApprox(
-							player.world, player,
+							player.level, player,
 							player.getEyePosition(partialTicks),
-							player.getLook(partialTicks),
+							player.getViewVector(partialTicks),
 							100, (e) -> { return e != player && tames.contains(e);},
 							.1);
 					if (result != null && result.getType() == RayTraceResult.Type.ENTITY) {
 						selectedPet = RayTrace.livingFromRaytrace(result);
-						if (selectedPet.world.isRemote) {
+						if (selectedPet.level.isClientSide) {
 							selectedPet.setGlowing(true);
 						}
 					}
 				} else {
 					// Find target
 					RayTraceResult result = RayTrace.raytraceApprox(
-							player.world, player,
+							player.level, player,
 							player.getEyePosition(partialTicks),
-							player.getLook(partialTicks),
-							100, (e) -> { return e != player && e instanceof LivingEntity && !player.isOnSameTeam(e) && !tames.contains(e);},
+							player.getViewVector(partialTicks),
+							100, (e) -> { return e != player && e instanceof LivingEntity && !player.isAlliedTo(e) && !tames.contains(e);},
 							1);
 					if (result != null && result.getType() == RayTraceResult.Type.ENTITY) {
 						NetworkHandler.sendToServer(PetCommandMessage.PetAttack(selectedPet, RayTrace.livingFromRaytrace(result)));
 					}
 					
 					// Clear out pet
-					if (selectedPet.world.isRemote) {
+					if (selectedPet.level.isClientSide) {
 						selectedPet.setGlowing(false);
 					}
 					selectedPet = null;
 				}
 			}
-		} else if (bindingPetAllStop.isPressed()) {
+		} else if (bindingPetAllStop.consumeClick()) {
 			NetworkHandler.sendToServer(PetCommandMessage.AllStop());
 		}
 	}

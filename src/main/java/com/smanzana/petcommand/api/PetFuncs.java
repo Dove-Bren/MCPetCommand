@@ -28,10 +28,10 @@ public class PetFuncs {
 		
 		Iterable<Entity> entities;
 		
-		if (owner.world instanceof ServerWorld) {
-			entities = ((ServerWorld) owner.world).getEntities().collect(Collectors.toList());
+		if (owner.level instanceof ServerWorld) {
+			entities = ((ServerWorld) owner.level).getEntities().collect(Collectors.toList());
 		} else {
-			entities = ((ClientWorld) owner.world).getAllEntities();
+			entities = ((ClientWorld) owner.level).entitiesForRendering();
 		}
 		
 		for (Entity e : entities) {
@@ -51,7 +51,7 @@ public class PetFuncs {
 				}
 			} else if (ent instanceof TameableEntity) {
 				TameableEntity tame = (TameableEntity) ent;
-				if (tame.isTamed() && tame.isOwner(owner)) {
+				if (tame.isTame() && tame.isOwnedBy(owner)) {
 					ents.add(ent);
 				}
 			}
@@ -89,7 +89,7 @@ public class PetFuncs {
 		}
 	
 		if (ent1.getTeam() != null || ent2.getTeam() != null) { // If teams are at play, just use those.
-			return ent1.isOnSameTeam(ent2);
+			return ent1.isAlliedTo(ent2);
 		}
 		
 		LivingEntity ent1Owner = PetFuncs.GetOwner(ent1);

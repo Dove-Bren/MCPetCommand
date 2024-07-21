@@ -31,7 +31,7 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 		final int dragonTopOffset = 10;
 		final int playerInvSize = 27 + 9;
 		
-		for (int i = 0; i < petInv.getSizeInventory(); i++) {
+		for (int i = 0; i < petInv.getContainerSize(); i++) {
 			Slot slotIn = new Slot(petInv, i, leftOffset + offsetX + (cellWidth * (i % invRow)), dragonTopOffset + offsetY + (cellWidth * (i / invRow)));
 			container.addSheetSlot(slotIn);
 		}
@@ -53,7 +53,7 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 	@Override
 	public void draw(MatrixStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
 		// Draw sheet
-		matrixStackIn.push();
+		matrixStackIn.pushPose();
 		{
 			final int cellWidth = 18;
 			final int invRow = 9;
@@ -63,14 +63,14 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 			final int playerInvSize = 27 + 9;
 			
 			// Pet slots
-			matrixStackIn.push();
+			matrixStackIn.pushPose();
 			matrixStackIn.translate(leftOffset - 1, dragonTopOffset - 1, 0);
-			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, petInv.getSizeInventory(), invRow);
-			matrixStackIn.pop();
+			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, petInv.getContainerSize(), invRow);
+			matrixStackIn.popPose();
 			
 			// Player slots
 			final int playerTopOffset = 100;
-			matrixStackIn.push();
+			matrixStackIn.pushPose();
 			matrixStackIn.translate(leftOffset - 1, playerTopOffset - 1, 0);
 			// ... First 27
 			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, Math.min(27, playerInvSize), invRow);
@@ -80,9 +80,9 @@ public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUI
 			matrixStackIn.translate(0, 10 + yOffset, 0);
 			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, Math.max(0, playerInvSize-27), invRow);
 			
-			matrixStackIn.pop();
+			matrixStackIn.popPose();
 		}
-		matrixStackIn.pop();
+		matrixStackIn.popPose();
 	}
 
 	@Override

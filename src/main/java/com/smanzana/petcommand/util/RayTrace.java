@@ -44,8 +44,8 @@ public class RayTrace {
 		
 		// EnderDragons are multipart but with no interface anymore
 		if (entityOrSubEntity instanceof EnderDragonPartEntity) {
-			if (((EnderDragonPartEntity) entityOrSubEntity).dragon instanceof LivingEntity) {
-				return (LivingEntity) ((EnderDragonPartEntity) entityOrSubEntity).dragon;
+			if (((EnderDragonPartEntity) entityOrSubEntity).parentMob instanceof LivingEntity) {
+				return (LivingEntity) ((EnderDragonPartEntity) entityOrSubEntity).parentMob;
 			}
 		}
 
@@ -62,7 +62,7 @@ public class RayTrace {
 		
 		@Override
 		public boolean test(LivingEntity input) {
-			return (!input.isEntityEqual(self) && !input.isEntityEqual(self.getRidingEntity()));
+			return (!input.is(self) && !input.is(self.getVehicle()));
 		}
 	}
 	
@@ -106,7 +106,7 @@ public class RayTrace {
 	
 	public static RayTraceResult miss(Vector3d fromPos, Vector3d toPos) {
 		Vector3d rayVec = toPos.subtract(fromPos);
-    	return BlockRayTraceResult.createMiss(fromPos, Direction.getFacingFromVector(rayVec.x, rayVec.y, rayVec.z), new BlockPos(fromPos));
+    	return BlockRayTraceResult.miss(fromPos, Direction.getNearest(rayVec.x, rayVec.y, rayVec.z), new BlockPos(fromPos));
 	}
 	
 	public static @Nullable Entity entFromRaytrace(RayTraceResult result) {
@@ -131,7 +131,7 @@ public class RayTrace {
 			return null;
 		}
 		
-		return ((BlockRayTraceResult) result).getPos();
+		return ((BlockRayTraceResult) result).getBlockPos();
 	}
 	
 	public static RayTraceResult raytrace(World world, @Nonnull Entity tracingEntity, Vector3d fromPos, float pitch,
@@ -195,20 +195,20 @@ public class RayTrace {
         
         // First, raytrace against blocks.
         // First we hit also will help us lower the range of our raytrace
-        trace = world.rayTraceBlocks(new RayTraceContext(fromPos, toPos, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, tracingEntity));
+        trace = world.clip(new RayTraceContext(fromPos, toPos, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, tracingEntity));
         
         if (trace != null && trace.getType() != RayTraceResult.Type.MISS) {
         	// limit toPos to position of block hit
-        	toPos = trace.getHitVec();
+        	toPos = trace.getLocation();
         }
         
-        List<Entity> list = world.getEntitiesInAABBexcluding(null,
+        List<Entity> list = world.getEntities((Entity) null,
         		new AxisAlignedBB(fromPos.x, fromPos.y, fromPos.z, toPos.x, toPos.y, toPos.z),
-        		EntityPredicates.NOT_SPECTATING.and(new Predicate<Entity>()
+        		EntityPredicates.NO_SPECTATORS.and(new Predicate<Entity>()
         {
             public boolean test(Entity p_apply_1_)
             {
-                return !p_apply_1_.noClip && (selector == null || selector.test(p_apply_1_));
+                return !p_apply_1_.noPhysics && (selector == null || selector.test(p_apply_1_));
             }
         }));
         // d2 is current closest distance
@@ -220,9 +220,9 @@ public class RayTrace {
         {
             Entity entity1 = (Entity)list.get(j);
             
-            float f1 = entity1.getCollisionBorderSize();
-            AxisAlignedBB axisalignedbb = entity1.getBoundingBox().grow((double)f1, (double)f1, (double)f1);
-            Optional<Vector3d> entHit = axisalignedbb.rayTrace(fromPos, toPos);
+            float f1 = entity1.getPickRadius();
+            AxisAlignedBB axisalignedbb = entity1.getBoundingBox().inflate((double)f1, (double)f1, (double)f1);
+            Optional<Vector3d> entHit = axisalignedbb.clip(fromPos, toPos);
 
             if (axisalignedbb.contains(fromPos))
             {
@@ -299,21 +299,21 @@ public class RayTrace {
         
         RayTraceResult trace;
         
-        trace = world.rayTraceBlocks(new RayTraceContext(fromPos, toPos, RayTraceContext.BlockMode.OUTLINE, RayTraceContext.FluidMode.NONE, tracingEntity));
+        trace = world.clip(new RayTraceContext(fromPos, toPos, RayTraceContext.BlockMode.OUTLINE, RayTraceContext.FluidMode.NONE, tracingEntity));
         
         if (trace != null && trace.getType() != RayTraceResult.Type.MISS) {
         	// limit toPos to position of block hit
-        	toPos = trace.getHitVec();
+        	toPos = trace.getLocation();
         	ret.add(cloneTrace(trace));
         }
         
-        List<Entity> list = world.getEntitiesInAABBexcluding(null,
+        List<Entity> list = world.getEntities((Entity) null,
         		new AxisAlignedBB(fromPos.x, fromPos.y, fromPos.z, toPos.x, toPos.y, toPos.z),
-        		EntityPredicates.NOT_SPECTATING.and(new Predicate<Entity>()
+        		EntityPredicates.NO_SPECTATORS.and(new Predicate<Entity>()
         {
             public boolean test(Entity p_apply_1_)
             {
-                return p_apply_1_.canBeCollidedWith() && selector.test(p_apply_1_);
+                return p_apply_1_.isPickable() && selector.test(p_apply_1_);
             }
         }));
         
@@ -323,9 +323,9 @@ public class RayTrace {
         {
             Entity entity1 = (Entity)list.get(j);
             
-            float f1 = entity1.getCollisionBorderSize();
-            AxisAlignedBB axisalignedbb = entity1.getBoundingBox().grow((double)f1, (double)f1, (double)f1);
-            Optional<Vector3d> entHit = axisalignedbb.rayTrace(fromPos, toPos);
+            float f1 = entity1.getPickRadius();
+            AxisAlignedBB axisalignedbb = entity1.getBoundingBox().inflate((double)f1, (double)f1, (double)f1);
+            Optional<Vector3d> entHit = axisalignedbb.clip(fromPos, toPos);
 
             if (axisalignedbb.contains(fromPos))
             {
@@ -348,16 +348,16 @@ public class RayTrace {
 	private static RayTraceResult cloneTrace(RayTraceResult in) {
 		if (in.getType() == RayTraceResult.Type.ENTITY) {
 			EntityRayTraceResult orig = (EntityRayTraceResult) in;
-			return new EntityRayTraceResult(orig.getEntity(), orig.getHitVec());
+			return new EntityRayTraceResult(orig.getEntity(), orig.getLocation());
 		}
 		
 		BlockRayTraceResult blockResult = (BlockRayTraceResult) in;
 		
 		if (in.getType() == RayTraceResult.Type.MISS)
-			return BlockRayTraceResult.createMiss(in.getHitVec(), blockResult.getFace(), blockResult.getPos());
+			return BlockRayTraceResult.miss(in.getLocation(), blockResult.getDirection(), blockResult.getBlockPos());
 		
 		
-		return new BlockRayTraceResult(blockResult.getHitVec(), blockResult.getFace(), blockResult.getPos(), blockResult.isInside());
+		return new BlockRayTraceResult(blockResult.getLocation(), blockResult.getDirection(), blockResult.getBlockPos(), blockResult.isInside());
 	}
 	
 	public static RayTraceResult forwardsRaycast(Entity projectile, boolean includeEntities, boolean ignoreCollideFlag, boolean shouldExclude, Entity maybeExcludedEntity) {
@@ -366,41 +366,41 @@ public class RayTrace {
 	
 	// Copy of ProjectileUtil method but with ability to collide with other misc entities
 	public static RayTraceResult forwardsRaycast(Entity projectile, RayTraceContext.BlockMode blockMode, boolean includeEntities, boolean ignoreCollideFlag, boolean shouldExclude, Entity maybeExcludedEntity){
-		double d0 = projectile.getPosX();
-		double d1 = projectile.getPosY();
-		double d2 = projectile.getPosZ();
-		double d3 = projectile.getMotion().x;
-		double d4 = projectile.getMotion().y;
-		double d5 = projectile.getMotion().z;
-		World world = projectile.world;
+		double d0 = projectile.getX();
+		double d1 = projectile.getY();
+		double d2 = projectile.getZ();
+		double d3 = projectile.getDeltaMovement().x;
+		double d4 = projectile.getDeltaMovement().y;
+		double d5 = projectile.getDeltaMovement().z;
+		World world = projectile.level;
 		Vector3d Vector3d = new Vector3d(d0, d1, d2);
 		Vector3d Vector3d1 = new Vector3d(d0 + d3, d1 + d4, d2 + d5);
-		RayTraceResult raytraceresult = world.rayTraceBlocks(new RayTraceContext(Vector3d, Vector3d1, blockMode, RayTraceContext.FluidMode.NONE, projectile));
+		RayTraceResult raytraceresult = world.clip(new RayTraceContext(Vector3d, Vector3d1, blockMode, RayTraceContext.FluidMode.NONE, projectile));
 
 		if (includeEntities)
 		{
 			if (raytraceresult.getType() != RayTraceResult.Type.MISS)
 			{
-				Vector3d1 = raytraceresult.getHitVec();
+				Vector3d1 = raytraceresult.getLocation();
 			}
 
 			Entity entity = null;
 			Vector3d entityHitVec = null;
-			List<Entity> list = world.getEntitiesWithinAABBExcludingEntity(projectile, projectile.getBoundingBox().offset(d3, d4, d5).grow(1.0D));
+			List<Entity> list = world.getEntities(projectile, projectile.getBoundingBox().move(d3, d4, d5).inflate(1.0D));
 			double d6 = 0.0D;
 
 			for (int i = 0; i < list.size(); ++i)
 			{
 				Entity entity1 = (Entity)list.get(i);
 
-				if ((ignoreCollideFlag || entity1.canBeCollidedWith()) && (shouldExclude || !entity1.isEntityEqual(maybeExcludedEntity)) && !entity1.noClip)
+				if ((ignoreCollideFlag || entity1.isPickable()) && (shouldExclude || !entity1.is(maybeExcludedEntity)) && !entity1.noPhysics)
 				{
-					AxisAlignedBB axisalignedbb = entity1.getBoundingBox().grow(0.30000001192092896D);
-					Optional<Vector3d> innerHit = axisalignedbb.rayTrace(Vector3d, Vector3d1);
+					AxisAlignedBB axisalignedbb = entity1.getBoundingBox().inflate(0.30000001192092896D);
+					Optional<Vector3d> innerHit = axisalignedbb.clip(Vector3d, Vector3d1);
 
 					if (innerHit.isPresent())
 					{
-						double d7 = Vector3d.squareDistanceTo(innerHit.get());
+						double d7 = Vector3d.distanceToSqr(innerHit.get());
 
 						if (d7 < d6 || d6 == 0.0D)
 						{
@@ -431,10 +431,10 @@ public class RayTrace {
 		}
 		
 		// Get entities near the result
-		Vector3d hitPos = result.getHitVec();
-		List<Entity> entities = world.getEntitiesInAABBexcluding(null, new AxisAlignedBB(
+		Vector3d hitPos = result.getLocation();
+		List<Entity> entities = world.getEntities((Entity) null, new AxisAlignedBB(
 				hitPos.x, hitPos.y, hitPos.z, hitPos.x, hitPos.y, hitPos.z
-				).grow(maxDist), selector);
+				).inflate(maxDist), selector);
 		double minDist = 0;
 		Entity minEnt = null;
 		for (Entity ent : entities) {
@@ -442,7 +442,7 @@ public class RayTrace {
 				continue;
 			}
 			
-			double distSq = hitPos.squareDistanceTo(ent.getPositionVec());
+			double distSq = hitPos.distanceToSqr(ent.position());
 			if (minEnt == null || distSq < minDist) {
 				minEnt = ent;
 				minDist = distSq;

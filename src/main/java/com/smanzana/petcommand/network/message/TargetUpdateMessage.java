@@ -21,14 +21,14 @@ public class TargetUpdateMessage {
 
 	public static void handle(TargetUpdateMessage message, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().setPacketHandled(true);
-		Minecraft.getInstance().runAsync(() -> {
+		Minecraft.getInstance().submit(() -> {
 			final Minecraft mc = Minecraft.getInstance();
 			if (mc.player == null) {
 				return;
 			}
 			try {
-				MobEntity mob = (MobEntity) mc.player.world.getEntityByID(message.sourceID);
-				LivingEntity target = message.targetID == null ? null : (LivingEntity) mc.player.world.getEntityByID(message.targetID);
+				MobEntity mob = (MobEntity) mc.player.level.getEntity(message.sourceID);
+				LivingEntity target = message.targetID == null ? null : (LivingEntity) mc.player.level.getEntity(message.targetID);
 				PetCommand.GetClientTargetManager().updateTarget(mob, target);
 			} catch (Exception e) {
 				PetCommand.LOGGER.error("Received a target update for entities we didn't know: " + message.sourceID + " => " + (message.targetID == null ? "NULL" : message.targetID));
@@ -46,7 +46,7 @@ public class TargetUpdateMessage {
 	}
 	
 	public TargetUpdateMessage(MobEntity source, @Nullable LivingEntity target) {
-		this(source.getEntityId(), target == null ? null : target.getEntityId());
+		this(source.getId(), target == null ? null : target.getId());
 	}
 
 	public static TargetUpdateMessage decode(PacketBuffer buf) {

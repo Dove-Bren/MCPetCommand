@@ -34,7 +34,7 @@ public class PetCommandMessage {
 			final @Nullable MobEntity pet;
 			
 			if (message.targetUUID != null) {
-				Entity e = PetCommand.GetEntityByUUID(sp.world, message.targetUUID);
+				Entity e = PetCommand.GetEntityByUUID(sp.level, message.targetUUID);
 				if (e instanceof LivingEntity) {
 					target = (LivingEntity) e;
 				} else {
@@ -45,7 +45,7 @@ public class PetCommandMessage {
 			}
 			
 			if (message.petUUID != null) {
-				Entity e = PetCommand.GetEntityByUUID(sp.world, message.petUUID);
+				Entity e = PetCommand.GetEntityByUUID(sp.level, message.petUUID);
 				if (e instanceof MobEntity) {
 					pet = (MobEntity) e;
 				} else {
@@ -124,15 +124,15 @@ public class PetCommandMessage {
 	}
 	
 	public static PetCommandMessage PetStop(LivingEntity pet) {
-		return new PetCommandMessage(PetCommandMessageType.STOP, pet.getUniqueID(), null, null, null);
+		return new PetCommandMessage(PetCommandMessageType.STOP, pet.getUUID(), null, null, null);
 	}
 	
 	public static PetCommandMessage AllAttack(LivingEntity target) {
-		return new PetCommandMessage(PetCommandMessageType.ATTACK, null, target.getUniqueID(), null, null);
+		return new PetCommandMessage(PetCommandMessageType.ATTACK, null, target.getUUID(), null, null);
 	}
 	
 	public static PetCommandMessage PetAttack(LivingEntity pet, LivingEntity target) {
-		return new PetCommandMessage(PetCommandMessageType.ATTACK, pet.getUniqueID(), target.getUniqueID(), null, null);
+		return new PetCommandMessage(PetCommandMessageType.ATTACK, pet.getUUID(), target.getUUID(), null, null);
 	}
 	
 	public static PetCommandMessage AllPlacementMode(PetPlacementMode mode) {
@@ -150,36 +150,36 @@ public class PetCommandMessage {
 		final @Nullable PetPlacementMode placementMode;
 		final @Nullable PetTargetMode targetMode;
 		
-		type = buf.readEnumValue(PetCommandMessageType.class);
-		petUUID = buf.readBoolean() ? buf.readUniqueId() : null;
-		targetUUID = buf.readBoolean() ? buf.readUniqueId() : null;
-		placementMode = buf.readBoolean() ? buf.readEnumValue(PetPlacementMode.class) : null;
-		targetMode = buf.readBoolean() ? buf.readEnumValue(PetTargetMode.class) : null;
+		type = buf.readEnum(PetCommandMessageType.class);
+		petUUID = buf.readBoolean() ? buf.readUUID() : null;
+		targetUUID = buf.readBoolean() ? buf.readUUID() : null;
+		placementMode = buf.readBoolean() ? buf.readEnum(PetPlacementMode.class) : null;
+		targetMode = buf.readBoolean() ? buf.readEnum(PetTargetMode.class) : null;
 		
 		return new PetCommandMessage(type, petUUID, targetUUID, placementMode, targetMode);
 	}
 
 	public static void encode(PetCommandMessage msg, PacketBuffer buf) {
-		buf.writeEnumValue(msg.type);
+		buf.writeEnum(msg.type);
 		
 		buf.writeBoolean(msg.petUUID != null);
 		if (msg.petUUID != null) {
-			buf.writeUniqueId(msg.petUUID);
+			buf.writeUUID(msg.petUUID);
 		}
 		
 		buf.writeBoolean(msg.targetUUID != null);
 		if (msg.targetUUID != null) {
-			buf.writeUniqueId(msg.targetUUID);
+			buf.writeUUID(msg.targetUUID);
 		}
 		
 		buf.writeBoolean(msg.placementMode != null);
 		if (msg.placementMode != null) {
-			buf.writeEnumValue(msg.placementMode);
+			buf.writeEnum(msg.placementMode);
 		}
 		
 		buf.writeBoolean(msg.targetMode != null);
 		if (msg.targetMode != null) {
-			buf.writeEnumValue(msg.targetMode);
+			buf.writeEnum(msg.targetMode);
 		}
 	}
 	

@@ -108,22 +108,22 @@ public class PetCommand
 	
 	public static @Nullable Entity GetEntityByUUID(World world, UUID id) {
 		// Copied out of NostrumMagica's Entities util
-		if (world.isRemote() && world instanceof ClientWorld) {
-			Iterable<Entity> entities = ((ClientWorld)world).getAllEntities();
+		if (world.isClientSide() && world instanceof ClientWorld) {
+			Iterable<Entity> entities = ((ClientWorld)world).entitiesForRendering();
 			for (Entity ent : entities) {
-				if (ent.getUniqueID().equals(id)) {
+				if (ent.getUUID().equals(id)) {
 					return ent;
 				}
 			}
 		} else if (world instanceof ServerWorld) {
-			return ((ServerWorld) world).getEntityByUuid(id);
+			return ((ServerWorld) world).getEntity(id);
 		}
 		
 		return null;
 	}
 	
 	private void initPetCommandManager(World world) {
-		petCommandManager = (PetCommandManager) ((ServerWorld) world).getServer().getWorld(World.OVERWORLD).getSavedData().getOrCreate(PetCommandManager::new,
+		petCommandManager = (PetCommandManager) ((ServerWorld) world).getServer().getLevel(World.OVERWORLD).getDataStorage().computeIfAbsent(PetCommandManager::new,
 				PetCommandManager.DATA_NAME);
 
 		// TODO I think this is automatic now?
@@ -135,7 +135,7 @@ public class PetCommand
 	
 	@SubscribeEvent
 	public void onWorldLoad(WorldEvent.Load event) {
-		if (!event.getWorld().isRemote()) {
+		if (!event.getWorld().isClientSide()) {
 			// force an exception here if this is wrong
 			ServerWorld world = (ServerWorld) event.getWorld();
 			
@@ -167,7 +167,7 @@ public class PetCommand
 			PrioritizedGoal followTask = null;
 			
 			// Get private goal list
-			LinkedHashSet<PrioritizedGoal> goals = ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.goalSelector, "field_220892_d"); 
+			LinkedHashSet<PrioritizedGoal> goals = ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.goalSelector, "availableGoals"); 
 
 			// Scan for existing task
 			for (PrioritizedGoal entry : goals) {
@@ -216,7 +216,7 @@ public class PetCommand
 			boolean hasTaskAlready = false;
 			
 			// Get private goal list
-			LinkedHashSet<PrioritizedGoal> targetGoals = ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.targetSelector, "field_220892_d"); 
+			LinkedHashSet<PrioritizedGoal> targetGoals = ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.targetSelector, "availableGoals"); 
 
 			// Scan for existing task
 			for (PrioritizedGoal entry : targetGoals) {

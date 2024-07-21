@@ -52,7 +52,7 @@ public class TargetManager implements ITargetManager {
 		if (shouldTrack(mob)) {
 			final LivingEntity prev = removeMapping(mob);
 			addMapping(mob, target);
-			if (prev != target && !mob.world.isRemote()) {
+			if (prev != target && !mob.level.isClientSide()) {
 				broadcastChange(mob, target);
 			}
 		}
