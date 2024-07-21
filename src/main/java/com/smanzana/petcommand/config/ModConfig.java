@@ -13,12 +13,12 @@ public class ModConfig {
 	private ModConfigClient client;
 	
 	private ForgeConfigSpec commonSpec;
-	private ModConfigCommon common;
+	//private ModConfigCommon common;
 	
 	public ModConfig() {
 		final Pair<ModConfigCommon, ForgeConfigSpec> commonPair = new ForgeConfigSpec.Builder().configure(ModConfigCommon::new);
 		commonSpec = commonPair.getRight();
-		common = commonPair.getLeft();
+		//common = commonPair.getLeft();
 		
 		final Pair<ModConfigClient, ForgeConfigSpec> clientPair = new ForgeConfigSpec.Builder().configure(ModConfigClient::new);
 		clientSpec = clientPair.getRight();

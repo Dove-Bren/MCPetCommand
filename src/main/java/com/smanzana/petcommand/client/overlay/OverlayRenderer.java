@@ -7,7 +7,6 @@ import javax.annotation.Nullable;
 
 import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
 import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
-import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -36,9 +35,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Cat;
 import net.minecraft.world.entity.animal.Wolf;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.client.gui.ForgeIngameGui;
+import net.minecraftforge.client.gui.IIngameOverlay;
+import net.minecraftforge.client.gui.OverlayRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -106,92 +106,16 @@ public class OverlayRenderer extends GuiComponent {
 	private int petPlacementIndex; // Controls displaying pet placement icon (fade in/out at 50%)
 	private int petPlacementAnimDur = 80;
 	
+	protected final IIngameOverlay healthbarOverlay;
+	protected final IIngameOverlay modeIconOverlay;
+	
 	public OverlayRenderer() {
 		MinecraftForge.EVENT_BUS.register(this);
 		petTargetIndex = -1;
 		petPlacementIndex = -1;
-	}
-	
-	@SubscribeEvent
-	public void onRender(RenderGameOverlayEvent.Post event) {
-		Minecraft mc = Minecraft.getInstance();
-		LocalPlayer player = mc.player;
-		Window window = event.getWindow();
-		PoseStack matrixStackIn = event.getMatrixStack();
 		
-		if (event.getType() == ElementType.ALL) {
-		
-			if (ModConfig.config.showHealthbars()) {
-				final float scale = 0.5f;
-				int y = ModConfig.config.getHealthbarAnchorY();
-				int healthbarWidth;
-				int healthbarHeight;
-				int xOffset;
-				int xConfigOffset = ModConfig.config.getHealthbarAnchorX();
-				
-				// Bigs
-				if (ModConfig.config.showBigHealthbars()) {
-					healthbarWidth = (int) (GUI_HEALTHBAR_ORB_BACK_WIDTH * scale);
-					healthbarHeight = (int) (GUI_HEALTHBAR_ORB_BACK_HEIGHT * scale);
-					if (xConfigOffset >= 0) {
-						xOffset = xConfigOffset;
-					} else {
-						xOffset = window.getGuiScaledWidth() - (-xConfigOffset + healthbarWidth);
-					}
-					
-					List<LivingEntity> bigPets = PetFuncs.GetTamedEntities(player, (ent) -> {
-						return ent != null && ent instanceof IEntityPet && ((IEntityPet) ent).isBigPet();
-					});
-					Collections.sort(bigPets, (left, right) -> {
-						return ((LivingEntity) (left)).getUUID().compareTo(((LivingEntity) right).getUUID());
-					});
-					for (LivingEntity bigPet: bigPets) {
-						renderHealthbarOrb(matrixStackIn, player, window, bigPet, xOffset, y, scale);
-						y += healthbarHeight + 2;
-					}
-				}
-				
-				// Regulars/all
-				healthbarWidth = (int) (GUI_HEALTHBAR_BOX_BACK_WIDTH * scale);
-				healthbarHeight = (int) (GUI_HEALTHBAR_BOX_BACK_HEIGHT * scale);
-				if (xConfigOffset >= 0) {
-					xOffset = xConfigOffset;
-				} else {
-					xOffset = window.getGuiScaledWidth() - (-xConfigOffset + healthbarWidth);
-				}
-				final boolean hideBigs = ModConfig.config.showBigHealthbars();
-				for (LivingEntity tamed : PetFuncs.GetTamedEntities(player)) {
-					if (hideBigs
-							&& tamed instanceof IEntityPet
-							&& ((IEntityPet) tamed).isBigPet()) {
-						continue;
-					}
-					renderHealthbarBox(matrixStackIn, player, window, tamed, xOffset, y, scale);
-					y += healthbarHeight;
-				}
-			}
-			
-			final float ticks = player.tickCount + event.getPartialTicks();
-			if (petTargetIndex >= 0) {
-				PetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(player);
-				renderPetActionTargetMode(matrixStackIn, player, window, mode, (ticks - petTargetIndex) / (float) petTargetAnimDur);
-				
-				if (ticks >= petTargetIndex + petTargetAnimDur) {
-					petTargetIndex = -1;
-				}
-			}
-			
-			if (petPlacementIndex >= 0) {
-				PetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(player);
-				renderPetActionPlacementMode(matrixStackIn, player, window, mode, (ticks - petPlacementIndex) / (float) petPlacementAnimDur);
-				
-				if (ticks >= petPlacementIndex + petPlacementAnimDur) {
-					petPlacementIndex = -1;
-				}
-			}
-		}
-		
-		int unused; // convert to HUD layer system?
+		healthbarOverlay = OverlayRegistry.registerOverlayAbove(ForgeIngameGui.EXPERIENCE_BAR_ELEMENT, "PetCommand::healthbarOverlay", this::renderHealthbarOverlay);
+		modeIconOverlay = OverlayRegistry.registerOverlayAbove(ForgeIngameGui.CROSSHAIR_ELEMENT, "PetCommand::modeOverlay", this::renderModeOverlay);
 	}
 	
 	@SubscribeEvent
@@ -217,8 +141,85 @@ public class OverlayRenderer extends GuiComponent {
 			matrixStackIn.popPose();
 		}
 	}
+	
+	private void renderHealthbarOverlay(ForgeIngameGui gui, PoseStack matrixStackIn, float partialTicks, int width, int height) {
+		if (ModConfig.config.showHealthbars()) {
+			Minecraft mc = Minecraft.getInstance();
+			LocalPlayer player = mc.player;
+			final float scale = 0.5f;
+			int y = ModConfig.config.getHealthbarAnchorY();
+			int healthbarWidth;
+			int healthbarHeight;
+			int xOffset;
+			int xConfigOffset = ModConfig.config.getHealthbarAnchorX();
+			
+			// Bigs
+			if (ModConfig.config.showBigHealthbars()) {
+				healthbarWidth = (int) (GUI_HEALTHBAR_ORB_BACK_WIDTH * scale);
+				healthbarHeight = (int) (GUI_HEALTHBAR_ORB_BACK_HEIGHT * scale);
+				if (xConfigOffset >= 0) {
+					xOffset = xConfigOffset;
+				} else {
+					xOffset = width - (-xConfigOffset + healthbarWidth);
+				}
+				
+				List<LivingEntity> bigPets = PetFuncs.GetTamedEntities(player, (ent) -> {
+					return ent != null && ent instanceof IEntityPet && ((IEntityPet) ent).isBigPet();
+				});
+				Collections.sort(bigPets, (left, right) -> {
+					return ((LivingEntity) (left)).getUUID().compareTo(((LivingEntity) right).getUUID());
+				});
+				for (LivingEntity bigPet: bigPets) {
+					renderHealthbarOrb(matrixStackIn, player, width, height, bigPet, xOffset, y, scale);
+					y += healthbarHeight + 2;
+				}
+			}
+			
+			// Regulars/all
+			healthbarWidth = (int) (GUI_HEALTHBAR_BOX_BACK_WIDTH * scale);
+			healthbarHeight = (int) (GUI_HEALTHBAR_BOX_BACK_HEIGHT * scale);
+			if (xConfigOffset >= 0) {
+				xOffset = xConfigOffset;
+			} else {
+				xOffset = width - (-xConfigOffset + healthbarWidth);
+			}
+			final boolean hideBigs = ModConfig.config.showBigHealthbars();
+			for (LivingEntity tamed : PetFuncs.GetTamedEntities(player)) {
+				if (hideBigs
+						&& tamed instanceof IEntityPet
+						&& ((IEntityPet) tamed).isBigPet()) {
+					continue;
+				}
+				renderHealthbarBox(matrixStackIn, player, width, height, tamed, xOffset, y, scale);
+				y += healthbarHeight;
+			}
+		}
+	}
+	
+	private void renderModeOverlay(ForgeIngameGui gui, PoseStack matrixStackIn, float partialTicks, int width, int height) {
+		Minecraft mc = Minecraft.getInstance();
+		LocalPlayer player = mc.player;
+		final float ticks = player.tickCount + partialTicks;
+		if (petTargetIndex >= 0) {
+			PetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(player);
+			renderPetActionTargetMode(matrixStackIn, player, width, height, mode, (ticks - petTargetIndex) / (float) petTargetAnimDur);
+			
+			if (ticks >= petTargetIndex + petTargetAnimDur) {
+				petTargetIndex = -1;
+			}
+		}
+		
+		if (petPlacementIndex >= 0) {
+			PetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(player);
+			renderPetActionPlacementMode(matrixStackIn, player, width, height, mode, (ticks - petPlacementIndex) / (float) petPlacementAnimDur);
+			
+			if (ticks >= petPlacementIndex + petPlacementAnimDur) {
+				petPlacementIndex = -1;
+			}
+		}
+	}
 
-	private void renderPetActionTargetMode(PoseStack matrixStackIn, LocalPlayer player, Window scaledResolution, PetTargetMode mode, float prog) {
+	private void renderPetActionTargetMode(PoseStack matrixStackIn, LocalPlayer player, int width, int height, PetTargetMode mode, float prog) {
 		final float alpha;
 		if (prog < .2f) {
 			alpha = prog / .2f;
@@ -236,7 +237,7 @@ public class OverlayRenderer extends GuiComponent {
 		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
 		RenderSystem.setShaderTexture(0, GUI_PET_ICONS);
 		
-		matrixStackIn.translate(scaledResolution.getGuiScaledWidth() / 2, scaledResolution.getGuiScaledHeight() / 2, 0);
+		matrixStackIn.translate(width / 2, height / 2, 0);
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.translate(1, 1, 0);
 		
@@ -248,7 +249,7 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.popPose();
 	}
 	
-	private void renderPetActionPlacementMode(PoseStack matrixStackIn, LocalPlayer player, Window scaledResolution, PetPlacementMode mode, float prog) {
+	private void renderPetActionPlacementMode(PoseStack matrixStackIn, LocalPlayer player, int width, int height, PetPlacementMode mode, float prog) {
 		final float alpha;
 		if (prog < .2f) {
 			alpha = prog / .2f;
@@ -265,7 +266,7 @@ public class OverlayRenderer extends GuiComponent {
 		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
 		RenderSystem.setShaderTexture(0, GUI_PET_ICONS);
 		
-		matrixStackIn.translate(scaledResolution.getGuiScaledWidth() / 2, scaledResolution.getGuiScaledHeight() / 2, 0);
+		matrixStackIn.translate(width / 2, height / 2, 0);
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.translate(-(GUI_PET_ICON_DIMS + 1), 1, 0);
 		
@@ -277,7 +278,7 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.popPose();
 	}
 	
-	private void renderHealthbarOrb(PoseStack matrixStackIn, LocalPlayer player, Window window, LivingEntity pet, int xoffset, int yoffset, float scale) {
+	private void renderHealthbarOrb(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, int xoffset, int yoffset, float scale) {
 		Minecraft mc = Minecraft.getInstance();
 		
 		// Render back, scaled bar + middle 'goods', and then foreground. Easy.
@@ -379,7 +380,7 @@ public class OverlayRenderer extends GuiComponent {
 		//matrixStackIn.rotate(Vector3f.YP.rotationDegrees(-30f));
 		RenderSystem.getModelViewStack().pushPose();
 		RenderSystem.getModelViewStack().mulPoseMatrix(matrixStackIn.last().pose());
-		InventoryScreen.renderEntityInInventory(0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, window.getGuiScaledWidth()/2, -20, pet);
+		InventoryScreen.renderEntityInInventory(0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, width/2, -20, pet);
 		RenderSystem.getModelViewStack().popPose();
 		matrixStackIn.popPose();
 		RenderSystem.setShaderTexture(0, GUI_HEALTHBARS);
@@ -426,7 +427,7 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.popPose();
 	}
 	
-	private void renderHealthbarBox(PoseStack matrixStackIn, LocalPlayer player, Window window, LivingEntity pet, int xoffset, int yoffset, float scale) {
+	private void renderHealthbarBox(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, int xoffset, int yoffset, float scale) {
 		Minecraft mc = Minecraft.getInstance();
 		
 		// Render back, scaled bar + middle 'goods', and then foreground. Easy.
