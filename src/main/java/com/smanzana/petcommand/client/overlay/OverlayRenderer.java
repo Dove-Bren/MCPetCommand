@@ -22,6 +22,7 @@ import com.smanzana.petcommand.api.pet.PetPlacementMode;
 import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.client.render.PetCommandRenderTypes;
 import com.smanzana.petcommand.config.ModConfig;
+import com.smanzana.petcommand.proxy.ClientProxy;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -430,6 +431,8 @@ public class OverlayRenderer extends GuiComponent {
 	private void renderHealthbarBox(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, int xoffset, int yoffset, float scale) {
 		Minecraft mc = Minecraft.getInstance();
 		
+		final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getCurrentPet() == pet; // TODO parameter
+		
 		// Render back, scaled bar + middle 'goods', and then foreground. Easy.
 		// For center, render:
 		// 1) healthbar
@@ -468,13 +471,27 @@ public class OverlayRenderer extends GuiComponent {
 		
 		RenderSystem.enableBlend();
 		
+		// Draw selected outline
+		if (isSelected) {
+			final double period = 1000;
+			final float wiggleRadius = 3;
+			final double wiggleProg = ((double) (System.currentTimeMillis() % (long) period) / period);
+			final float wiggleMod = (float) Math.sin(wiggleProg * Math.PI * 2) * wiggleRadius;
+			
+			matrixStackIn.pushPose();
+			matrixStackIn.translate(-20 + (int)(wiggleMod), 0, -101);
+			RenderSystem.setShaderColor(1f, 1f, 1f, .5f);
+			
+			blit(matrixStackIn, 0, 0,
+					0, GUI_HEALTHBAR_BOX_BACK_VOFFSET + GUI_HEALTHBAR_BOX_BACK_HEIGHT, GUI_HEALTHBAR_BOX_BACK_WIDTH, GUI_HEALTHBAR_BOX_BACK_HEIGHT);
+			RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+			matrixStackIn.popPose();
+		}
+		
 		// Draw background
 		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, -100);
 		RenderSystem.setShaderColor(petColor[0], petColor[1], petColor[2], petColor[3]);
-//		this.drawGradientRect(GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
-//				GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
-//				0x50000000, 0xA0000000); //nameplate background
 		blit(matrixStackIn, 0, 0,
 				0, GUI_HEALTHBAR_BOX_BACK_VOFFSET + GUI_HEALTHBAR_BOX_BACK_HEIGHT, GUI_HEALTHBAR_BOX_BACK_WIDTH, GUI_HEALTHBAR_BOX_BACK_HEIGHT);
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
