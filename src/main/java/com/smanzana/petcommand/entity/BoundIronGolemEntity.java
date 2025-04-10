@@ -271,7 +271,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 
 	@Override
 	public boolean isBigPet() {
-		return false;
+		return true;
 	}
 
 	@Override

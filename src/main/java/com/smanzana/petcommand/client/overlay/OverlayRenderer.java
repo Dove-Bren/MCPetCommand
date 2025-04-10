@@ -310,6 +310,8 @@ public class OverlayRenderer extends GuiComponent {
 			info = PetInfo.Wrap(pet);
 		}
 		
+		final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getCurrentPet() == pet; // TODO parameter
+		
 		final float health = (float) info.getHpPercent();//(float) (Math.max(0, Math.ceil(pet.getHealth())) / Math.max(0.01, Math.ceil(pet.getMaxHealth())));
 		final boolean hasSecondaryBar = info.getMaxSecondary() > 0;
 		float secondaryMeter = (float) info.getSecondaryPercent();
@@ -328,6 +330,27 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.scale(scale, scale, 1);
 		
 		RenderSystem.enableBlend();
+		
+		// Draw selected outline
+		if (isSelected) {
+			final double period = 1000;
+			final float wiggleRadius = 3;
+			final double wiggleProg = ((double) (System.currentTimeMillis() % (long) period) / period);
+			final float wiggleMod = (float) Math.sin(wiggleProg * Math.PI * 2) * wiggleRadius;
+			
+			matrixStackIn.pushPose();
+			matrixStackIn.translate(-20 + (int)(wiggleMod), 0, -101);
+			RenderSystem.setShaderColor(1f, 1f, 1f, .5f);
+			
+			this.fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
+					GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
+					0x50000000, 0xA0000000); //nameplate background
+			RenderSystem.setShaderColor(1f, 1f, 1f, .5f);
+			blit(matrixStackIn, 0, 0,
+					0, GUI_HEALTHBAR_ORB_BACK_HEIGHT, GUI_HEALTHBAR_ORB_BACK_WIDTH, GUI_HEALTHBAR_ORB_BACK_HEIGHT);
+			RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+			matrixStackIn.popPose();
+		}
 		
 		// Draw background
 		matrixStackIn.pushPose();
@@ -383,6 +406,7 @@ public class OverlayRenderer extends GuiComponent {
 		RenderSystem.getModelViewStack().mulPoseMatrix(matrixStackIn.last().pose());
 		InventoryScreen.renderEntityInInventory(0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, width/2, -20, pet);
 		RenderSystem.getModelViewStack().popPose();
+		RenderSystem.applyModelViewMatrix();
 		matrixStackIn.popPose();
 		RenderSystem.setShaderTexture(0, GUI_HEALTHBARS);
 		
