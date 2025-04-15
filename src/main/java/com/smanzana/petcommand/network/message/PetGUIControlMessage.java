@@ -6,7 +6,7 @@ import com.smanzana.petcommand.client.petgui.PetGUI;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 /**
  * Client has performed some action in a dragon GUI

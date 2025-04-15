@@ -7,7 +7,7 @@ import com.smanzana.petcommand.client.petgui.PetGUI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 /**
  * Server is sending some syncing data to the client GUI

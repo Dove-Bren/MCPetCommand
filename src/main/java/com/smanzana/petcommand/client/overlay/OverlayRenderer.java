@@ -124,10 +124,10 @@ public class OverlayRenderer extends GuiComponent {
 		List<Mob> targeters = PetCommandAPI.GetTargetManager(event.getEntity()).getEntitiesTargetting(event.getEntity());
 		if (!targeters.isEmpty()) {
 			int i = 0;
-			final PoseStack matrixStackIn = event.getMatrixStack();
+			final PoseStack matrixStackIn = event.getPoseStack();
 			final Minecraft mc = Minecraft.getInstance();
 			final Camera activeRenderInfo = mc.getEntityRenderDispatcher().camera;
-			final VertexConsumer buffer = event.getBuffers().getBuffer(PetCommandRenderTypes.getPetTargetIcon()); // Could only grab this when rendering at least one?
+			final VertexConsumer buffer = event.getMultiBufferSource().getBuffer(PetCommandRenderTypes.getPetTargetIcon()); // Could only grab this when rendering at least one?
 			matrixStackIn.pushPose();
 			matrixStackIn.translate(0, event.getEntity().getBbHeight() + .15f, 0);
 			matrixStackIn.mulPose(activeRenderInfo.rotation());
@@ -136,7 +136,7 @@ public class OverlayRenderer extends GuiComponent {
 				@Nullable LivingEntity owner = PetFuncs.GetOwner(targeter);
 				if (owner != null && owner == mc.player) {
 					matrixStackIn.translate(0, .25f /* *i*/, 0);
-					renderPetTargetIcon(matrixStackIn, buffer, targeter, i++, event.getPartialRenderTick());
+					renderPetTargetIcon(matrixStackIn, buffer, targeter, i++, event.getPartialTick());
 				}
 			}
 			matrixStackIn.popPose();

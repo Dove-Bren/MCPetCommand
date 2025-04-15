@@ -4,7 +4,7 @@ import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.client.petgui.PetGUI;
 
 import net.minecraft.world.inventory.MenuType;
-import net.minecraftforge.common.extensions.IForgeContainerType;
+import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -21,6 +21,6 @@ public class PetCommandContainers {
 	public static void registerContainers(final RegistryEvent.Register<MenuType<?>> event) {
 		final IForgeRegistry<MenuType<?>> registry = event.getRegistry();
 		
-		registry.register(IForgeContainerType.create(PetGUI.PetContainer::FromNetwork).setRegistryName(PetGUI.PetContainer.ID));
+		registry.register(IForgeMenuType.create(PetGUI.PetContainer::FromNetwork).setRegistryName(PetGUI.PetContainer.ID));
 	}
 }
