@@ -3,16 +3,18 @@ package com.smanzana.petcommand.api.pet;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.api.PetCommandAPI;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 
 public class PetInfo {
 	
-	public static enum SecondaryFlavor {
+	public static enum ValueFlavor {
 		/**
 		 * A bad thing, but expected to slowly grow as times goes on.
 		 * For example, 'fatigue'.
@@ -52,7 +54,7 @@ public class PetInfo {
 		protected final float diffA;
 		
 		// ARGB
-		private SecondaryFlavor(int empty, int full) {
+		private ValueFlavor(int empty, int full) {
 			emptyR = (float) ((empty >> 16) & 0xFF) / 256f;
 			emptyG = (float) ((empty >> 8) & 0xFF) / 256f;
 			emptyB = (float) ((empty >> 0) & 0xFF) / 256f;
@@ -86,6 +88,10 @@ public class PetInfo {
 		}
 	}
 	
+	public static record PetValue(double current, double max, @Nonnull ValueFlavor flavor, @Nullable Component label) { }
+	
+	public static final PetValue EmptyValue = new PetValue(0, 1, ValueFlavor.PROGRESS, null);
+	
 	public static enum PetAction {
 		SITTING,
 		ATTACKING,
@@ -94,46 +100,54 @@ public class PetInfo {
 		WAITING
 	}
 
+	// All pets should have these
 	private double currentHp;
 	private double maxHp;
 	private double hpPercent; // out of 1.0
 
-	private double currentSecondary;
-	private double maxSecondary;
-	private double secondaryPercent; // out of 1.0
+	// Pets can provide a set of extra metrics for display, with info about how to display it
+	private final List<PetValue> values;
 	
-	private SecondaryFlavor flavor;
 	private PetAction action;
 	
 	private int refCount;
 	
 	protected PetInfo() {
 		refCount = 0;
+		values = new ArrayList<>();
 	}
 	
-	protected void set(double hp, double maxHp, double secondary, double maxSecondary, SecondaryFlavor flavor, PetAction action) {
+	protected void set(PetAction action, double hp, double maxHp, PetValue ... values) {
 		this.currentHp = hp;
 		this.maxHp = maxHp;
 		this.hpPercent = maxHp > 0 ? (hp / maxHp) : 0;
 		
-		this.currentSecondary = secondary;
-		this.maxSecondary = maxSecondary;
-		this.secondaryPercent = maxSecondary > 0 ? (secondary / maxSecondary) : 0;
+		this.values.clear();
+		if (values.length == 0) {
+			this.values.add(EmptyValue);
+		} else {
+			for (PetValue value : values) {
+				this.values.add(value);
+			}
+		}
 		
-		this.flavor = flavor == null ? SecondaryFlavor.PROGRESS : flavor;
 		this.action = action == null ? PetAction.WAITING : action;
 	}
 	
-	protected void set(double hp, double maxHp, double secondary, double maxSecondary) {
-		set(hp, maxHp, secondary, maxSecondary, null, null);
+	protected void set(PetAction action, double hp, double maxHp, double secondary, double maxSecondary, ValueFlavor flavor, Component secondaryLabel) {
+		set(action, hp, maxHp, new PetValue(secondary, maxSecondary, flavor == null ? ValueFlavor.PROGRESS : flavor, secondaryLabel));
+	}
+	
+	protected void set(double hp, double maxHp, double secondary, double maxSecondary, Component secondaryLabel) {
+		set(null, hp, maxHp, secondary, maxSecondary, null, secondaryLabel);
 	}
 	
 	protected void set(double hp, double maxHp, PetAction action) {
-		set(hp, maxHp, 0, 0, null, action);
+		set(action, hp, maxHp, EmptyValue);
 	}
 	
 	protected void set(double hp, double maxHp) {
-		set(hp, maxHp, 0, 0);
+		set(null, hp, maxHp, EmptyValue);
 	}
 	
 	protected PetInfo addRef() {
@@ -175,25 +189,9 @@ public class PetInfo {
 		validate();
 		return hpPercent;
 	}
-
-	public double getCurrentSecondary() {
-		validate();
-		return currentSecondary;
-	}
-
-	public double getMaxSecondary() {
-		validate();
-		return maxSecondary;
-	}
-
-	public double getSecondaryPercent() {
-		validate();
-		return secondaryPercent;
-	}
 	
-	public SecondaryFlavor getSecondaryFlavor() {
-		validate();
-		return this.flavor;
+	public List<PetValue> getPetValues() {
+		return this.values;
 	}
 	
 	public PetAction getPetAction() {
@@ -225,15 +223,21 @@ public class PetInfo {
 		}
 	}
 	
-	public static final PetInfo claim(double hp, double maxHp, double secondary, double maxSecondary, SecondaryFlavor flavor, PetAction action) {
+	public static final PetInfo claim(PetAction action, double hp, double maxHp, PetValue ...values) {
 		PetInfo info = claim();
-		info.set(hp, maxHp, secondary, maxSecondary, flavor, action);
+		info.set(action, hp, maxHp, values);
 		return info;
 	}
 	
-	public static final PetInfo claim(double hp, double maxHp, double secondary, double maxSecondary) {
+	public static final PetInfo claim(PetAction action, double hp, double maxHp, double secondary, double maxSecondary, ValueFlavor flavor, Component secondaryLabel) {
 		PetInfo info = claim();
-		info.set(hp, maxHp, secondary, maxSecondary);
+		info.set(action, hp, maxHp, secondary, maxSecondary, flavor, secondaryLabel);
+		return info;
+	}
+	
+	public static final PetInfo claim(double hp, double maxHp, double secondary, double maxSecondary, Component secondaryLabel) {
+		PetInfo info = claim();
+		info.set(hp, maxHp, secondary, maxSecondary, secondaryLabel);
 		return info;
 	}
 	
@@ -287,13 +291,18 @@ public class PetInfo {
 		}
 		
 		@Override
-		public void set(double hp, double maxHp, double secondary, double maxSecondary, SecondaryFlavor flavor, PetAction action) {
-			super.set(hp, maxHp, secondary, maxSecondary, flavor, action);
+		public void set(PetAction action, double hp, double maxHp, PetValue ...values) {
+			super.set(action, hp, maxHp, values);
 		}
 		
 		@Override
-		public void set(double hp, double maxHp, double secondary, double maxSecondary) {
-			super.set(hp, maxHp, secondary, maxSecondary);
+		public void set(PetAction action, double hp, double maxHp, double secondary, double maxSecondary, ValueFlavor flavor, Component secondaryLabel) {
+			super.set(action, hp, maxHp, secondary, maxSecondary, flavor, secondaryLabel);
+		}
+		
+		@Override
+		public void set(double hp, double maxHp, double secondary, double maxSecondary, Component secondaryLabel) {
+			super.set(hp, maxHp, secondary, maxSecondary, secondaryLabel);
 		}
 		
 		@Override
@@ -303,7 +312,7 @@ public class PetInfo {
 		
 		@Override
 		public void set(double hp, double maxHp) {
-			super.set(hp, maxHp, 0, 0);
+			super.set(hp, maxHp, (PetAction)null);
 		}
 		
 		@Override

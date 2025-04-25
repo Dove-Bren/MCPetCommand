@@ -15,12 +15,14 @@ import com.smanzana.petcommand.api.client.petgui.sheet.PetInventorySheet;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.pet.PetInfo;
 import com.smanzana.petcommand.api.pet.PetInfo.PetAction;
-import com.smanzana.petcommand.api.pet.PetInfo.SecondaryFlavor;
+import com.smanzana.petcommand.api.pet.PetInfo.ValueFlavor;
 import com.smanzana.petcommand.util.ArrayUtil;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -57,6 +59,8 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	
 	public static final String ID = "bound_iron_golem";
+	
+	private static final Component SwingLabel = new TranslatableComponent("value." + ID + ".cooldown");
 	
 	private static final String NBT_OWNER_ID = "bound_owner_id";
 	private static final String NBT_INVENTORY = "inventory";
@@ -261,7 +265,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	@Override
 	public PetInfo getPetSummary() {
 		final int maxAttack = 10; // Copied from IronGolemEntity. This is max cooldown
-		return PetInfo.claim(this.getHealth(), this.getMaxHealth(), Math.max(0, maxAttack - this.getAttackAnimationTick()), maxAttack, SecondaryFlavor.GOOD, getCurrentAction());
+		return PetInfo.claim(getCurrentAction(), this.getHealth(), this.getMaxHealth(), Math.max(0, maxAttack - this.getAttackAnimationTick()), maxAttack, ValueFlavor.GOOD, SwingLabel);
 	}
 
 	@Override

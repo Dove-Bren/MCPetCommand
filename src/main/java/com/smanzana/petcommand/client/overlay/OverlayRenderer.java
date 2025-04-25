@@ -17,7 +17,8 @@ import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.pet.PetInfo;
 import com.smanzana.petcommand.api.pet.PetInfo.PetAction;
-import com.smanzana.petcommand.api.pet.PetInfo.SecondaryFlavor;
+import com.smanzana.petcommand.api.pet.PetInfo.PetValue;
+import com.smanzana.petcommand.api.pet.PetInfo.ValueFlavor;
 import com.smanzana.petcommand.api.pet.PetPlacementMode;
 import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.client.render.PetCommandRenderTypes;
@@ -312,10 +313,14 @@ public class OverlayRenderer extends GuiComponent {
 			info = PetInfo.Wrap(pet);
 		}
 		
+		//TODO: use some sort of configuration to pick which value to display
+		final List<PetValue> values = info.getPetValues();
+		final PetValue valueToDisplay = values.isEmpty() ? PetInfo.EmptyValue : values.get(0);
+		
 		final float health = (float) info.getHpPercent();//(float) (Math.max(0, Math.ceil(pet.getHealth())) / Math.max(0.01, Math.ceil(pet.getMaxHealth())));
-		final boolean hasSecondaryBar = info.getMaxSecondary() > 0;
-		float secondaryMeter = (float) info.getSecondaryPercent();
-		final SecondaryFlavor flavor = info.getSecondaryFlavor();
+		final boolean hasSecondaryBar = valueToDisplay.max() > 0;
+		float secondaryMeter = (float) (valueToDisplay.current() / valueToDisplay.max());
+		final ValueFlavor flavor = valueToDisplay.flavor();
 		final PetAction action = info.getPetAction();
 		final float[] petColor = getTargetColor((Mob) pet);
 		
@@ -470,10 +475,14 @@ public class OverlayRenderer extends GuiComponent {
 			info = PetInfo.Wrap(pet);
 		}
 		
+		//TODO: use some sort of configuration to pick which value to display
+		final List<PetValue> values = info.getPetValues();
+		final PetValue valueToDisplay = values.isEmpty() ? PetInfo.EmptyValue : values.get(0);
+		
 		final float health = (float) info.getHpPercent();//(float) (Math.max(0, Math.ceil(pet.getHealth())) / Math.max(0.01, Math.ceil(pet.getMaxHealth())));
-		final boolean hasSecondaryBar = info.getMaxSecondary() > 0;
-		float secondaryMeter = (float) info.getSecondaryPercent();
-		final SecondaryFlavor flavor = info.getSecondaryFlavor();
+		final boolean hasSecondaryBar = valueToDisplay.max() > 0;
+		float secondaryMeter = (float) (valueToDisplay.current() / valueToDisplay.max());
+		final ValueFlavor flavor = valueToDisplay.flavor();
 //		final boolean sitting = (pet instanceof EntityTameable ? ((EntityTameable) pet).isSitting()
 //				: pet instanceof IEntityTameable ? ((IEntityTameable) pet).isSitting()
 //				: false);
