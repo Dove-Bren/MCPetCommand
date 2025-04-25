@@ -2,6 +2,7 @@ package com.smanzana.petcommand.proxy;
 
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetCommandAPI;
+import com.smanzana.petcommand.api.client.pet.ISelectionManager;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.pet.ITargetManager;
 
@@ -26,5 +27,10 @@ public class PetCommandAPIImpl extends PetCommandAPI {
 	@Override
 	protected ITargetManager getTargetManager(LivingEntity entity) {
 		return PetCommand.GetProxy().getTargetManager(entity);
+	}
+
+	@Override
+	protected ISelectionManager getSelectionManager() {
+		return PetCommand.GetProxy().getSelectionManager();
 	}
 }

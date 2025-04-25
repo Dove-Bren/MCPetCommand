@@ -171,7 +171,8 @@ public class OverlayRenderer extends GuiComponent {
 					return ((LivingEntity) (left)).getUUID().compareTo(((LivingEntity) right).getUUID());
 				});
 				for (LivingEntity bigPet: bigPets) {
-					renderHealthbarOrb(matrixStackIn, player, width, height, bigPet, xOffset, y, scale);
+					final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getSelectionManager().isSelected(bigPet);
+					renderHealthbarOrb(matrixStackIn, player, width, height, bigPet, isSelected, xOffset, y, scale);
 					y += healthbarHeight + 2;
 				}
 			}
@@ -191,7 +192,8 @@ public class OverlayRenderer extends GuiComponent {
 						&& ((IEntityPet) tamed).isBigPet()) {
 					continue;
 				}
-				renderHealthbarBox(matrixStackIn, player, width, height, tamed, xOffset, y, scale);
+				final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getSelectionManager().isSelected(tamed);
+				renderHealthbarBox(matrixStackIn, player, width, height, tamed, isSelected, xOffset, y, scale);
 				y += healthbarHeight;
 			}
 		}
@@ -279,7 +281,7 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.popPose();
 	}
 	
-	private void renderHealthbarOrb(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, int xoffset, int yoffset, float scale) {
+	private void renderHealthbarOrb(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, boolean isSelected, int xoffset, int yoffset, float scale) {
 		Minecraft mc = Minecraft.getInstance();
 		
 		// Render back, scaled bar + middle 'goods', and then foreground. Easy.
@@ -309,8 +311,6 @@ public class OverlayRenderer extends GuiComponent {
 		} else {
 			info = PetInfo.Wrap(pet);
 		}
-		
-		final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getCurrentPet() == pet; // TODO parameter
 		
 		final float health = (float) info.getHpPercent();//(float) (Math.max(0, Math.ceil(pet.getHealth())) / Math.max(0.01, Math.ceil(pet.getMaxHealth())));
 		final boolean hasSecondaryBar = info.getMaxSecondary() > 0;
@@ -452,10 +452,8 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.popPose();
 	}
 	
-	private void renderHealthbarBox(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, int xoffset, int yoffset, float scale) {
+	private void renderHealthbarBox(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, boolean isSelected, int xoffset, int yoffset, float scale) {
 		Minecraft mc = Minecraft.getInstance();
-		
-		final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getCurrentPet() == pet; // TODO parameter
 		
 		// Render back, scaled bar + middle 'goods', and then foreground. Easy.
 		// For center, render:

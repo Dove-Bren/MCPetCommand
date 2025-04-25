@@ -1,6 +1,7 @@
 package com.smanzana.petcommand.proxy;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -13,6 +14,8 @@ import com.smanzana.petcommand.api.pet.ITargetManager;
 import com.smanzana.petcommand.api.pet.PetPlacementMode;
 import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.client.overlay.OverlayRenderer;
+import com.smanzana.petcommand.client.pet.SelectionManager;
+import com.smanzana.petcommand.client.render.OutlineRenderer;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetCommandMessage;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
@@ -36,12 +39,14 @@ public class ClientProxy extends CommonProxy {
 	private KeyMapping bindingPetAttack;
 	private KeyMapping bindingPetAllStop;
 	private OverlayRenderer overlayRenderer;
-	
-	private @Nullable LivingEntity selectedPet; // Used for directing pets to do actions on key releases
+	private OutlineRenderer outlineRenderer;
+	private SelectionManager selectionManager;
 	
 	public ClientProxy() {
 		super();
 		this.overlayRenderer = new OverlayRenderer();
+		this.outlineRenderer = new OutlineRenderer();
+		this.selectionManager = new SelectionManager(this.getOutlineRenderer());
 		
 		MinecraftForge.EVENT_BUS.register(this); // Handle keyboard inputs
 	}
@@ -150,7 +155,8 @@ public class ClientProxy extends CommonProxy {
 			if (player != null && player.level != null) {
 				final float partialTicks = Minecraft.getInstance().getFrameTime();
 				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
-				if (selectedPet == null) {
+				final Set<LivingEntity> selectedPets = this.getSelectionManager().getSelectedPets();
+				if (selectedPets.isEmpty()) {
 					// Try and select a pet
 					HitResult result = RayTrace.raytraceApprox(
 							player.level, player,
@@ -159,10 +165,11 @@ public class ClientProxy extends CommonProxy {
 							100, (e) -> { return e != player && tames.contains(e);},
 							.1);
 					if (result != null && result.getType() == HitResult.Type.ENTITY) {
-						selectedPet = RayTrace.livingFromRaytrace(result);
-						if (selectedPet.level.isClientSide) {
-							selectedPet.setGlowingTag(true);
-						}
+						LivingEntity selectedPet = RayTrace.livingFromRaytrace(result);
+						this.getSelectionManager().addPet(selectedPet);
+					} else {
+						// didn't hit any specific pet, so select all
+						tames.forEach(p -> this.getSelectionManager().addPet(p));
 					}
 				} else {
 					// Find target
@@ -173,14 +180,13 @@ public class ClientProxy extends CommonProxy {
 							100, (e) -> { return e != player && e instanceof LivingEntity && !player.isAlliedTo(e) && !tames.contains(e);},
 							1);
 					if (result != null && result.getType() == HitResult.Type.ENTITY) {
-						NetworkHandler.sendToServer(PetCommandMessage.PetAttack(selectedPet, RayTrace.livingFromRaytrace(result)));
+						for (LivingEntity selectedPet : selectedPets) {
+							NetworkHandler.sendToServer(PetCommandMessage.PetAttack(selectedPet, RayTrace.livingFromRaytrace(result)));
+						}
 					}
 					
 					// Clear out pet
-					if (selectedPet.level.isClientSide) {
-						selectedPet.setGlowingTag(false);
-					}
-					selectedPet = null;
+					this.getSelectionManager().clearSelection();
 				}
 			}
 		} else if (bindingPetAllStop.consumeClick()) {
@@ -188,8 +194,13 @@ public class ClientProxy extends CommonProxy {
 		}
 	}
 	
-	public @Nullable LivingEntity getCurrentPet() {
-		return this.selectedPet;
+	public OutlineRenderer getOutlineRenderer() {
+		return this.outlineRenderer;
+	}
+	
+	@Override
+	public SelectionManager getSelectionManager() {
+		return this.selectionManager;
 	}
 
 }
