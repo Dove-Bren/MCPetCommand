@@ -60,7 +60,7 @@ public class PetCommand
 	public PetCommand() {
 		instance = this;
 		
-		proxy = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
+		proxy = DistExecutor.unsafeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new); // TODO unsafe so that it works in dev. See forge docs :(
 		
 		(new ModConfig()).register();
 		
