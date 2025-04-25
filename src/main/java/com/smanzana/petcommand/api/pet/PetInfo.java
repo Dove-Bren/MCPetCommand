@@ -93,11 +93,11 @@ public class PetInfo {
 	public static final PetValue EmptyValue = new PetValue(0, 1, ValueFlavor.PROGRESS, null);
 	
 	public static enum PetAction {
-		SITTING,
-		ATTACKING,
-		IDLING,
-		WORKING,
-		WAITING
+		STAY,
+		ATTACK,
+		IDLE,
+		WORK,
+		WAIT
 	}
 
 	// All pets should have these
@@ -131,7 +131,7 @@ public class PetInfo {
 			}
 		}
 		
-		this.action = action == null ? PetAction.WAITING : action;
+		this.action = action == null ? PetAction.WAIT : action;
 	}
 	
 	protected void set(PetAction action, double hp, double maxHp, double secondary, double maxSecondary, ValueFlavor flavor, Component secondaryLabel) {
@@ -266,9 +266,9 @@ public class PetInfo {
 		if (entity instanceof TamableAnimal) {
 			final @Nullable LivingEntity target = PetCommandAPI.GetTargetManager(entity).getTarget((TamableAnimal) entity);
 			final PetAction action = ((TamableAnimal) entity).isInSittingPose()
-					? PetAction.SITTING
-					: (target != null && target.isAlive()) ? PetAction.ATTACKING		
-					: PetAction.IDLING;
+					? PetAction.STAY
+					: (target != null && target.isAlive()) ? PetAction.ATTACK		
+					: PetAction.IDLE;
 			return claim(entity.getHealth(), entity.getMaxHealth(), action);
 		} else {
 			return claim(entity.getHealth(), entity.getMaxHealth());

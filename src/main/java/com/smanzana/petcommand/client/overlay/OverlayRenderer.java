@@ -21,6 +21,9 @@ import com.smanzana.petcommand.api.pet.PetInfo.PetValue;
 import com.smanzana.petcommand.api.pet.PetInfo.ValueFlavor;
 import com.smanzana.petcommand.api.pet.PetPlacementMode;
 import com.smanzana.petcommand.api.pet.PetTargetMode;
+import com.smanzana.petcommand.client.icon.PetActionIcon;
+import com.smanzana.petcommand.client.icon.PetPlacementModeIcon;
+import com.smanzana.petcommand.client.icon.PetTargetModeIcon;
 import com.smanzana.petcommand.client.render.PetCommandRenderTypes;
 import com.smanzana.petcommand.config.ModConfig;
 import com.smanzana.petcommand.proxy.ClientProxy;
@@ -86,19 +89,13 @@ public class OverlayRenderer extends GuiComponent {
 	private static final int GUI_HEALTHBAR_BOX_SECONDARY_HEIGHT = 8;
 	
 	private static final int GUI_HEALTHBAR_ICON_LENGTH = 32;
-	private static final int GUI_HEALTHBAR_ICON_HOFFSET = 207;
 	private static final int GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET = 300;
 	private static final int GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET = 50;
-	private static final int GUI_HEALTHBAR_ICON_STAY_VOFFSET = 0;
-	private static final int GUI_HEALTHBAR_ICON_ATTACK_VOFFSET = GUI_HEALTHBAR_ICON_STAY_VOFFSET + GUI_HEALTHBAR_ICON_LENGTH;
-	private static final int GUI_HEALTHBAR_ICON_WORK_VOFFSET = GUI_HEALTHBAR_ICON_ATTACK_VOFFSET + GUI_HEALTHBAR_ICON_LENGTH;
 	
 	public static final ResourceLocation GUI_PET_ICONS = new ResourceLocation(PetCommand.MODID, "textures/gui/pet_icons.png");
 	//private static final int GUI_PET_ICONS_DIMS = 256;
 	private static final int GUI_PET_ICON_DIMS = 32;
-	private static final int GUI_PET_ICON_TARGET_HOFFSET = 0;
 	private static final int GUI_PET_ICON_TARGET_VOFFSET = 0;
-	private static final int GUI_PET_ICON_PLACEMENT_HOFFSET = 0;
 	private static final int GUI_PET_ICON_PLACEMENT_VOFFSET = GUI_PET_ICON_TARGET_VOFFSET + GUI_PET_ICON_DIMS;
 	private static final int GUI_PET_ICON_FLOATTARGET_HOFFSET = 0;
 	private static final int GUI_PET_ICON_FLOATTARGET_VOFFSET = GUI_PET_ICON_PLACEMENT_VOFFSET + GUI_PET_ICON_DIMS;
@@ -233,21 +230,14 @@ public class OverlayRenderer extends GuiComponent {
 			alpha = 1f;
 		}
 		
-		final int u = GUI_PET_ICON_TARGET_HOFFSET + (mode.ordinal() * GUI_PET_ICON_DIMS);
-		final int v = GUI_PET_ICON_TARGET_VOFFSET; // + (mode.ordinal() * GUI_PET_ICON_DIMS);
-		
 		matrixStackIn.pushPose();
 		RenderSystem.enableBlend();
 		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
-		RenderSystem.setShaderTexture(0, GUI_PET_ICONS);
-		
 		matrixStackIn.translate(width / 2, height / 2, 0);
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.translate(1, 1, 0);
 		
-		RenderSystem.setShaderColor(1f, 1f, 1f, alpha * .6f);
-		blit(matrixStackIn, 0, 0, u, v, GUI_PET_ICON_DIMS, GUI_PET_ICON_DIMS);
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+		PetTargetModeIcon.get(mode).draw(matrixStackIn, 0, 0, GUI_PET_ICON_DIMS, GUI_PET_ICON_DIMS, 1f, 1f, 1f, alpha * .6f);
 		
 		RenderSystem.disableBlend();
 		matrixStackIn.popPose();
@@ -262,21 +252,14 @@ public class OverlayRenderer extends GuiComponent {
 		} else {
 			alpha = 1f;
 		}
-		final int u = GUI_PET_ICON_PLACEMENT_HOFFSET + (mode.ordinal() * GUI_PET_ICON_DIMS);
-		final int v = GUI_PET_ICON_PLACEMENT_VOFFSET; // + (mode.ordinal() * GUI_PET_ICON_DIMS);
 		
 		matrixStackIn.pushPose();
 		RenderSystem.enableBlend();
 		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
-		RenderSystem.setShaderTexture(0, GUI_PET_ICONS);
-		
 		matrixStackIn.translate(width / 2, height / 2, 0);
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.translate(-(GUI_PET_ICON_DIMS + 1), 1, 0);
-		
-		RenderSystem.setShaderColor(1f, 1f, 1f, alpha * .6f);
-		blit(matrixStackIn, 0, 0, u, v, GUI_PET_ICON_DIMS, GUI_PET_ICON_DIMS);
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+		PetPlacementModeIcon.get(mode).draw(matrixStackIn, 0, 0, GUI_PET_ICON_DIMS, GUI_PET_ICON_DIMS, 1f, 1f, 1f, alpha * .6f);
 		
 		RenderSystem.disableBlend();
 		matrixStackIn.popPose();
@@ -420,16 +403,18 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.pushPose();
 		matrixStackIn.scale(.6f, .6f, .6f);
 		matrixStackIn.translate(0, 0, 0);
-		if (action == PetAction.ATTACKING) {
-			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
-					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_ATTACK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-		} else if (action == PetAction.SITTING) {
-			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
-					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_STAY_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-		} else if (action == PetAction.WORKING) {
-			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
-					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_WORK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-		}
+//		if (action == PetAction.ATTACK) {
+//			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
+//					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_ATTACK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
+//		} else if (action == PetAction.STAY) {
+//			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
+//					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_STAY_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
+//		} else if (action == PetAction.WORK) {
+//			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
+//					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_WORK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
+//		}
+		PetActionIcon.get(action).draw(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
+				GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
 		matrixStackIn.popPose();
 		
 		//	-> Name
@@ -568,16 +553,8 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.pushPose();
 		matrixStackIn.scale(.6f, .6f, .6f);
 		matrixStackIn.translate(0, 0, 0);
-		if (action == PetAction.ATTACKING) {
-			blit(matrixStackIn, 282, 6,
-					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_ATTACK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-		} else if (action == PetAction.SITTING) {
-			blit(matrixStackIn, 282, 6,
-					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_STAY_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-		} else if (action == PetAction.WORKING) {
-			blit(matrixStackIn, 282, 6,
-					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_WORK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-		}
+		PetActionIcon.get(action).draw(matrixStackIn, 282, 6,
+				GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
 		matrixStackIn.popPose();
 
 		//	-> Name
@@ -639,7 +616,6 @@ public class OverlayRenderer extends GuiComponent {
 		
 		final float scale = 1f / (16f * (256f / (float) GUI_HEALTHBAR_ICON_LENGTH));
 		//final Minecraft mc = Minecraft.getInstance();
-		//mc.getTextureManager().bindTexture(GUI_PET_ICONS);
 		matrixStackIn.pushPose();
 		matrixStackIn.scale(scale, scale, 1f);
 		matrixStackIn.translate(-(GUI_HEALTHBAR_ICON_LENGTH/2f), 0, 0);

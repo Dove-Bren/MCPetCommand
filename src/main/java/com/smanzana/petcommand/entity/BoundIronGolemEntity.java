@@ -254,11 +254,11 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	
 	protected PetAction getCurrentAction() {
 		if (this.isAttacking()) {
-			return PetAction.ATTACKING;
+			return PetAction.ATTACK;
 		} else if (this.getOfferFlowerTick() > 0) {
-			return PetAction.WORKING;
+			return PetAction.WORK;
 		} else {
-			return PetAction.IDLING;
+			return PetAction.IDLE;
 		}
 	}
 
