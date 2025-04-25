@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.smanzana.petcommand.api.client.render.IEntityOutliner;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
@@ -26,25 +27,7 @@ import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
-public class OutlineRenderer {
-	
-	public static final class Outline {
-		public float red;
-		public float green;
-		public float blue;
-		public float alpha;
-		
-		public Outline() {
-			this(1f, 1f, 1f, 1f);
-		}
-
-		public Outline(float red, float green, float blue, float alpha) {
-			this.red = red;
-			this.green = green;
-			this.blue = blue;
-			this.alpha = alpha;
-		}
-	}
+public class OutlineRenderer implements IEntityOutliner {
 	
 	// Per-frame tracking of whether vanilla is going to do any glow rendering
 	private boolean renderEntityDoingGlow = false;
@@ -59,10 +42,12 @@ public class OutlineRenderer {
 		this.outlineEntities = new HashMap<>();
 	}
 	
+	@Override
 	public synchronized void add(Entity ent, Outline outline) {
 		this.outlineEntities.put(ent, outline);
 	}
 	
+	@Override
 	public synchronized void remove(Entity ent) {
 		this.outlineEntities.remove(ent);
 	}
@@ -86,7 +71,7 @@ public class OutlineRenderer {
 			this.setupOutlineBuffers(Minecraft.getInstance().renderBuffers().bufferSource());
 		}
 		
-		outlineBuffer.color(outline.red, outline.green, outline.blue, outline.alpha);
+		outlineBuffer.color(outline.red(), outline.green(), outline.blue(), outline.alpha());
 		Minecraft.getInstance().getEntityRenderDispatcher().render(entity, 0, 0, 0, rotationYaw, partialTicks, matrixStackIn, outlineBuffer, 0xFFFFFFFF);
 	}
 	

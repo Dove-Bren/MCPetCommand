@@ -8,7 +8,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.event.TickEvent.ServerTickEvent;
-import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
+import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class TargetListener {
@@ -22,11 +23,11 @@ public class TargetListener {
 		clientTickCount = 0;
 	}
 	
-	@SubscribeEvent
-	public void onAITarget(LivingSetAttackTargetEvent event) {
-		if (event.getEntityLiving() instanceof Mob) {
+	@SubscribeEvent(priority = EventPriority.LOWEST)
+	public void onAITarget(LivingChangeTargetEvent event) {
+		if (!event.isCanceled() && event.getEntityLiving() instanceof Mob) {
 			Mob mob = (Mob) event.getEntityLiving();
-			PetCommandAPI.GetTargetManager(mob).updateTarget(mob, event.getTarget());
+			PetCommandAPI.GetTargetManager(mob).updateTarget(mob, event.getNewTarget());
 		}
 	}
 	

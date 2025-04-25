@@ -198,7 +198,6 @@ public class ClientProxy extends CommonProxy {
 		return this.outlineRenderer;
 	}
 	
-	@Override
 	public SelectionManager getSelectionManager() {
 		return this.selectionManager;
 	}

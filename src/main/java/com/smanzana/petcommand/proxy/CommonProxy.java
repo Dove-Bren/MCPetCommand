@@ -3,7 +3,6 @@ package com.smanzana.petcommand.proxy;
 import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.api.client.pet.ISelectionManager;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.pet.ITargetManager;
 import com.smanzana.petcommand.client.petgui.PetGUI;
@@ -44,8 +43,4 @@ public class CommonProxy {
 		return PetCommand.GetServerTargetManager();
 	}
 
-	public ISelectionManager getSelectionManager() {
-		return null;
-	}
-	
 }
