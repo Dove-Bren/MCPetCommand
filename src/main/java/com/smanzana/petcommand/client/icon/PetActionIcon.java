@@ -6,16 +6,16 @@ import java.util.Map;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.api.pet.PetInfo.PetAction;
+import com.smanzana.petcommand.api.pet.EPetAction;
 
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.resources.ResourceLocation;
 
 public class PetActionIcon {
 
-	private static Map<PetAction, PetActionIcon> cache = new EnumMap<>(PetAction.class);
+	private static Map<EPetAction, PetActionIcon> cache = new EnumMap<>(EPetAction.class);
 	
-	public static PetActionIcon get(PetAction action) {
+	public static PetActionIcon get(EPetAction action) {
 		return cache.computeIfAbsent(action, PetActionIcon::new);
 	}
 	
@@ -23,7 +23,7 @@ public class PetActionIcon {
 	
 	private final ResourceLocation texture;
 	
-	private PetActionIcon(PetAction action) {
+	private PetActionIcon(EPetAction action) {
 		texture = new ResourceLocation(PetCommand.MODID, "textures/gui/petaction_" + action.name().toLowerCase() + ".png");
 	}
 	
@@ -43,7 +43,7 @@ public class PetActionIcon {
 			RenderSystem.setShaderTexture(0, this.getTexture());
 			RenderSystem.enableBlend();
 			RenderSystem.setShaderColor(red, green, blue, alpha); // idk if this works since blit uses postex
-			GuiComponent.blit(matrixStackIn, xOffset, yOffset, 0, 0, width, height, texLen, texLen);
+			GuiComponent.blit(matrixStackIn, xOffset, yOffset, width, height, 0, 0, texLen, texLen, 32, 32);
 			RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 			RenderSystem.disableBlend();
 		}

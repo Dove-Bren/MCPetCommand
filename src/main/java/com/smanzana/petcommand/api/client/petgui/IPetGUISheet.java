@@ -2,10 +2,10 @@ package com.smanzana.petcommand.api.client.petgui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.api.client.container.IPetContainer;
-import com.smanzana.petcommand.api.entity.IEntityPet;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -16,7 +16,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
  * @author Skyler
  *
  */
-public interface IPetGUISheet<T extends IEntityPet> {
+public interface IPetGUISheet<T extends LivingEntity> {
 	
 	// Called when the sheet is first shown. Set up anything that's needed.
 	public void showSheet(T pet, Player player, IPetContainer<T> container, int width, int height, int offsetX, int offsetY);

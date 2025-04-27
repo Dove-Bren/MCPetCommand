@@ -12,6 +12,7 @@ public class ModConfigClient {
 	ForgeConfigSpec.BooleanValue configShowBigHealthbars;
 	ForgeConfigSpec.IntValue configHealthbarAnchorX;
 	ForgeConfigSpec.IntValue configHealthbarAnchorY;
+	ForgeConfigSpec.BooleanValue configAddNewPets;
 	
 	public ModConfigClient(ForgeConfigSpec.Builder builder) {
 //		builder.comment("PetCommand options")
@@ -32,6 +33,10 @@ public class ModConfigClient {
 			configHealthbarAnchorY = builder
 					.translation("display.anchory.desc")
 					.defineInRange("display.anchory", 75, 0, Integer.MAX_VALUE);
+			
+			configAddNewPets = builder
+					.translation("behavior.addnewpets.desc")
+					.define("behavior.addnewpets", true);
 		}
 //		builder.pop();
 	}

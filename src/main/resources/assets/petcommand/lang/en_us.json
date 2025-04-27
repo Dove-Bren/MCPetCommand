@@ -20,7 +20,41 @@
 	"config.petcommand.display.anchory": "Healthbar Anchor Y",
 	"config.petcommand.display.anchory.desc": "Y offset (in pixels) to display the pet healthbars",
 	
+	"config.petcommand.behavior.addnewpets": "Auto Add New Pets",
+	"config.petcommand.behavior.addnewpets.desc": "Whether to add new pets to the HUD pet display",
+	
 	"entity.petcommand.bound_iron_golem": "Bound Iron Golem",
 	
-	"value.bound_iron_golem.cooldown": "Stamina"
+	"value.bound_iron_golem.cooldown": "Stamina",
+	
+	"petaction.stay.name": "Stay",
+	"petaction.stay.desc": "Pet will stay in place and not take any action",
+	"petaction.attack.name": "Attack",
+	"petaction.attack.desc": "Pet is currently attacking something",
+	"petaction.idle.name": "Idle",
+	"petaction.idle.desc": "Pet is not doing anything",
+	"petaction.work.name": "Work",
+	"petaction.work.desc": "Pet is actively working on something",
+	"petaction.wait.name": "Wait",
+	"petaction.wait.desc": "Pet is waiting for a command",
+	"petaction.guard.name": "Guard",
+	"petaction.guard.desc": "Pet is guarding an area or entity",
+	"petaction.move.name": "Move",
+	"petaction.move.desc": "Pet is moving",
+	
+	"pettarget.free.name": "Free",
+	"pettarget.free.desc": "Pet has no specific orders, and will attack things they normally would",
+	"pettarget.defensive.name": "Defensive",
+	"pettarget.defensive.desc": "Pet will automatically attack things that attack their owner",
+	"pettarget.aggressive.name": "Aggressive",
+	"pettarget.aggressive.desc": "Pet will attack any non-friendly creature that comes near",
+	"pettarget.passive.name": "Passive",
+	"pettarget.passive.desc": "Pet will not attack anything unless told to directly",
+	
+	"petplacement.free.name": "Free",
+	"petplacement.free.desc": "Pet has not been told where to stand, and will wander around like normal",
+	"petplacement.heel_follow.name": "Heel",
+	"petplacement.heel_follow.desc": "Pet will stay in position behind their owner",
+	"petplacement.heel_defensive.name": "Vanguard",
+	"petplacement.heel_defensive.desc": "Pet will move in front of their owner"
 }

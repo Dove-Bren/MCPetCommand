@@ -9,14 +9,12 @@ import javax.annotation.Nullable;
 import com.google.common.base.Predicate;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
-import com.smanzana.petcommand.api.entity.ITameableEntity;
-import com.smanzana.petcommand.api.pet.PetPlacementMode;
+import com.smanzana.petcommand.api.pet.EPetPlacementMode;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
@@ -60,23 +58,8 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 		this.filter = filter;
 	}
 	
-	public static final boolean IsPetSittingGeneric(LivingEntity pet) {
-		final boolean sitting;
-		if (pet == null) {
-			sitting = false;
-		} else if (pet instanceof ITameableEntity) {
-			sitting = ((ITameableEntity) pet).isEntitySitting();
-		} else if (pet instanceof TamableAnimal) {
-			sitting = ((TamableAnimal) pet).isOrderedToSit();
-		} else {
-			sitting = false;
-		}
-		
-		return sitting;
-	}
-	
 	protected boolean isPetSitting(T pet) {
-		return IsPetSittingGeneric(pet);
+		return PetFuncs.IsPetSitting(pet);
 	}
 	
 	/**
@@ -92,7 +75,7 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 		List<LivingEntity> pets = PetFuncs.GetTamedEntities(owner);
 		pets.removeIf((p) -> {
 			return p == null
-					|| IsPetSittingGeneric(p)
+					|| PetFuncs.IsPetSitting(p)
 					|| thePet.isPassenger()
 					|| thePet.hasIndirectPassenger(this.theOwner);
 		});
@@ -116,7 +99,7 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 	 * @param mode
 	 * @return
 	 */
-	protected Vec3 getIdealTargetPosition(T pet, LivingEntity owner, PetPlacementMode mode) {
+	protected Vec3 getIdealTargetPosition(T pet, LivingEntity owner, EPetPlacementMode mode) {
 		final int index = getPetPositionIndex(pet, owner);
 		final Vec3 target;
 		
@@ -200,7 +183,7 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 		return target;
 	}
 	
-	protected Vec3 getTargetPosition(T pet, LivingEntity owner, PetPlacementMode mode) {
+	protected Vec3 getTargetPosition(T pet, LivingEntity owner, EPetPlacementMode mode) {
 		if (timeToRecalcPosition == 0 || timeToRecalcPosition < pet.tickCount) {
 			timeToRecalcPosition = pet.tickCount + 20;
 			lastPosition = getIdealTargetPosition(pet, owner, mode);
@@ -237,9 +220,9 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 			return false;
 		}
 		
-		final PetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(entitylivingbase);
+		final EPetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(entitylivingbase);
 		
-		if (mode == PetPlacementMode.FREE) {
+		if (mode == EPetPlacementMode.FREE) {
 			return false;
 		}
 		
@@ -268,8 +251,8 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 			return false;
 		}
 		
-		final PetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(this.theOwner);
-		if (mode == PetPlacementMode.FREE) {
+		final EPetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(this.theOwner);
+		if (mode == EPetPlacementMode.FREE) {
 			return false;
 		}
 		final boolean sitting = this.isPetSitting(thePet);
@@ -315,7 +298,7 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 			//System.out.println("Moving");
 			if (--this.timeToRecalcPath <= 0) {
 				this.timeToRecalcPath = 10;
-				final PetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(this.theOwner);
+				final EPetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(this.theOwner);
 				final Vec3 targetPos = this.getTargetPosition(thePet, theOwner, mode);
 
 				//thePet.setLocationAndAngles(targetPos.x, targetPos.y, targetPos.z, this.thePet.rotationYaw, this.thePet.rotationPitch);

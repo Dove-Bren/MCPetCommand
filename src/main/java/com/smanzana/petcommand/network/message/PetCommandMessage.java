@@ -6,8 +6,9 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.api.pet.PetPlacementMode;
-import com.smanzana.petcommand.api.pet.PetTargetMode;
+import com.smanzana.petcommand.api.pet.EPetPlacementMode;
+import com.smanzana.petcommand.api.pet.EPetTargetMode;
+import com.smanzana.petcommand.pet.PetOrder;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -57,9 +58,11 @@ public class PetCommandMessage {
 			
 			switch (message.type) {
 			case STOP:
-				//if (pet == null) {
-				PetCommand.GetPetCommandManager().commandAllStopAttacking(sp);
-				//}
+				if (pet == null) {
+					PetCommand.GetPetCommandManager().commandAllStop(sp);
+				} else {
+					PetCommand.GetPetCommandManager().commandToStop(sp, pet);
+				}
 				break;
 			case ATTACK:
 				if (target == null) {
@@ -89,6 +92,14 @@ public class PetCommandMessage {
 				
 				PetCommand.GetPetCommandManager().setTargetMode(sp, message.targetMode);
 				break;
+			case SET_ORDER:
+				if (message.order == null) {
+					PetCommand.LOGGER.error("Received pet order with no order attached");
+					break;
+				}
+				
+				PetCommand.GetPetCommandManager().setPetOrder(sp, pet, message.order);
+				break;
 			}
 		});
 	}
@@ -98,65 +109,75 @@ public class PetCommandMessage {
 		ATTACK,
 		SET_PLACEMENT_MODE,
 		SET_TARGET_MODE,
+		SET_ORDER,
 	}
 	
 	protected final PetCommandMessageType type;
 	protected final @Nullable UUID petUUID;
 	protected final @Nullable UUID targetUUID;
-	protected final @Nullable PetPlacementMode placementMode;
-	protected final @Nullable PetTargetMode targetMode;
+	protected final @Nullable EPetPlacementMode placementMode;
+	protected final @Nullable EPetTargetMode targetMode;
+	protected final @Nullable PetOrder order;
 
 	
 	private PetCommandMessage(PetCommandMessageType type,
 			@Nullable UUID petUUID,
 			@Nullable UUID targetUUID,
-			@Nullable PetPlacementMode placement,
-			@Nullable PetTargetMode target) {
+			@Nullable EPetPlacementMode placement,
+			@Nullable EPetTargetMode target,
+			@Nullable PetOrder order) {
 		this.type = type;
 		this.petUUID = petUUID;
 		this.targetUUID = targetUUID;
 		this.placementMode = placement;
 		this.targetMode = target;
+		this.order = order;
 	}
 	
 	public static PetCommandMessage AllStop() {
-		return new PetCommandMessage(PetCommandMessageType.STOP, null, null, null, null);
+		return new PetCommandMessage(PetCommandMessageType.STOP, null, null, null, null, null);
 	}
 	
 	public static PetCommandMessage PetStop(LivingEntity pet) {
-		return new PetCommandMessage(PetCommandMessageType.STOP, pet.getUUID(), null, null, null);
+		return new PetCommandMessage(PetCommandMessageType.STOP, pet.getUUID(), null, null, null, null);
 	}
 	
 	public static PetCommandMessage AllAttack(LivingEntity target) {
-		return new PetCommandMessage(PetCommandMessageType.ATTACK, null, target.getUUID(), null, null);
+		return new PetCommandMessage(PetCommandMessageType.ATTACK, null, target.getUUID(), null, null, null);
 	}
 	
 	public static PetCommandMessage PetAttack(LivingEntity pet, LivingEntity target) {
-		return new PetCommandMessage(PetCommandMessageType.ATTACK, pet.getUUID(), target.getUUID(), null, null);
+		return new PetCommandMessage(PetCommandMessageType.ATTACK, pet.getUUID(), target.getUUID(), null, null, null);
 	}
 	
-	public static PetCommandMessage AllPlacementMode(PetPlacementMode mode) {
-		return new PetCommandMessage(PetCommandMessageType.SET_PLACEMENT_MODE, null, null, mode, null);
+	public static PetCommandMessage AllPlacementMode(EPetPlacementMode mode) {
+		return new PetCommandMessage(PetCommandMessageType.SET_PLACEMENT_MODE, null, null, mode, null, null);
 	}
 	
-	public static PetCommandMessage AllTargetMode(PetTargetMode mode) {
-		return new PetCommandMessage(PetCommandMessageType.SET_TARGET_MODE, null, null, null, mode);
+	public static PetCommandMessage AllTargetMode(EPetTargetMode mode) {
+		return new PetCommandMessage(PetCommandMessageType.SET_TARGET_MODE, null, null, null, mode, null);
+	}
+	
+	public static PetCommandMessage PetOrder(LivingEntity pet, PetOrder order) {
+		return new PetCommandMessage(PetCommandMessageType.SET_ORDER, pet.getUUID(), null, null, null, order);
 	}
 	
 	public static PetCommandMessage decode(FriendlyByteBuf buf) {
 		final PetCommandMessageType type;
 		final @Nullable UUID petUUID;
 		final @Nullable UUID targetUUID;
-		final @Nullable PetPlacementMode placementMode;
-		final @Nullable PetTargetMode targetMode;
+		final @Nullable EPetPlacementMode placementMode;
+		final @Nullable EPetTargetMode targetMode;
+		final @Nullable PetOrder order;
 		
 		type = buf.readEnum(PetCommandMessageType.class);
 		petUUID = buf.readBoolean() ? buf.readUUID() : null;
 		targetUUID = buf.readBoolean() ? buf.readUUID() : null;
-		placementMode = buf.readBoolean() ? buf.readEnum(PetPlacementMode.class) : null;
-		targetMode = buf.readBoolean() ? buf.readEnum(PetTargetMode.class) : null;
+		placementMode = buf.readBoolean() ? buf.readEnum(EPetPlacementMode.class) : null;
+		targetMode = buf.readBoolean() ? buf.readEnum(EPetTargetMode.class) : null;
+		order = buf.readBoolean() ? PetOrder.FromNBT(buf.readNbt()) : null;
 		
-		return new PetCommandMessage(type, petUUID, targetUUID, placementMode, targetMode);
+		return new PetCommandMessage(type, petUUID, targetUUID, placementMode, targetMode, order);
 	}
 
 	public static void encode(PetCommandMessage msg, FriendlyByteBuf buf) {
@@ -180,6 +201,11 @@ public class PetCommandMessage {
 		buf.writeBoolean(msg.targetMode != null);
 		if (msg.targetMode != null) {
 			buf.writeEnum(msg.targetMode);
+		}
+		
+		buf.writeBoolean(msg.order != null);
+		if (msg.order != null) {
+			buf.writeNbt(msg.order.toNBT());
 		}
 	}
 	

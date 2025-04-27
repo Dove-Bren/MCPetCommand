@@ -9,13 +9,13 @@ import org.lwjgl.glfw.GLFW;
 
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
-import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.pet.EPetPlacementMode;
+import com.smanzana.petcommand.api.pet.EPetTargetMode;
 import com.smanzana.petcommand.api.pet.ITargetManager;
-import com.smanzana.petcommand.api.pet.PetPlacementMode;
-import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.client.overlay.OverlayRenderer;
 import com.smanzana.petcommand.client.pet.SelectionManager;
 import com.smanzana.petcommand.client.render.OutlineRenderer;
+import com.smanzana.petcommand.client.screen.PetListScreen;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetCommandMessage;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
@@ -23,6 +23,7 @@ import com.smanzana.petcommand.util.RayTrace;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.HitResult;
@@ -38,6 +39,7 @@ public class ClientProxy extends CommonProxy {
 	private KeyMapping bindingPetAttackAll;
 	private KeyMapping bindingPetAttack;
 	private KeyMapping bindingPetAllStop;
+	private KeyMapping bindingPetScreen;
 	private OverlayRenderer overlayRenderer;
 	private OutlineRenderer outlineRenderer;
 	private SelectionManager selectionManager;
@@ -62,6 +64,8 @@ public class ClientProxy extends CommonProxy {
 		ClientRegistry.registerKeyBinding(bindingPetAttack);
 		bindingPetAllStop = new KeyMapping("key.pet.stopall.desc", GLFW.GLFW_KEY_L, "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetAllStop);
+		bindingPetScreen = new KeyMapping("key.pet.screen.desc", GLFW.GLFW_KEY_P, "key.PetCommand.desc");
+		ClientRegistry.registerKeyBinding(bindingPetScreen);
 	}
 	
 	@Override
@@ -84,7 +88,7 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	@Override
-	public void openPetGUI(Player player, IEntityPet pet) {
+	public void openPetGUI(Player player, LivingEntity pet) {
 		// Integrated clients still need to open the gui...
 		//if (!player.world.isRemote) {
 //			DragonContainer container = dragon.getGUIContainer();
@@ -106,8 +110,8 @@ public class ClientProxy extends CommonProxy {
 	public void onKey(KeyInputEvent event) {
 		if (bindingPetPlacementModeCycle.consumeClick()) {
 			// Cycle placement mode
-			final PetPlacementMode current = PetCommand.GetPetCommandManager().getPlacementMode(this.getPlayer());
-			final PetPlacementMode next = PetPlacementMode.values()[(current.ordinal() + 1) % PetPlacementMode.values().length];
+			final EPetPlacementMode current = PetCommand.GetPetCommandManager().getPlacementMode(this.getPlayer());
+			final EPetPlacementMode next = EPetPlacementMode.values()[(current.ordinal() + 1) % EPetPlacementMode.values().length];
 			
 			// Set up client to have this locally
 			PetCommand.GetPetCommandManager().setPlacementMode(getPlayer(), next);
@@ -119,8 +123,8 @@ public class ClientProxy extends CommonProxy {
 			NetworkHandler.sendToServer(PetCommandMessage.AllPlacementMode(next));
 		} else if (bindingPetTargetModeCycle.consumeClick()) {
 			// Cycle target mode
-			final PetTargetMode current = PetCommand.GetPetCommandManager().getTargetMode(this.getPlayer());
-			final PetTargetMode next = PetTargetMode.values()[(current.ordinal() + 1) % PetTargetMode.values().length];
+			final EPetTargetMode current = PetCommand.GetPetCommandManager().getTargetMode(this.getPlayer());
+			final EPetTargetMode next = EPetTargetMode.values()[(current.ordinal() + 1) % EPetTargetMode.values().length];
 			
 			// Update client icon
 			this.overlayRenderer.changePetTargetIcon();
@@ -191,6 +195,8 @@ public class ClientProxy extends CommonProxy {
 			}
 		} else if (bindingPetAllStop.consumeClick()) {
 			NetworkHandler.sendToServer(PetCommandMessage.AllStop());
+		} else if (bindingPetScreen.consumeClick()) {
+			togglePetScreen();
 		}
 	}
 	
@@ -200,6 +206,17 @@ public class ClientProxy extends CommonProxy {
 	
 	public SelectionManager getSelectionManager() {
 		return this.selectionManager;
+	}
+	
+	protected void togglePetScreen() {
+		final Minecraft mc = Minecraft.getInstance();
+		if (mc.screen != null && mc.screen instanceof PetListScreen) {
+			// Close it
+			mc.setScreen(null);
+		} else if (mc.screen == null) {
+			// Open it
+			mc.setScreen(new PetListScreen(TextComponent.EMPTY, this.getPlayer()));
+		}
 	}
 
 }

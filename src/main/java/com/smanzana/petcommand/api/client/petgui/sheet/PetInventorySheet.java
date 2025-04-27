@@ -9,10 +9,11 @@ import com.smanzana.petcommand.api.entity.IEntityPet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 
-public abstract class PetInventorySheet<T extends IEntityPet> implements IPetGUISheet<T> {
+public abstract class PetInventorySheet<T extends LivingEntity & IEntityPet> implements IPetGUISheet<T> {
 	
 	protected final T pet;
 	protected final Container petInv;

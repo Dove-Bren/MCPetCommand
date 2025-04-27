@@ -13,8 +13,10 @@ import com.google.common.collect.Lists;
 import com.smanzana.petcommand.api.ai.IFollowOwnerGoal;
 import com.smanzana.petcommand.api.entity.ITameableEntity;
 import com.smanzana.petcommand.config.ModConfig;
+import com.smanzana.petcommand.config.PetOverrides;
 import com.smanzana.petcommand.entity.BoundIronGolemEntity;
 import com.smanzana.petcommand.entity.ai.FollowOwnerAdvancedGoal;
+import com.smanzana.petcommand.entity.ai.FollowPetOrderGoal;
 import com.smanzana.petcommand.entity.ai.PetTargetGoal;
 import com.smanzana.petcommand.listener.MovementListener;
 import com.smanzana.petcommand.listener.TargetListener;
@@ -53,6 +55,7 @@ public class PetCommand
 	private PetCommandManager petCommandManager;
 	private MovementListener movementListener;
 	private TargetListener targetListener;
+	private PetOverrides petOverrides;
 
 	private final TargetManager serverTargetManager;
 	private final TargetManager clientTargetManager;
@@ -70,6 +73,7 @@ public class PetCommand
 		MinecraftForge.EVENT_BUS.register(this);
 		movementListener = new MovementListener();
 		targetListener = new TargetListener();
+		petOverrides = new PetOverrides();
 		MinecraftForge.EVENT_BUS.addListener(BoundIronGolemEntity::EntityInteractListener);
 	}
 	
@@ -94,6 +98,10 @@ public class PetCommand
 	
 	public static TargetListener GetTargetListener() {
 		return instance.targetListener;
+	}
+	
+	public static PetOverrides GetClientPetOverrides() {
+		return instance.petOverrides;
 	}
 	
 	public static TargetManager GetServerTargetManager() {
@@ -206,6 +214,32 @@ public class PetCommand
 						living.goalSelector.addGoal(entry.getPriority() + 1, entry.getGoal());
 					}
 				}
+			}
+		}
+		
+		// Order obeying goal for pets
+		{
+			WrappedGoal existingTask = null;
+			
+			// Get private goal list
+			living.goalSelector.getAvailableGoals();
+			Set<WrappedGoal> goals = living.goalSelector.getAvailableGoals(); 
+
+			// Scan for existing task
+			for (WrappedGoal entry : goals) {
+				if (entry.getGoal() instanceof FollowPetOrderGoal) {
+					if (existingTask == null) {
+						existingTask = entry;
+					} else if (existingTask.getPriority() > entry.getPriority()) {
+						existingTask = entry; // cause > priority means less priority lol
+					}
+				}
+			}
+
+			if (existingTask == null) {
+				// Gotta inject task. May have to make space for it.
+				FollowPetOrderGoal<Mob> task = new FollowPetOrderGoal<Mob>(living, 1.5f, .5f);
+				living.goalSelector.addGoal(-1, task);
 			}
 		}
 

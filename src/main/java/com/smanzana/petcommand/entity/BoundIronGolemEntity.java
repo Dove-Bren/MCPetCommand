@@ -12,9 +12,10 @@ import com.smanzana.petcommand.api.client.container.IPetContainer;
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
 import com.smanzana.petcommand.api.client.petgui.PetGUIStatAdapter;
 import com.smanzana.petcommand.api.client.petgui.sheet.PetInventorySheet;
+import com.smanzana.petcommand.api.client.petgui.sheet.PetStatSheet;
 import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.pet.EPetAction;
 import com.smanzana.petcommand.api.pet.PetInfo;
-import com.smanzana.petcommand.api.pet.PetInfo.PetAction;
 import com.smanzana.petcommand.api.pet.PetInfo.ValueFlavor;
 import com.smanzana.petcommand.util.ArrayUtil;
 
@@ -252,13 +253,16 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 		return false;
 	}
 	
-	protected PetAction getCurrentAction() {
-		if (this.isAttacking()) {
-			return PetAction.ATTACK;
+	protected EPetAction getCurrentAction() {
+		final @Nullable EPetAction order = PetInfo.GetOrderAction(this);
+		if (order != null) {
+			return order;
+		} else if (this.isAttacking()) {
+			return EPetAction.ATTACK;
 		} else if (this.getOfferFlowerTick() > 0) {
-			return PetAction.WORK;
+			return EPetAction.WORK;
 		} else {
-			return PetAction.IDLE;
+			return EPetAction.IDLE;
 		}
 	}
 
@@ -266,6 +270,14 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	public PetInfo getPetSummary() {
 		final int maxAttack = 10; // Copied from IronGolemEntity. This is max cooldown
 		return PetInfo.claim(getCurrentAction(), this.getHealth(), this.getMaxHealth(), Math.max(0, maxAttack - this.getAttackAnimationTick()), maxAttack, ValueFlavor.GOOD, SwingLabel);
+		
+		// Testing code
+//		int unused;
+//		return PetInfo.claim(getCurrentAction(), this.getHealth(), this.getMaxHealth(),
+//				new PetInfo.PetValue(Math.max(0, maxAttack - this.getAttackAnimationTick()), maxAttack, ValueFlavor.GOOD, SwingLabel),
+//				new PetInfo.PetValue(2, 5, ValueFlavor.BAD, new TextComponent("Test Value")),
+//				new PetInfo.PetValue(.3f, 1f, ValueFlavor.BAD, new TextComponent("Test Percent"))
+//				);
 	}
 
 	@Override
@@ -281,6 +293,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	@Override
 	public IPetGUISheet<BoundIronGolemEntity>[] getContainerSheets(Player player) {
 		return ArrayUtil.MakeArray(
+			new PetStatSheet<>(this),
 			new PetInventorySheet<BoundIronGolemEntity>(this, this.inventory) {
 				@Override
 				public boolean shouldShow(BoundIronGolemEntity golem, IPetContainer<BoundIronGolemEntity> container) {
@@ -409,5 +422,10 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 		ent.setOwner(owner);
 		entity.level.addFreshEntity(ent);
 		entity.remove(RemovalReason.DISCARDED);
+	}
+
+	@Override
+	public boolean setEntitySitting(boolean sitting) {
+		return false;
 	}
 }

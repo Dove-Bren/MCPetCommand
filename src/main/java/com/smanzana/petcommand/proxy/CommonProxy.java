@@ -27,7 +27,7 @@ public class CommonProxy {
 		return null;
 	}
 	
-	public <T extends IEntityPet> void openPetGUI(Player player, T pet) {
+	public <T extends IEntityPet> void openPetGUI(Player player, LivingEntity pet) {
 		if (!player.level.isClientSide()) {
 			this.openContainer(player, PetGUI.PetContainer.Make(pet, player));
 		}

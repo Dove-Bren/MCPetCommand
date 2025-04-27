@@ -15,15 +15,20 @@ import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.client.container.IPetContainer;
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
 import com.smanzana.petcommand.api.client.petgui.PetGUIRenderHelper;
-import com.smanzana.petcommand.api.client.petgui.PetGUIStatAdapter;
+import com.smanzana.petcommand.api.client.petgui.sheet.PetStatSheet;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.api.entity.IRerollablePet;
+import com.smanzana.petcommand.api.pet.PetInfo;
+import com.smanzana.petcommand.api.pet.PetInfo.PetValue;
+import com.smanzana.petcommand.api.pet.PetInfo.ValueFlavor;
 import com.smanzana.petcommand.client.container.AutoGuiContainer;
 import com.smanzana.petcommand.client.container.PetCommandContainers;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetGUIControlMessage;
 import com.smanzana.petcommand.network.message.PetGUISyncMessage;
 import com.smanzana.petcommand.sound.PetCommandSounds;
+import com.smanzana.petcommand.util.ArrayUtil;
+import com.smanzana.petcommand.util.ColorUtil;
 import com.smanzana.petcommand.util.ContainerUtil;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 
@@ -93,7 +98,7 @@ public class PetGUI {
 		}
 	}
 
-	public static class PetContainer<T extends IEntityPet> extends AbstractContainerMenu implements IPetContainer<T> {
+	public static class PetContainer<T extends LivingEntity> extends AbstractContainerMenu implements IPetContainer<T> {
 		
 		public static final String ID = "pet_container";
 
@@ -135,17 +140,17 @@ public class PetGUI {
 			final int containerID = buffer.readVarInt();
 			final int numSheets = buffer.readVarInt();
 			
-			IEntityPet pet = null;
+			LivingEntity pet = null;
 			Entity foundEnt = PetCommand.GetEntityByUUID(PetCommand.GetProxy().getPlayer().level, petID);
 			
-			if (foundEnt == null || !(foundEnt instanceof IEntityPet)) {
+			if (foundEnt == null || !(foundEnt instanceof LivingEntity)) {
 				return null; // crash
 			}
 			
-			pet = (IEntityPet) foundEnt;
+			pet = (LivingEntity) foundEnt;
 			
 			final Player player = PetCommand.GetProxy().getPlayer();
-			final IPetGUISheet<?>[] sheets = pet.getContainerSheets(player);
+			final IPetGUISheet<?>[] sheets = GetSheetsFor(pet, player);
 
 			if (numSheets != sheets.length) {
 				PetCommand.LOGGER.error("Sheet count differs on client and server for " + pet);
@@ -159,9 +164,21 @@ public class PetGUI {
 			return container;
 		}
 		
-		public static <T extends IEntityPet> IPackedContainerProvider Make(T pet, Player player) {
-			@SuppressWarnings("unchecked")
-			final IPetGUISheet<T>[] sheets = (IPetGUISheet<T>[]) pet.getContainerSheets(player);
+		protected static <T extends LivingEntity> IPetGUISheet<T>[] GetSheetsFor(T pet, Player player) {
+			if (pet instanceof IEntityPet p) {
+				@SuppressWarnings("unchecked")
+				final IPetGUISheet<T>[] sheets = (IPetGUISheet<T>[]) p.getContainerSheets(player);
+				return sheets;
+			} else {
+				// default sheets for non-pet
+				return ArrayUtil.MakeArray(
+					new PetStatSheet<>(pet)
+				);
+			}
+		}
+		
+		public static <T extends LivingEntity> IPackedContainerProvider Make(T pet, Player player) {
+			final IPetGUISheet<T>[] sheets = GetSheetsFor(pet, player);
 			final int key = takeNextKey();
 			
 			return ContainerUtil.MakeProvider(ID, (windowId, playerInv, playerIn) -> {
@@ -169,7 +186,7 @@ public class PetGUI {
 				PetGUI.register(container, key);
 				return container;
 			}, (buffer) -> {
-				buffer.writeUUID(pet.getPetID());
+				buffer.writeUUID(pet.getUUID());
 				buffer.writeVarInt(key);
 				buffer.writeVarInt(sheets.length);
 			});
@@ -205,7 +222,11 @@ public class PetGUI {
 				// Pet hasn't been synced yet
 				return false;
 			}
-			return playerIn.equals(pet.getOwner());
+			if (pet instanceof IEntityPet p) {
+				return playerIn.equals(p.getOwner());
+			} else {
+				return pet.isAlive();
+			}
 		}
 
 		// Caution: This assumes only one player has these open!
@@ -304,8 +325,9 @@ public class PetGUI {
 			case REROLL:
 				if (pet != null
 					&& supportsReroll()
-					&& pet.getOwner() instanceof Player
-					&& ((Player) pet.getOwner()).isCreative()) {
+					&& pet instanceof IEntityPet p
+					&& p.getOwner() instanceof Player
+					&& ((Player) p.getOwner()).isCreative()) {
 					// Reset container sheet. The client will send this as well later.
 					this.setSheet(0);
 					((IRerollablePet) pet).rerollStats();
@@ -331,7 +353,7 @@ public class PetGUI {
 	
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class PetGUIContainer<T extends IEntityPet> extends AutoGuiContainer<PetContainer<T>> {
+	public static class PetGUIContainer<T extends LivingEntity> extends AutoGuiContainer<PetContainer<T>> {
 		
 		public static final ResourceLocation TEXT = new ResourceLocation(PetCommand.MODID + ":textures/gui/container/tamed_pet_gui.png");
 
@@ -388,15 +410,12 @@ public class PetGUI {
 		//private static int GUI_OPEN_ANIM_TIME = 20 * 1;
 		
 		private PetContainer<T> container;
-		private final PetGUIStatAdapter<T> adapter;
 		
 		//private int openTicks;
 		
-		@SuppressWarnings("unchecked")
 		public PetGUIContainer(PetContainer<T> container, Inventory playerInv, Component name) {
 			super(container, playerInv, name);
 			this.container = container;
-			this.adapter = (PetGUIStatAdapter<T>) container.pet.getGUIAdapter();
 			//this.openTicks = 0;
 		}
 		
@@ -457,8 +476,6 @@ public class PetGUI {
 			
 			// Draw stats and stuff
 			{
-				//GuiComponent.fill(GUI_INFO_HOFFSET, GUI_INFO_VOFFSET, GUI_SHEET_HOFFSET - 10, height - 10, 0xFF00FFFF);
-				
 				final int w = (GUI_SHEET_HOFFSET - GUI_SHEET_MARGIN) - (GUI_INFO_HOFFSET * 2);
 				int x = GUI_INFO_HOFFSET;
 				int y = GUI_INFO_VOFFSET;
@@ -466,18 +483,20 @@ public class PetGUI {
 				final int h = 14;
 				final int centerX = GUI_SHEET_HOFFSET / 2;
 				
+				final PetInfo info = PetInfo.Wrap(container.pet);
+				
 				// Health
 				{
-					drawCenteredString(matrixStackIn, this.font, ChatFormatting.BOLD + adapter.getHealthLabel(container.pet), centerX, y, 0xFFFFFFFF);
+					drawCenteredString(matrixStackIn, this.font, ChatFormatting.BOLD + "Health", centerX, y, 0xFFFFFFFF);
 					y += font.lineHeight + 5;
 					GuiComponent.fill(matrixStackIn, x, y, x + w, y + h, 0xFFD0D0D0);
 					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF201010);
 					
-					int prog = (int) ((float) (w - 2) * (adapter.getHealth(container.pet) / adapter.getMaxHealth(container.pet)));
+					int prog = (int) ((float) (w - 2) * (info.getCurrentHp() / info.getMaxHp()));
 					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + 1 + prog, y + h - 1, 0xFFA02020);
 					
 					drawCenteredString(matrixStackIn, font,
-							String.format("%d / %d", (int) adapter.getHealth(container.pet), (int) adapter.getMaxHealth(container.pet)),
+							String.format("%d / %d", (int) info.getCurrentHp(), (int) info.getMaxHp()),
 							centerX,
 							y + (h / 2) - (font.lineHeight / 2),
 							0xFFC0C0C0);
@@ -485,81 +504,34 @@ public class PetGUI {
 					y += h + 10;
 				}
 				
-				// Secondary
-				if (adapter.supportsSecondaryAmt(container.pet) && adapter.getMaxSecondaryAmt(container.pet) > 0) {
-					drawCenteredString(matrixStackIn, this.font, ChatFormatting.BOLD + adapter.getSecondaryLabel(container.pet), centerX, y, 0xFFFFFFFF);
-					y += font.lineHeight + 5;
-					GuiComponent.fill(matrixStackIn, x, y, x + w, y + h, 0xFFD0D0D0);
-					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF101020);
-					
-					int prog = (int) ((float) (w - 2) * (adapter.getSecondaryAmt(container.pet) / adapter.getMaxSecondaryAmt(container.pet)));
-					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + 1 + prog, y + h - 1, 0xFF2020A0);
-					
-					drawCenteredString(matrixStackIn, font,
-							String.format("%d / %d", (int) adapter.getSecondaryAmt(container.pet), (int) adapter.getMaxSecondaryAmt(container.pet)),
-							centerX,
-							y + (h / 2) - (font.lineHeight / 2),
-							0xFFC0C0C0);
-					
-					y += h + 10;
-				}
-				
-				// Tertiary
-				if (adapter.supportsTertiaryAmt(container.pet) && adapter.getMaxTertiaryAmt(container.pet) > 0) {
-					final float cur = adapter.getTertiaryAmt(container.pet);
-					final float max = adapter.getMaxTertiaryAmt(container.pet);
-					
-					drawCenteredString(matrixStackIn, this.font, ChatFormatting.BOLD + adapter.getTertiaryLabel(container.pet), centerX, y, 0xFFFFFFFF);
-					y += font.lineHeight + 5;
-					GuiComponent.fill(matrixStackIn, x, y, x + w, y + h, 0xFFD0D0D0);
-					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF201020);
-					
-					int prog = (int) ((float) (w - 2) * (cur/max));
-					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + 1 + prog, y + h - 1, 0xFFA020A0);
-					
-					drawCenteredString(matrixStackIn, font,
-							String.format("%.2f%%", (cur/max) * 100f),
-							centerX,
-							y + (h / 2) - (font.lineHeight / 2),
-							cur >= max ? 0xFFC0FFC0 : 0xFFC0C0C0);
-					
-//					if (container.pet.isSoulBound()) {
-//						drawCenteredString(font,
-//								"Soulbound",
-//								centerX,
-//								y + (h / 2) - (font.FONT_HEIGHT / 2),
-//								0xFF40FF40);
-//					} else {
-//						drawCenteredString(font,
-//								String.format("%.2f%%", bond * 100f),
-//								centerX,
-//								y + (h / 2) - (font.FONT_HEIGHT / 2),
-//								bond == 1f ? 0xFFC0FFC0 : 0xFFC0C0C0);
-//					}
-					
-					
-					y += h + 10;
-				}
-				
-				// XP
-				if (adapter.supportsQuaternaryAmt(container.pet) && adapter.getMaxQuaternaryAmt(container.pet) > 0) {
-					final float cur = adapter.getQuaternaryAmt(container.pet);
-					final float max = adapter.getMaxQuaternaryAmt(container.pet);
-					drawCenteredString(matrixStackIn, this.font, ChatFormatting.BOLD + adapter.getQuaternaryLabel(container.pet), centerX, y, 0xFFFFFFFF);
-					y += font.lineHeight + 5;
-					GuiComponent.fill(matrixStackIn, x, y, x + w, y + h, 0xFFD0D0D0);
-					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF102010);
-					
-					int prog = (int) ((float) (w - 2) * (cur / max));
-					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + 1 + prog, y + h - 1, 0xFF20A020);
-					
-					drawCenteredString(matrixStackIn, font,
-							String.format("%d / %d", (int) cur, (int) max),
-							centerX,
-							y + (h / 2) - (font.lineHeight / 2),
-							0xFFC0C0C0);
-					
-					y += h + 10;
+				List<PetValue> values = info.getPetValues();
+				if (values != null) {
+					for (int i = 0; i < Math.min(4, values.size()); i++) {
+						final PetValue value = values.get(i);
+						
+						if (value.label() == null) {
+							continue;
+						}
+						
+						final ValueFlavor flavor = value.flavor();
+						final int color = ColorUtil.colorToARGB(flavor.colorR(1f), flavor.colorG(1f), flavor.colorB(1f), flavor.colorA(1f));
+						
+						drawCenteredString(matrixStackIn, this.font, value.label().copy().withStyle(ChatFormatting.BOLD), centerX, y, 0xFFFFFFFF);
+						y += font.lineHeight + 5;
+						GuiComponent.fill(matrixStackIn, x, y, x + w, y + h, 0xFFD0D0D0);
+						GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF201010);
+						
+						int prog = (int) ((float) (w - 2) * (value.current() / value.max()));
+						GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + 1 + prog, y + h - 1, color);
+						
+						drawCenteredString(matrixStackIn, font,
+								String.format("%d / %d", (int) value.current(), (int) value.max()),
+								centerX,
+								y + (h / 2) - (font.lineHeight / 2),
+								0xFFC0C0C0);
+						
+						y += h + 10;
+					}
 				}
 			}
 			

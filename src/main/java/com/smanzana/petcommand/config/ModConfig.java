@@ -48,4 +48,12 @@ public class ModConfig {
 	public int getHealthbarAnchorY() {
 		return client.configHealthbarAnchorY.get();
 	}
+	
+	public boolean getAutoAddNewPets() {
+		return client.configAddNewPets.get();
+	}
+	
+	public void setAutoAddNewPets(boolean add) {
+		client.configAddNewPets.set(add);
+	}
 }

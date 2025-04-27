@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 import com.google.common.collect.Lists;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
-import com.smanzana.petcommand.api.pet.PetTargetMode;
+import com.smanzana.petcommand.api.pet.EPetTargetMode;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,9 +40,9 @@ public class PetTargetGoal<T extends PathfinderMob> extends TargetGoal {
 			return false;
 		}
 		
-		final PetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(entitylivingbase);
+		final EPetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(entitylivingbase);
 		
-		if (mode == PetTargetMode.FREE) {
+		if (mode == EPetTargetMode.FREE) {
 			return false;
 		}
 		
@@ -87,7 +87,7 @@ public class PetTargetGoal<T extends PathfinderMob> extends TargetGoal {
 			}
 		}
 		
-		final PetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(theOwner);
+		final EPetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(theOwner);
 		switch (mode) {
 		case AGGRESSIVE:
 			if (thePet.getTarget() == null && targetTicks <= 0) {

@@ -1,14 +1,14 @@
 package com.smanzana.petcommand.api.client.container;
 
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
-import com.smanzana.petcommand.api.entity.IEntityPet;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 
-public interface IPetContainer<T extends IEntityPet> {
+public interface IPetContainer<T extends LivingEntity> {
 
 	public AbstractContainerMenu getContainer();
 	

@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
+import com.smanzana.petcommand.network.message.OpenPetGUIMessage;
 import com.smanzana.petcommand.network.message.PetCommandMessage;
 import com.smanzana.petcommand.network.message.PetCommandSettingsSyncMessage;
 import com.smanzana.petcommand.network.message.PetGUIControlMessage;
@@ -59,6 +60,7 @@ public class NetworkHandler {
 		syncChannel.registerMessage(discriminator++, PetCommandMessage.class, PetCommandMessage::encode, PetCommandMessage::decode, PetCommandMessage::handle);
 		syncChannel.registerMessage(discriminator++, PetCommandSettingsSyncMessage.class, PetCommandSettingsSyncMessage::encode, PetCommandSettingsSyncMessage::decode, PetCommandSettingsSyncMessage::handle);
 		syncChannel.registerMessage(discriminator++, TargetUpdateMessage.class, TargetUpdateMessage::encode, TargetUpdateMessage::decode, TargetUpdateMessage::handle);
+		syncChannel.registerMessage(discriminator++, OpenPetGUIMessage.class, OpenPetGUIMessage::encode, OpenPetGUIMessage::decode, OpenPetGUIMessage::handle);
 	}
 	
 	//NetworkHandler.sendTo(new ClientCastReplyMessage(false, att.getMana(), 0, null),

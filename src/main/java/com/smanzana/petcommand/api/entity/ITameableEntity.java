@@ -38,4 +38,11 @@ public interface ITameableEntity {
 	 */
 	public boolean isEntitySitting();
 	
+	/**
+	 * Attempt to command the pet to sit.
+	 * @param sitting
+	 * @return whether the pet is sitting as a result of this call
+	 */
+	public boolean setEntitySitting(boolean sitting);
+	
 }

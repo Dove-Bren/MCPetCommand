@@ -1,7 +1,6 @@
 package com.smanzana.petcommand.init;
 
 import com.smanzana.petcommand.PetCommand;
-import com.smanzana.petcommand.api.entity.IEntityPet;
 import com.smanzana.petcommand.client.container.PetCommandContainers;
 import com.smanzana.petcommand.client.petgui.PetGUI;
 import com.smanzana.petcommand.client.petgui.PetGUI.PetContainer;
@@ -14,6 +13,7 @@ import com.smanzana.petcommand.proxy.ClientProxy;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.MenuScreens.ScreenConstructor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
@@ -33,6 +33,8 @@ public class ClientInit {
 		proxy.initKeybinds();
 		
 		PetGUIRenderHelperImpl.Register();
+		
+		PetCommand.GetClientPetOverrides().loadFromDisk();
 	}
 	
 	@SubscribeEvent
@@ -41,7 +43,7 @@ public class ClientInit {
 	}
 	
 	// To get around bounds matching. D:
-	protected static class PetGUIFactory<T extends IEntityPet> implements ScreenConstructor<PetGUI.PetContainer<T>, PetGUI.PetGUIContainer<T>> {
+	protected static class PetGUIFactory<T extends LivingEntity> implements ScreenConstructor<PetGUI.PetContainer<T>, PetGUI.PetGUIContainer<T>> {
 
 			@Override
 			public PetGUIContainer<T> create(PetContainer<T> c, Inventory p,

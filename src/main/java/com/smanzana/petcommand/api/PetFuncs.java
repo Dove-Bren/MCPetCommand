@@ -115,4 +115,41 @@ public class PetFuncs {
 		// More hostile; assume anything here is not on same team
 		return false;
 	}
+	
+	public static final boolean IsPetSitting(LivingEntity pet) {
+		final boolean sitting;
+		if (pet == null) {
+			sitting = false;
+		} else if (pet instanceof ITameableEntity) {
+			sitting = ((ITameableEntity) pet).isEntitySitting();
+		} else if (pet instanceof TamableAnimal) {
+			sitting = ((TamableAnimal) pet).isOrderedToSit();
+		} else {
+			sitting = false;
+		}
+		
+		return sitting;
+	}
+	
+	/**
+	 * Attempts to set the provided entity as 'sitting.'
+	 * Returns whether it was successful in figuring out how via generic methods.
+	 * @param pet
+	 * @return
+	 */
+	public static final boolean TryToSitPet(LivingEntity pet, boolean sit) {
+		if (pet == null) {
+			return false;
+		}
+		
+		if (pet instanceof TamableAnimal tame) {
+			tame.setOrderedToSit(sit);
+			return true;
+		}
+		if (pet instanceof ITameableEntity tame) {
+			return tame.setEntitySitting(sit);
+		}
+		
+		return false;
+	}
 }

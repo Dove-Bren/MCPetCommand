@@ -15,18 +15,19 @@ import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetCommandAPI;
 import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.api.entity.IEntityPet;
+import com.smanzana.petcommand.api.pet.EPetAction;
+import com.smanzana.petcommand.api.pet.EPetPlacementMode;
+import com.smanzana.petcommand.api.pet.EPetTargetMode;
 import com.smanzana.petcommand.api.pet.PetInfo;
-import com.smanzana.petcommand.api.pet.PetInfo.PetAction;
 import com.smanzana.petcommand.api.pet.PetInfo.PetValue;
 import com.smanzana.petcommand.api.pet.PetInfo.ValueFlavor;
-import com.smanzana.petcommand.api.pet.PetPlacementMode;
-import com.smanzana.petcommand.api.pet.PetTargetMode;
 import com.smanzana.petcommand.client.icon.PetActionIcon;
 import com.smanzana.petcommand.client.icon.PetPlacementModeIcon;
 import com.smanzana.petcommand.client.icon.PetTargetModeIcon;
 import com.smanzana.petcommand.client.render.PetCommandRenderTypes;
 import com.smanzana.petcommand.config.ModConfig;
 import com.smanzana.petcommand.proxy.ClientProxy;
+import com.smanzana.petcommand.util.ColorUtil;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -40,6 +41,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Cat;
 import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.item.DyeColor;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.client.gui.IIngameOverlay;
@@ -163,7 +165,7 @@ public class OverlayRenderer extends GuiComponent {
 				}
 				
 				List<LivingEntity> bigPets = PetFuncs.GetTamedEntities(player, (ent) -> {
-					return ent != null && ent instanceof IEntityPet && ((IEntityPet) ent).isBigPet();
+					return ent != null && ent instanceof IEntityPet big && big.isBigPet() && !IsHiddenFromHUD(ent);
 				});
 				Collections.sort(bigPets, (left, right) -> {
 					return ((LivingEntity) (left)).getUUID().compareTo(((LivingEntity) right).getUUID());
@@ -190,6 +192,9 @@ public class OverlayRenderer extends GuiComponent {
 						&& ((IEntityPet) tamed).isBigPet()) {
 					continue;
 				}
+				if (IsHiddenFromHUD(tamed)) {
+					continue;
+				}
 				final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getSelectionManager().isSelected(tamed);
 				renderHealthbarBox(matrixStackIn, player, width, height, tamed, isSelected, xOffset, y, scale);
 				y += healthbarHeight;
@@ -202,7 +207,7 @@ public class OverlayRenderer extends GuiComponent {
 		LocalPlayer player = mc.player;
 		final float ticks = player.tickCount + partialTicks;
 		if (petTargetIndex >= 0) {
-			PetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(player);
+			EPetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(player);
 			renderPetActionTargetMode(matrixStackIn, player, width, height, mode, (ticks - petTargetIndex) / (float) petTargetAnimDur);
 			
 			if (ticks >= petTargetIndex + petTargetAnimDur) {
@@ -211,7 +216,7 @@ public class OverlayRenderer extends GuiComponent {
 		}
 		
 		if (petPlacementIndex >= 0) {
-			PetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(player);
+			EPetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(player);
 			renderPetActionPlacementMode(matrixStackIn, player, width, height, mode, (ticks - petPlacementIndex) / (float) petPlacementAnimDur);
 			
 			if (ticks >= petPlacementIndex + petPlacementAnimDur) {
@@ -220,7 +225,7 @@ public class OverlayRenderer extends GuiComponent {
 		}
 	}
 
-	private void renderPetActionTargetMode(PoseStack matrixStackIn, LocalPlayer player, int width, int height, PetTargetMode mode, float prog) {
+	private void renderPetActionTargetMode(PoseStack matrixStackIn, LocalPlayer player, int width, int height, EPetTargetMode mode, float prog) {
 		final float alpha;
 		if (prog < .2f) {
 			alpha = prog / .2f;
@@ -243,7 +248,7 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.popPose();
 	}
 	
-	private void renderPetActionPlacementMode(PoseStack matrixStackIn, LocalPlayer player, int width, int height, PetPlacementMode mode, float prog) {
+	private void renderPetActionPlacementMode(PoseStack matrixStackIn, LocalPlayer player, int width, int height, EPetPlacementMode mode, float prog) {
 		final float alpha;
 		if (prog < .2f) {
 			alpha = prog / .2f;
@@ -288,24 +293,16 @@ public class OverlayRenderer extends GuiComponent {
 //			secondaryMeter = (float) dragon.getXP() / (float) dragon.getMaxXP();
 //		}
 		
-		PetInfo info;
-		if (pet instanceof IEntityPet) {
-			IEntityPet iPet = (IEntityPet) pet;
-			info = iPet.getPetSummary();
-		} else {
-			info = PetInfo.Wrap(pet);
-		}
+		PetInfo info = PetInfo.Wrap(pet);
 		
-		//TODO: use some sort of configuration to pick which value to display
-		final List<PetValue> values = info.getPetValues();
-		final PetValue valueToDisplay = values.isEmpty() ? PetInfo.EmptyValue : values.get(0);
+		final PetValue valueToDisplay = GetPetValue(pet);
 		
 		final float health = (float) info.getHpPercent();//(float) (Math.max(0, Math.ceil(pet.getHealth())) / Math.max(0.01, Math.ceil(pet.getMaxHealth())));
 		final boolean hasSecondaryBar = valueToDisplay.max() > 0;
 		float secondaryMeter = (float) (valueToDisplay.current() / valueToDisplay.max());
 		final ValueFlavor flavor = valueToDisplay.flavor();
-		final PetAction action = info.getPetAction();
-		final float[] petColor = getTargetColor((Mob) pet);
+		final EPetAction action = info.getPetAction();
+		final float[] petColor = GetPetColor((Mob) pet);
 		
 		info.release();
 		info = null;
@@ -452,28 +449,20 @@ public class OverlayRenderer extends GuiComponent {
 		// 3) pet status icon
 		Font fonter = mc.font;
 		
-		PetInfo info;
-		if (pet instanceof IEntityPet) {
-			IEntityPet iPet = (IEntityPet) pet;
-			info = iPet.getPetSummary();
-		} else {
-			info = PetInfo.Wrap(pet);
-		}
+		PetInfo info = PetInfo.Wrap(pet);
 		
-		//TODO: use some sort of configuration to pick which value to display
-		final List<PetValue> values = info.getPetValues();
-		final PetValue valueToDisplay = values.isEmpty() ? PetInfo.EmptyValue : values.get(0);
+		final PetValue valueToDisplay = GetPetValue(pet);
 		
 		final float health = (float) info.getHpPercent();//(float) (Math.max(0, Math.ceil(pet.getHealth())) / Math.max(0.01, Math.ceil(pet.getMaxHealth())));
-		final boolean hasSecondaryBar = valueToDisplay.max() > 0;
-		float secondaryMeter = (float) (valueToDisplay.current() / valueToDisplay.max());
-		final ValueFlavor flavor = valueToDisplay.flavor();
+		final boolean hasSecondaryBar = valueToDisplay != null && valueToDisplay.max() > 0;
+		float secondaryMeter = hasSecondaryBar ? ((float) (valueToDisplay.current() / valueToDisplay.max())) : 0;
+		final ValueFlavor flavor = hasSecondaryBar ? valueToDisplay.flavor() : null;
 //		final boolean sitting = (pet instanceof EntityTameable ? ((EntityTameable) pet).isSitting()
 //				: pet instanceof IEntityTameable ? ((IEntityTameable) pet).isSitting()
 //				: false);
 //		final boolean attacking = (pet instanceof Mob ? ((Mob) pet).getAttackTarget() != null : false);
-		final PetAction action = info.getPetAction();
-		final float[] petColor = getTargetColor((Mob) pet);
+		final EPetAction action = info.getPetAction();
+		final float[] petColor = GetPetColor((Mob) pet);
 		
 		info.release();
 		info = null;
@@ -582,33 +571,90 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.popPose();
 	}
 	
-	protected float[] getTargetColor(Mob targeter) {
-		if (targeter instanceof IEntityPet) {
-			final int raw = ((IEntityPet) targeter).getPetColor();
-			return new float[] {
-				(float) ((raw >> 16) & 0xFF) / 256f,
-				(float) ((raw >> 8) & 0xFF) / 256f,
-				(float) ((raw >> 0) & 0xFF) / 256f,
-				(float) ((raw >> 24) & 0xFF) / 256f,
-			};
-		} else if (targeter instanceof Wolf) {
-			final float[] rgb = ((Wolf) targeter).getCollarColor().getTextureDiffuseColors();
-			return new float[] {
-					rgb[0], rgb[1], rgb[2], 1f
-			};
-		} else if (targeter instanceof Cat) {
-			final float[] rgb = ((Cat) targeter).getCollarColor().getTextureDiffuseColors();
-			return new float[] {
-					rgb[0], rgb[1], rgb[2], 1f
-			};
+	// TODO move these out
+	public static final float[] GetPetColor(LivingEntity pet) {
+		return ColorUtil.ARGBToColor(GetPetColorRaw(pet));
+	}
+	public static final int GetPetColorRaw(LivingEntity pet) {
+		Integer override = PetCommand.GetClientPetOverrides().getColor(pet.getUUID());
+		if (override != null) {
+			return override;
 		} else {
-			final int raw = IEntityPet.MakeColorFromID(targeter.getUUID());
-			return new float[] {
-				(float) ((raw >> 16) & 0xFF) / 256f,
-				(float) ((raw >> 8) & 0xFF) / 256f,
-				(float) ((raw >> 0) & 0xFF) / 256f,
-				(float) ((raw >> 24) & 0xFF) / 256f,
-			};
+			return GetDefaultPetColorRaw(pet); 
+		}
+	}
+	
+	protected static final int GetDefaultPetColorRaw(LivingEntity pet) {
+		if (pet instanceof IEntityPet) {
+			return ((IEntityPet) pet).getPetColor();
+		} else if (pet instanceof Wolf wolf) {
+//			final float[] rgb = ((Wolf) pet).getCollarColor().getTextureDiffuseColors();
+//			return 0xFF000000
+//					| ((byte)(rgb[0] * 255) << 16)
+//					| ((byte)(rgb[1] * 255) << 8)
+//					| ((byte)(rgb[2] * 255) << 0)
+//					;
+			final DyeColor color = wolf.getCollarColor();
+			return ColorUtil.dyeToARGB(color);
+		} else if (pet instanceof Cat cat) {
+//			final float[] rgb = ((Cat) pet).getCollarColor().getTextureDiffuseColors();
+//			return 0xFF000000
+//					| ((byte)(rgb[0] * 255) << 16)
+//					| ((byte)(rgb[1] * 255) << 8)
+//					| ((byte)(rgb[2] * 255) << 0)
+//					;
+			final DyeColor color = cat.getCollarColor();
+			return ColorUtil.dyeToARGB(color);
+		} else {
+			return IEntityPet.MakeColorFromID(pet.getUUID());
+		}
+	}
+	
+	public static final boolean IsHiddenFromHUD(LivingEntity pet) {
+		Boolean override = PetCommand.GetClientPetOverrides().getHide(pet.getUUID());
+		if (override != null) {
+			return override.booleanValue();
+		} else {
+			return false;
+		}
+	}
+	
+	public static final int GetPetValueIndex(LivingEntity pet) {
+		Integer override = PetCommand.GetClientPetOverrides().getValueIdx(pet.getUUID());
+		int index = 0;
+		if (override != null) {
+			index = override.intValue();
+		}
+		
+		return index;
+	}
+	
+	public static final @Nullable PetValue GetPetValue(LivingEntity pet) {
+		PetInfo info = PetInfo.Wrap(pet);
+		
+		List<PetValue> values = info.getPetValues();
+		if (values == null || values.isEmpty()) {
+			return null;
+		}
+
+		// Make sure index indicates a good value
+		int index = GetPetValueIndex(pet);
+		if (index >= values.size()) {
+			index = 0;
+		}
+		while (index < values.size()) {
+			PetValue value = values.get(index);
+			if (value == null || value.label() == null) {
+				index++;
+			} else {
+				break;
+			}
+		}
+		
+		if (index < values.size()) {
+			return values.get(index);
+		} else {
+			return null;
 		}
 	}
 	
@@ -620,7 +666,7 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.scale(scale, scale, 1f);
 		matrixStackIn.translate(-(GUI_HEALTHBAR_ICON_LENGTH/2f), 0, 0);
 		
-		final float[] color = getTargetColor(targeter);
+		final float[] color = GetPetColor(targeter);
 		
 		final float width = GUI_HEALTHBAR_ICON_LENGTH;
 		final float height = GUI_HEALTHBAR_ICON_LENGTH;
