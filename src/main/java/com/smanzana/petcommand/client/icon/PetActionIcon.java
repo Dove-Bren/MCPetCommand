@@ -40,6 +40,7 @@ public class PetActionIcon {
 		matrixStackIn.pushPose();
 
 		{
+			RenderSystem.enableDepthTest();
 			RenderSystem.setShaderTexture(0, this.getTexture());
 			RenderSystem.enableBlend();
 			RenderSystem.setShaderColor(red, green, blue, alpha); // idk if this works since blit uses postex

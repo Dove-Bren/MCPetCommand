@@ -42,6 +42,7 @@
 	"petaction.move.name": "Move",
 	"petaction.move.desc": "Pet is moving",
 	
+	"pettarget.info": "Who pets choose to attack when free roaming",
 	"pettarget.free.name": "Free",
 	"pettarget.free.desc": "Pet has no specific orders, and will attack things they normally would",
 	"pettarget.defensive.name": "Defensive",
@@ -51,6 +52,7 @@
 	"pettarget.passive.name": "Passive",
 	"pettarget.passive.desc": "Pet will not attack anything unless told to directly",
 	
+	"petplacement.info": "Where pets move to by default when not carrying out specific orders",
 	"petplacement.free.name": "Free",
 	"petplacement.free.desc": "Pet has not been told where to stand, and will wander around like normal",
 	"petplacement.heel_follow.name": "Heel",

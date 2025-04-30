@@ -40,19 +40,21 @@ public abstract class ParentWidget<T extends ObscurableChildWidget> extends Obsc
 	@Override
 	public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
 		super.render(matrixStack, mouseX, mouseY, partialTicks);
+		
 		if (this.visible) {
 			for (T widget : children) {
 				widget.render(matrixStack, mouseX, mouseY, partialTicks);
 			}
 		}
-		renderForeground(matrixStack, mouseX, mouseY, partialTicks);
 		
-		matrixStack.pushPose();
-		matrixStack.translate(0, 0, 400);
+		renderForeground(matrixStack, mouseX, mouseY, partialTicks);
+	}
+	
+	@Override
+	public void renderToolTip(PoseStack matrixStack, int mouseX, int mouseY) {
 		for (T widget : children) {
 			widget.renderToolTip(matrixStack, mouseX, mouseY);
 		}
-		matrixStack.popPose();
 	}
 	
 	@Override

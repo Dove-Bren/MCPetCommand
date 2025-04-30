@@ -1,10 +1,7 @@
 package com.smanzana.petcommand.client.widgetdupe;
 
-import java.util.List;
-
 import javax.annotation.Nullable;
 
-import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -24,7 +21,7 @@ public class ChildButtonWidget extends ObscurableChildWidget {
 	
 	protected final Screen parent;
 	
-	protected @Nullable List<Component> tooltip;
+	protected @Nullable ITooltip tooltip;
 	protected final OnPress onPress;
 	
 	public ChildButtonWidget(Screen parent, int x, int y, int width, int height, Component label, OnPress onPress) {
@@ -33,13 +30,9 @@ public class ChildButtonWidget extends ObscurableChildWidget {
 		this.onPress = onPress;
 	}
 	
-	public ChildButtonWidget tooltip(List<Component> tooltip) {
+	public ChildButtonWidget tooltip(ITooltip tooltip) {
 		this.tooltip = tooltip;
 		return this;
-	}
-	
-	public ChildButtonWidget tooltip(Component tooltip) {
-		return tooltip(Lists.newArrayList(tooltip));
 	}
 	
 	@Override
@@ -60,7 +53,7 @@ public class ChildButtonWidget extends ObscurableChildWidget {
 			
 			RenderSystem.setShader(GameRenderer::getPositionTexShader);
 			RenderSystem.setShaderTexture(0, WIDGETS_LOCATION);
-			blit(matrixStackIn, x + 1, y + 1, width - 2, height - 2, 2, 68, (width - 2), (height - 2), 256, 256);
+			blit(matrixStackIn, x + 1, y + 1, width - 2, height - 2, 2, 68, (width - 2), Math.min(height - 2, 14), 256, 256);
 			
 			// highlights
 			fill(matrixStackIn, x + 1, y + 1, x + (width - 1), y + 2, 0x40FFFFFF);
@@ -85,18 +78,10 @@ public class ChildButtonWidget extends ObscurableChildWidget {
 		}
 	}
 	
-	protected List<Component> getTooltip() {
-		return this.tooltip;
-	}
-	
 	@Override
 	public void renderToolTip(PoseStack matrixStackIn, int mouseX, int mouseY) {
-		final List<Component> tooltip = getTooltip();
 		if (this.isHoveredOrFocused() && tooltip != null) {
-			matrixStackIn.pushPose();
-			matrixStackIn.translate(0, 0, 100);
-			parent.renderComponentTooltip(matrixStackIn, tooltip, mouseX, mouseY);
-			matrixStackIn.popPose();
+			Tooltip.RenderTooltip(tooltip, parent, matrixStackIn, mouseX, mouseY);
 		}
 	}
 	

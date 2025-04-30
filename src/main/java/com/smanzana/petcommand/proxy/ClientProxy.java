@@ -106,34 +106,42 @@ public class ClientProxy extends CommonProxy {
 		return super.getTargetManager(entity);
 	}
 	
+	public void cyclePlacementMode() {
+		final EPetPlacementMode current = PetCommand.GetPetCommandManager().getPlacementMode(this.getPlayer());
+		final EPetPlacementMode next = EPetPlacementMode.values()[(current.ordinal() + 1) % EPetPlacementMode.values().length];
+		
+		// Set up client to have this locally
+		PetCommand.GetPetCommandManager().setPlacementMode(getPlayer(), next);
+		
+		// Send change to server
+		NetworkHandler.sendToServer(PetCommandMessage.AllPlacementMode(next));
+	}
+	
+	public void cycleTargetMode() {
+		// Cycle target mode
+		final EPetTargetMode current = PetCommand.GetPetCommandManager().getTargetMode(this.getPlayer());
+		final EPetTargetMode next = EPetTargetMode.values()[(current.ordinal() + 1) % EPetTargetMode.values().length];
+		
+		// Set up client to have this locally
+		PetCommand.GetPetCommandManager().setTargetMode(getPlayer(), next);
+		
+		// Send change to server
+		NetworkHandler.sendToServer(PetCommandMessage.AllTargetMode(next));
+	}
+	
 	@SubscribeEvent
 	public void onKey(KeyInputEvent event) {
 		if (bindingPetPlacementModeCycle.consumeClick()) {
 			// Cycle placement mode
-			final EPetPlacementMode current = PetCommand.GetPetCommandManager().getPlacementMode(this.getPlayer());
-			final EPetPlacementMode next = EPetPlacementMode.values()[(current.ordinal() + 1) % EPetPlacementMode.values().length];
-			
-			// Set up client to have this locally
-			PetCommand.GetPetCommandManager().setPlacementMode(getPlayer(), next);
+			cyclePlacementMode();
 			
 			// Update client icon
 			this.overlayRenderer.changePetPlacementIcon();
-			
-			// Send change to server
-			NetworkHandler.sendToServer(PetCommandMessage.AllPlacementMode(next));
 		} else if (bindingPetTargetModeCycle.consumeClick()) {
-			// Cycle target mode
-			final EPetTargetMode current = PetCommand.GetPetCommandManager().getTargetMode(this.getPlayer());
-			final EPetTargetMode next = EPetTargetMode.values()[(current.ordinal() + 1) % EPetTargetMode.values().length];
+			cycleTargetMode();
 			
 			// Update client icon
 			this.overlayRenderer.changePetTargetIcon();
-			
-			// Set up client to have this locally
-			PetCommand.GetPetCommandManager().setTargetMode(getPlayer(), next);
-			
-			// Send change to server
-			NetworkHandler.sendToServer(PetCommandMessage.AllTargetMode(next));
 		} else if (bindingPetAttackAll.consumeClick()) {
 			// Raytrace, find tar get, and set all to attack
 			final Player player = getPlayer();

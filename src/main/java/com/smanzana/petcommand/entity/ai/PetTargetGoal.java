@@ -46,6 +46,10 @@ public class PetTargetGoal<T extends PathfinderMob> extends TargetGoal {
 			return false;
 		}
 		
+		if (PetFuncs.IsPetSitting(thePet)) {
+			return false;
+		}
+		
 		theOwner = entitylivingbase;
 		return true;
 	}
