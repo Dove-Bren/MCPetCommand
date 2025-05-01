@@ -47,15 +47,7 @@ public class PetValueWidget extends LabeledWidget {
 				return "";
 			}
 			
-			if (value.max() == 0) {
-				return value.current() == 0 ? "No" : "Yes";
-			}
-			
-			if (value.max() == 1.0) {
-				return String.format("%d%%", (int) (value.current() * 100));
-			}
-			
-			return String.format("%3d / %d", (int) value.current(), (int) value.max());
+			return value.getFormattedString();
 		}
 		
 	}

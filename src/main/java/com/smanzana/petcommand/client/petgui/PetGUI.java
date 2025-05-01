@@ -513,19 +513,21 @@ public class PetGUI {
 							continue;
 						}
 						
+						final float realProg = value.max() > 0 ? (float)(value.current() / value.max()) : 1f;
+						
 						final ValueFlavor flavor = value.flavor();
-						final int color = ColorUtil.colorToARGB(flavor.colorR(1f), flavor.colorG(1f), flavor.colorB(1f), flavor.colorA(1f));
+						final int color = ColorUtil.colorToARGB(flavor.colorR(realProg), flavor.colorG(realProg), flavor.colorB(realProg), flavor.colorA(realProg));
 						
 						drawCenteredString(matrixStackIn, this.font, value.label().copy().withStyle(ChatFormatting.BOLD), centerX, y, 0xFFFFFFFF);
 						y += font.lineHeight + 5;
 						GuiComponent.fill(matrixStackIn, x, y, x + w, y + h, 0xFFD0D0D0);
 						GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF201010);
 						
-						int prog = (int) ((float) (w - 2) * (value.current() / value.max()));
+						int prog = (int) ((float) (w - 2) * realProg);
 						GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + 1 + prog, y + h - 1, color);
 						
 						drawCenteredString(matrixStackIn, font,
-								String.format("%d / %d", (int) value.current(), (int) value.max()),
+								value.getFormattedString(),
 								centerX,
 								y + (h / 2) - (font.lineHeight / 2),
 								0xFFC0C0C0);

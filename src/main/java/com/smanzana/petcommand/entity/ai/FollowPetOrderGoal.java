@@ -169,7 +169,7 @@ public class FollowPetOrderGoal<T extends Mob> extends Goal {
 			}
 			break;
 		case GUARD_POS:
-			if (inPosition && pet.getTarget() == null) {
+			if (inPosition && (pet.getTarget() == null || pet.getTarget().isDeadOrDying() || pet.distanceTo(pet.getTarget()) > 10)) {
 				final LivingEntity newTarg = getGuardTarget(pet, owner, order);
 				if (newTarg != null) {
 					pet.setTarget(newTarg);
@@ -216,6 +216,14 @@ public class FollowPetOrderGoal<T extends Mob> extends Goal {
 			return false;
 		}
 		
+		if (order.type() == EPetOrderType.GUARD_POS) {
+			final Vec3 targetPos = getTargetPosition(thePet, theOwner, order);
+			if (!this.shouldMoveToTarget(thePet, theOwner, order, targetPos)
+					&& (thePet.getTarget() != null && !thePet.getTarget().isDeadOrDying() && thePet.distanceTo(thePet.getTarget()) < 10)) {
+				return false;
+			}
+		}
+		
 		return true;
 	}
 
@@ -230,6 +238,14 @@ public class FollowPetOrderGoal<T extends Mob> extends Goal {
 		
 		if (thePet.isPassenger()) {
 			return false;
+		}
+		
+		if (order.type() == EPetOrderType.GUARD_POS) {
+			final Vec3 targetPos = getTargetPosition(thePet, theOwner, order);
+			if (!this.shouldMoveToTarget(thePet, theOwner, order, targetPos)
+					&& (thePet.getTarget() != null && !thePet.getTarget().isDeadOrDying() && thePet.distanceTo(thePet.getTarget()) < 10)) {
+				return false;
+			}
 		}
 		
 		return true;
@@ -279,7 +295,9 @@ public class FollowPetOrderGoal<T extends Mob> extends Goal {
 		
 		// Calculate how far from where we want to be we are
 		final Vec3 targetPos = getTargetPosition(thePet, theOwner, order);
-		final float reqDist = (order.type() == EPetOrderType.MOVE_TO_ME ? 2 : this.maxDist);
+		final float reqDist = (order.type() == EPetOrderType.MOVE_TO_ME ? 2 :
+			order.type() == EPetOrderType.GUARD_POS ? 10
+					: this.maxDist);
 		final boolean inPosition = this.thePet.distanceToSqr(targetPos.x, targetPos.y, targetPos.z) <= (double)(reqDist * reqDist);
 		this.onOrderTick(thePet, theOwner, order, inPosition);
 		

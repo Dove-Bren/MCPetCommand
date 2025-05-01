@@ -37,7 +37,7 @@ public class PetInfo {
 		/**
 		 * A good thing. Like health, but not health. Like mana?
 		 */
-		GOOD(0xFF4BAD20, 0xFF4BAD20),
+		GOOD(0xFF210aa3, 0xFF210aa3),
 		
 		/**
 		 * A good thing that's expected to slowly grow or drop. For example, energy.
@@ -90,7 +90,20 @@ public class PetInfo {
 		}
 	}
 	
-	public static record PetValue(double current, double max, @Nonnull ValueFlavor flavor, @Nullable Component label) { }
+	public static record PetValue(double current, double max, @Nonnull ValueFlavor flavor, @Nullable Component label) {
+
+		public String getFormattedString() {
+			if (max() == 0) {
+				return current() == 0 ? "No" : "Yes";
+			}
+			
+			if (max() == 1.0) {
+				return String.format("%d%%", (int) (current() * 100));
+			}
+			
+			return String.format("%3d / %d", (int) current(), (int) max());
+		}
+	}
 	
 	public static final PetValue EmptyValue = new PetValue(0, 1, ValueFlavor.PROGRESS, null);
 	

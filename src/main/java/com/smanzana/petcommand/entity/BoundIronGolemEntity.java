@@ -10,7 +10,6 @@ import com.smanzana.petcommand.api.PetCommandAPI;
 import com.smanzana.petcommand.api.ai.IFollowOwnerGoal;
 import com.smanzana.petcommand.api.client.container.IPetContainer;
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
-import com.smanzana.petcommand.api.client.petgui.PetGUIStatAdapter;
 import com.smanzana.petcommand.api.client.petgui.sheet.PetInventorySheet;
 import com.smanzana.petcommand.api.client.petgui.sheet.PetStatSheet;
 import com.smanzana.petcommand.api.entity.IEntityPet;
@@ -303,11 +302,6 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 		);
 	}
 
-	@Override
-	public PetGUIStatAdapter<? extends IEntityPet> getGUIAdapter() {
-		return GolemGUIStatAdapter.INSTANCE;
-	}
-	
 	protected void transformBack() {
 		// Transform into the given entity
 		Entity ent = EntityType.IRON_GOLEM.create(level);
@@ -327,74 +321,6 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 			return false;
 		}
 		
-	}
-	
-	protected static final class GolemGUIStatAdapter implements PetGUIStatAdapter<BoundIronGolemEntity> {
-		public static final GolemGUIStatAdapter INSTANCE = new GolemGUIStatAdapter();
-		
-		protected GolemGUIStatAdapter() {
-			
-		}
-		
-		@Override
-		public boolean supportsSecondaryAmt(BoundIronGolemEntity pet) {
-			return false;
-		}
-		
-		@Override
-		public boolean supportsTertiaryAmt(BoundIronGolemEntity pet) {
-			return false;
-		}
-		
-		@Override
-		public boolean supportsQuaternaryAmt(BoundIronGolemEntity pet) {
-			return false;
-		}
-
-		@Override
-		public float getSecondaryAmt(BoundIronGolemEntity pet) {
-			return 0;
-		}
-
-		@Override
-		public float getMaxSecondaryAmt(BoundIronGolemEntity pet) {
-			return 0;
-		}
-
-		@Override
-		public String getSecondaryLabel(BoundIronGolemEntity pet) {
-			return null;
-		}
-
-		@Override
-		public float getTertiaryAmt(BoundIronGolemEntity pet) {
-			return 0;
-		}
-
-		@Override
-		public float getMaxTertiaryAmt(BoundIronGolemEntity pet) {
-			return 0;
-		}
-
-		@Override
-		public String getTertiaryLabel(BoundIronGolemEntity pet) {
-			return null;
-		}
-
-		@Override
-		public float getQuaternaryAmt(BoundIronGolemEntity pet) {
-			return 0;
-		}
-
-		@Override
-		public float getMaxQuaternaryAmt(BoundIronGolemEntity pet) {
-			return 0;
-		}
-
-		@Override
-		public String getQuaternaryLabel(BoundIronGolemEntity pet) {
-			return null;
-		}
 	}
 	
 	public static void EntityInteractListener(PlayerInteractEvent.EntityInteract event) {

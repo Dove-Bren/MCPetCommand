@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.UUID;
 
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
-import com.smanzana.petcommand.api.client.petgui.PetGUIStatAdapter;
 import com.smanzana.petcommand.api.pet.PetInfo;
 
 import net.minecraft.world.entity.LivingEntity;
@@ -24,8 +23,6 @@ public interface IEntityPet extends ITameableEntity {
 	public boolean isBigPet();
 	
 	public IPetGUISheet<? extends IEntityPet>[] getContainerSheets(Player player);
-	
-	public PetGUIStatAdapter<? extends IEntityPet> getGUIAdapter();
 	
 	public default int getPetColor() {
 		return MakeColorFromID(this.getPetID());

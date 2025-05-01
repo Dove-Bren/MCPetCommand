@@ -70,6 +70,12 @@ public class PetListScreen extends Screen {
 	public PetListScreen(Component title, Player player) {
 		super(title);
 		this.player = player;
+		
+	}
+	
+	@Override
+	public boolean isPauseScreen() {
+		return false;
 	}
 	
 	@Override
@@ -121,6 +127,10 @@ public class PetListScreen extends Screen {
 			}
 			row.addChild(new TargetModeButton(this, 0, 0, 24, 24, this::cycleTargetMode, this::getTargetMode).tooltip(this::getPetTargetTooltip));
 		controlList.addChild(row);
+		
+		controlList.addChild(new ChildButtonWidget(this, 0, 0, 20, 24, new TextComponent("All Stop"), this::stopAll));
+		controlList.addChild(new ChildButtonWidget(this, 0, 0, 20, 24, new TextComponent("All Come"), this::callAll));
+		controlList.addChild(new ChildButtonWidget(this, 0, 0, 20, 24, new TextComponent("All Stay"), this::stayAll));
 		
 		this.addRenderableWidget(controlList);
 	}
@@ -237,6 +247,22 @@ public class PetListScreen extends Screen {
 	
 	protected List<Component> getPetTargetTooltip() {
 		return getPetTargetTooltip(this.getTargetMode());
+	}
+	
+	protected void stopAll(ChildButtonWidget ignored) {
+		PetCommand.GetPetCommandManager().commandAllStop(player);
+	}
+	
+	protected void stayAll(ChildButtonWidget ignored) {
+		for (LivingEntity ent : PetFuncs.GetTamedEntities(player)) {
+			PetCommand.GetPetCommandManager().setPetOrder(player, ent, new PetOrder(EPetOrderType.STAY, null));
+		}
+	}
+	
+	protected void callAll(ChildButtonWidget ignored) {
+		for (LivingEntity ent : PetFuncs.GetTamedEntities(player)) {
+			PetCommand.GetPetCommandManager().setPetOrder(player, ent, new PetOrder(EPetOrderType.MOVE_TO_ME, null));
+		}
 	}
 	
 	protected static class PetListEntry extends AutoRowWidget<ObscurableChildWidget> {

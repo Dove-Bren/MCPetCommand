@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.RenderType;
 public final class PetCommandRenderTypes extends RenderType {
 
 	protected static final RenderType PET_TARGET_ICON;
+	protected static final RenderType PET_ORDER_MOVE_ARROW;
 	
 	private static final String Name(String suffix) {
 		return "petcommandrender_" + suffix;
@@ -29,6 +30,16 @@ public final class PetCommandRenderTypes extends RenderType {
 				.setLayeringState(VIEW_OFFSET_Z_LAYERING)
 			.createCompositeState(false);
 		PET_TARGET_ICON = RenderType.create(Name("TargetIcon"), DefaultVertexFormat.POSITION_COLOR_TEX, VertexFormat.Mode.QUADS, 32, false, false, glState);
+		
+		glState = RenderType.CompositeState.builder()
+				.setShaderState(RenderStateShard.POSITION_COLOR_TEX_SHADER)
+				.setTextureState(new RenderStateShard.TextureStateShard(PetOrderRenderer.TEX_MOVE, false, false))
+				.setCullState(NO_CULL)
+				.setLightmapState(NO_LIGHTMAP)
+				.setOutputState(ITEM_ENTITY_TARGET)
+				.setLayeringState(VIEW_OFFSET_Z_LAYERING)
+			.createCompositeState(false);
+		PET_ORDER_MOVE_ARROW = RenderType.create(Name("MoveArrow"), DefaultVertexFormat.POSITION_COLOR_TEX, VertexFormat.Mode.QUADS, 32, false, false, glState);
 	}
 
 	private PetCommandRenderTypes(String p_173178_, VertexFormat p_173179_, Mode p_173180_, int p_173181_, boolean p_173182_, boolean p_173183_, Runnable p_173184_, Runnable p_173185_) {

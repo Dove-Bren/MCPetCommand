@@ -7,28 +7,35 @@ import javax.annotation.Nullable;
 
 import org.lwjgl.glfw.GLFW;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
+import com.smanzana.petcommand.api.pet.EPetOrderType;
 import com.smanzana.petcommand.api.pet.EPetPlacementMode;
 import com.smanzana.petcommand.api.pet.EPetTargetMode;
 import com.smanzana.petcommand.api.pet.ITargetManager;
 import com.smanzana.petcommand.client.overlay.OverlayRenderer;
 import com.smanzana.petcommand.client.pet.SelectionManager;
 import com.smanzana.petcommand.client.render.OutlineRenderer;
+import com.smanzana.petcommand.client.render.PetOrderRenderer;
 import com.smanzana.petcommand.client.screen.PetListScreen;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.network.message.PetCommandMessage;
+import com.smanzana.petcommand.pet.PetOrder;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 import com.smanzana.petcommand.util.RayTrace;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.InputEvent.KeyInputEvent;
+import net.minecraftforge.client.event.InputEvent.RawMouseEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -40,8 +47,10 @@ public class ClientProxy extends CommonProxy {
 	private KeyMapping bindingPetAttack;
 	private KeyMapping bindingPetAllStop;
 	private KeyMapping bindingPetScreen;
+	private KeyMapping bindingPetOrderModifier;
 	private OverlayRenderer overlayRenderer;
 	private OutlineRenderer outlineRenderer;
+	private PetOrderRenderer petOrderRenderer;
 	private SelectionManager selectionManager;
 	
 	public ClientProxy() {
@@ -49,14 +58,15 @@ public class ClientProxy extends CommonProxy {
 		this.overlayRenderer = new OverlayRenderer();
 		this.outlineRenderer = new OutlineRenderer();
 		this.selectionManager = new SelectionManager(this.getOutlineRenderer());
+		this.petOrderRenderer = new PetOrderRenderer();
 		
 		MinecraftForge.EVENT_BUS.register(this); // Handle keyboard inputs
 	}
 	
 	public void initKeybinds() {
-		bindingPetPlacementModeCycle = new KeyMapping("key.pet.placementmode.desc", GLFW.GLFW_KEY_G, "key.PetCommand.desc");
+		bindingPetPlacementModeCycle = new KeyMapping("key.pet.placementmode.desc", InputConstants.UNKNOWN.getValue(), "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetPlacementModeCycle);
-		bindingPetTargetModeCycle = new KeyMapping("key.pet.targetmode.desc", GLFW.GLFW_KEY_H, "key.PetCommand.desc");
+		bindingPetTargetModeCycle = new KeyMapping("key.pet.targetmode.desc", InputConstants.UNKNOWN.getValue(), "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetTargetModeCycle);
 		bindingPetAttackAll = new KeyMapping("key.pet.attackall.desc", GLFW.GLFW_KEY_X, "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetAttackAll);
@@ -66,6 +76,8 @@ public class ClientProxy extends CommonProxy {
 		ClientRegistry.registerKeyBinding(bindingPetAllStop);
 		bindingPetScreen = new KeyMapping("key.pet.screen.desc", GLFW.GLFW_KEY_P, "key.PetCommand.desc");
 		ClientRegistry.registerKeyBinding(bindingPetScreen);
+		bindingPetOrderModifier = new KeyMapping("key.pet.order.desc", GLFW.GLFW_KEY_LEFT_CONTROL, "key.PetCommand.desc");
+		ClientRegistry.registerKeyBinding(bindingPetOrderModifier);
 	}
 	
 	@Override
@@ -200,6 +212,9 @@ public class ClientProxy extends CommonProxy {
 					// Clear out pet
 					this.getSelectionManager().clearSelection();
 				}
+				
+				// Readjust order renderer based on selection
+				this.getPetOrderRenderer().setEnabled(!this.getSelectionManager().getSelectedPets().isEmpty());
 			}
 		} else if (bindingPetAllStop.consumeClick()) {
 			NetworkHandler.sendToServer(PetCommandMessage.AllStop());
@@ -208,8 +223,39 @@ public class ClientProxy extends CommonProxy {
 		}
 	}
 	
+	@SubscribeEvent
+	public void onMouse(RawMouseEvent event) {
+		if (event.isCanceled() || event.getButton() != GLFW.GLFW_MOUSE_BUTTON_2) {
+			return;
+		}
+		
+		if (!this.isPetOrderPressed()) {
+			return;
+		}
+		
+		if (this.getSelectionManager().getSelectedPets().isEmpty()) {
+			return;
+		}
+		
+		// Process command
+		event.setCanceled(true);
+		this.handlePetOrder();
+	}
+	
+	public boolean isPetOrderPressed() {
+		return this.bindingPetOrderModifier.isDown();
+	}
+	
+	public boolean isPetOrderGuard() {
+		return this.getPlayer().isCrouching();
+	}
+	
 	public OutlineRenderer getOutlineRenderer() {
 		return this.outlineRenderer;
+	}
+	
+	public PetOrderRenderer getPetOrderRenderer() {
+		return this.petOrderRenderer;
 	}
 	
 	public SelectionManager getSelectionManager() {
@@ -225,6 +271,40 @@ public class ClientProxy extends CommonProxy {
 			// Open it
 			mc.setScreen(new PetListScreen(TextComponent.EMPTY, this.getPlayer()));
 		}
+	}
+	
+	protected void handlePetOrder() {
+		// We have issued an order. Figure out which, where, and do it
+		
+		final Player player = this.getPlayer();
+		final float partialTicks = Minecraft.getInstance().getFrameTime();
+		HitResult result = RayTrace.raytrace(
+				player.level, player,
+				player.getEyePosition(partialTicks),
+				player.getViewVector(partialTicks),
+				100, (e) -> false);
+		BlockPos pos = RayTrace.outsideBlockPosFromResult(result);
+		if (pos != null) {
+			final boolean isGuard = this.isPetOrderGuard();
+			
+			final PetOrder order;
+			if (isGuard) {
+				order = new PetOrder(EPetOrderType.GUARD_POS, pos);
+			} else {
+				order = new PetOrder(EPetOrderType.MOVE_TO_POS, pos);
+			}
+			
+			for (LivingEntity pet : this.getSelectionManager().getSelectedPets()) {
+				PetCommand.GetPetCommandManager().setPetOrder(player, pet, order);
+			}
+			
+		}
+		
+		player.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE, 1f, .5f);
+		player.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE, 1f, .65f);
+		
+		this.getSelectionManager().clearSelection();
+		this.getPetOrderRenderer().setEnabled(false);
 	}
 
 }
