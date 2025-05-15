@@ -168,7 +168,7 @@ public class PetListScreen extends Screen {
 		
 		// Clear out mask
 		{
-			//RenderSystem.enableDepthTest(); // make sure this is on
+			RenderSystem.enableDepthTest(); // make sure this is on
 			RenderSystem.depthMask(true);
 			matrixStack.pushPose();
 			matrixStack.translate(0, 0, 0);
