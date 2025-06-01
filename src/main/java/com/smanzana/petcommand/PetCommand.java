@@ -2,6 +2,7 @@ package com.smanzana.petcommand;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -216,7 +217,7 @@ public class PetCommand
 			boolean hasTaskAlready = false;
 			
 			// Get private goal list
-			LinkedHashSet<PrioritizedGoal> targetGoals = ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.targetSelector, "availableGoals"); 
+			Set<PrioritizedGoal> targetGoals = ObfuscationReflectionHelper.getPrivateValue(GoalSelector.class, living.targetSelector, "availableGoals"); 
 
 			// Scan for existing task
 			for (PrioritizedGoal entry : targetGoals) {
