@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
+import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.entity.ITameableEntity;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -65,7 +66,11 @@ public class PetFuncs {
 			return tame.getLivingOwner();
 		} else if (ent instanceof TamableAnimal) {
 			TamableAnimal tame = (TamableAnimal) ent;
-			return tame.getOwner();
+			// return tame.getOwner(); // this always assumes player
+			@Nullable Entity rawEntity = PetCommand.GetEntityByUUID(tame.level, tame.getOwnerUUID());
+			if (rawEntity != null && rawEntity instanceof LivingEntity living) {
+				return living;
+			}
 		}
 		return null;
 	}
