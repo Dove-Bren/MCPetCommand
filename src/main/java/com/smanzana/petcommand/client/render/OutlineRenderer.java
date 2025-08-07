@@ -79,7 +79,7 @@ public class OutlineRenderer implements IEntityOutliner {
 	private void forceRenderOutline(float partialTicks) {
 		Minecraft mc = Minecraft.getInstance();
 		final LevelRenderer worldRenderer = mc.levelRenderer;
-		final PostChain outlineShader = ObfuscationReflectionHelper.getPrivateValue(LevelRenderer.class, worldRenderer, "entityEffect");
+		final PostChain outlineShader = ObfuscationReflectionHelper.getPrivateValue(LevelRenderer.class, worldRenderer, "f_109412_");
 		
 		outlineShader.process(partialTicks);
 		mc.getMainRenderTarget().bindWrite(false);

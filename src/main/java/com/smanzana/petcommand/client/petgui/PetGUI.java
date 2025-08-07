@@ -223,7 +223,7 @@ public class PetGUI {
 				return false;
 			}
 			if (pet instanceof IEntityPet p) {
-				return playerIn.equals(p.getOwner());
+				return playerIn.equals(p.getPetOwner());
 			} else {
 				return pet.isAlive();
 			}
@@ -326,8 +326,8 @@ public class PetGUI {
 				if (pet != null
 					&& supportsReroll()
 					&& pet instanceof IEntityPet p
-					&& p.getOwner() instanceof Player
-					&& ((Player) p.getOwner()).isCreative()) {
+					&& p.getPetOwner() instanceof Player
+					&& ((Player) p.getPetOwner()).isCreative()) {
 					// Reset container sheet. The client will send this as well later.
 					this.setSheet(0);
 					((IRerollablePet) pet).rerollStats();

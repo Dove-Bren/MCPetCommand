@@ -253,7 +253,7 @@ public class PetCommandManager extends SavedData implements IPetOrderManager {
 	}
 	
 	public void commandToAttack(LivingEntity owner, IEntityPet pet, LivingEntity target) {
-		if (!owner.equals(pet.getOwner())) {
+		if (!owner.equals(pet.getPetOwner())) {
 			return;
 		}
 		

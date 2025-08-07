@@ -12,7 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public interface ITameableEntity {
 
-	public @Nullable Entity getOwner();
+	public @Nullable Entity getPetOwner();
 	
 	/**
 	 * Returns whether this entity has been tamed and, thus, has an owner.
@@ -24,7 +24,7 @@ public interface ITameableEntity {
 	 * Updated getOwner call. We must be owned by an LivingEntity
 	 */
 	default public LivingEntity getLivingOwner() {
-		Entity owner = this.getOwner();
+		Entity owner = this.getPetOwner();
 		if (owner instanceof LivingEntity) {
 			return (LivingEntity) owner;
 		}

@@ -217,7 +217,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	}
 	
 	protected boolean isOwner(LivingEntity entity) {
-		return this.isEntityTamed() && this.getOwner() != entity;
+		return this.isEntityTamed() && this.getPetOwner() != entity;
 	}
 	
 	@Override
@@ -233,7 +233,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	} 
 
 	@Override
-	public Entity getOwner() {
+	public Entity getPetOwner() {
 		final UUID ownerID = this.getOwnerID();
 		if (ownerID == null) {
 			return null;
