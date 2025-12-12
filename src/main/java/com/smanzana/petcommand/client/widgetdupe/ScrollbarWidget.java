@@ -5,13 +5,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.PetCommand;
 
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 
-public class ScrollbarWidget extends AbstractWidget {
+public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
 	
 	public static interface IScrollbarListener {
 		/**

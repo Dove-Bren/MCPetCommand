@@ -22,6 +22,7 @@ import com.smanzana.petcommand.api.pet.PetInfo.PetValue;
 import com.smanzana.petcommand.client.icon.PetPlacementModeIcon;
 import com.smanzana.petcommand.client.icon.PetTargetModeIcon;
 import com.smanzana.petcommand.client.overlay.OverlayRenderer;
+import com.smanzana.petcommand.client.widget.PetActionValue;
 import com.smanzana.petcommand.client.widget.PetValueWidget;
 import com.smanzana.petcommand.client.widgetdupe.AutoLayoutParentWidget;
 import com.smanzana.petcommand.client.widgetdupe.AutoRowWidget;
@@ -65,7 +66,7 @@ public class PetListScreen extends Screen {
 	protected final Player player;
 	protected ListWidget<PetListEntry> petList;
 	protected ScrollbarWidget scrollbar;
-	protected ListWidget<ObscurableChildWidget> controlList;
+	protected ListWidget<ObscurableChildWidget<?>> controlList;
 
 	public PetListScreen(Component title, Player player) {
 		super(title);
@@ -112,7 +113,7 @@ public class PetListScreen extends Screen {
 		controlList.setSpacing(5);
 		controlList.setAutoSizeChildren();
 		
-		AutoRowWidget<ObscurableChildWidget> row = new AutoRowWidget<>(0, 0, leftWidth, 24, TextComponent.EMPTY);
+		AutoRowWidget<ObscurableChildWidget<?>> row = new AutoRowWidget<>(0, 0, leftWidth, 24, TextComponent.EMPTY);
 			row.addChild(new TextWidget(this, new TextComponent("Placement: "), 0, 0, 68, 24).centerVertical().centerInBounds().tooltip(Tooltip.create(new TranslatableComponent("petplacement.info"))));
 			if (extraHSpace > 5) {
 				row.addChild(new SpacerWidget(0, 0, extraHSpace - 5, 1));
@@ -128,9 +129,9 @@ public class PetListScreen extends Screen {
 			row.addChild(new TargetModeButton(this, 0, 0, 24, 24, this::cycleTargetMode, this::getTargetMode).tooltip(this::getPetTargetTooltip));
 		controlList.addChild(row);
 		
-		controlList.addChild(new ChildButtonWidget(this, 0, 0, 20, 24, new TextComponent("All Stop"), this::stopAll));
-		controlList.addChild(new ChildButtonWidget(this, 0, 0, 20, 24, new TextComponent("All Come"), this::callAll));
-		controlList.addChild(new ChildButtonWidget(this, 0, 0, 20, 24, new TextComponent("All Stay"), this::stayAll));
+		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, new TextComponent("All Stop"), this::stopAll));
+		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, new TextComponent("All Come"), this::callAll));
+		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, new TextComponent("All Stay"), this::stayAll));
 		
 		this.addRenderableWidget(controlList);
 	}
@@ -214,7 +215,7 @@ public class PetListScreen extends Screen {
 		return PetCommand.GetPetCommandManager().getPlacementMode(player);
 	}
 	
-	protected void cyclePlacementMode(ChildButtonWidget ignored) {
+	protected void cyclePlacementMode(ChildButtonWidget<?> ignored) {
 		((ClientProxy) PetCommand.GetProxy()).cyclePlacementMode();
 	}
 	
@@ -222,7 +223,7 @@ public class PetListScreen extends Screen {
 		return PetCommand.GetPetCommandManager().getTargetMode(player);
 	}
 	
-	protected void cycleTargetMode(ChildButtonWidget ignored) {
+	protected void cycleTargetMode(ChildButtonWidget<?> ignored) {
 		((ClientProxy) PetCommand.GetProxy()).cycleTargetMode();
 	}
 	
@@ -249,23 +250,23 @@ public class PetListScreen extends Screen {
 		return getPetTargetTooltip(this.getTargetMode());
 	}
 	
-	protected void stopAll(ChildButtonWidget ignored) {
+	protected void stopAll(ChildButtonWidget<?> ignored) {
 		PetCommand.GetPetCommandManager().commandAllStop(player);
 	}
 	
-	protected void stayAll(ChildButtonWidget ignored) {
+	protected void stayAll(ChildButtonWidget<?> ignored) {
 		for (LivingEntity ent : PetFuncs.GetTamedEntities(player)) {
 			PetCommand.GetPetCommandManager().setPetOrder(player, ent, new PetOrder(EPetOrderType.STAY, null));
 		}
 	}
 	
-	protected void callAll(ChildButtonWidget ignored) {
+	protected void callAll(ChildButtonWidget<?> ignored) {
 		for (LivingEntity ent : PetFuncs.GetTamedEntities(player)) {
 			PetCommand.GetPetCommandManager().setPetOrder(player, ent, new PetOrder(EPetOrderType.MOVE_TO_ME, null));
 		}
 	}
 	
-	protected static class PetListEntry extends AutoRowWidget<ObscurableChildWidget> {
+	protected static class PetListEntry extends AutoRowWidget<ObscurableChildWidget<?>> {
 		
 		protected static final int collapsedHeight = 10;
 		protected static final int expandedHeight = collapsedHeight * 2;
@@ -274,9 +275,9 @@ public class PetListScreen extends Screen {
 		
 		// Whether we are currently supposed to be expanded or not
 		protected boolean expanded;
-		private AutoLayoutParentWidget<? extends AutoRowWidget<ObscurableChildWidget>> parentWidget;
-		protected AutoRowWidget<ObscurableChildWidget> firstRow;
-		protected AutoRowWidget<ObscurableChildWidget> secondRow;
+		private AutoLayoutParentWidget<?, ? extends AutoRowWidget<ObscurableChildWidget<?>>> parentWidget;
+		protected AutoRowWidget<ObscurableChildWidget<?>> firstRow;
+		protected AutoRowWidget<ObscurableChildWidget<?>> secondRow;
 
 		public PetListEntry(PetListScreen parent, LivingEntity pet, int width) {
 			super(0, 0, width, collapsedHeight, TextComponent.EMPTY);
@@ -291,7 +292,7 @@ public class PetListScreen extends Screen {
 			final int tagWidth = 6;
 			
 			this.addChild(new ColorButtonWidget(parent, pet, 0, 0, 6, expandedHeight, TextComponent.EMPTY, (b) -> this.cycleColor(), () -> this.getColor()));
-			ListWidget<ObscurableChildWidget> mainList = new ListWidget<>(0, 0, 300 - tagWidth, collapsedHeight, TextComponent.EMPTY);
+			ListWidget<ObscurableChildWidget<?>> mainList = new ListWidget<>(0, 0, 300 - tagWidth, collapsedHeight, TextComponent.EMPTY);
 			this.addChild(mainList);
 			
 			{
@@ -320,7 +321,7 @@ public class PetListScreen extends Screen {
 				firstRow.addChild(new SpacerWidget(0, 0, extraPer, collapsedHeight));
 				firstRow.addChild(new LabeledWidget(parent,
 						new LabeledWidget.StringLabel("Action: "),
-						new LabeledWidget.PetActionValue(() -> PetInfo.Wrap(pet).getPetAction(), 16, 16),
+						new PetActionValue(() -> PetInfo.Wrap(pet).getPetAction(), 16, 16),
 						0, 3, 30, collapsedHeight)
 						.tooltip(() -> getPetActionTooltip(PetInfo.Wrap(pet).getPetAction())).scale(.5f));
 				if (extraPer > 0)
@@ -386,7 +387,7 @@ public class PetListScreen extends Screen {
 		
 		@SuppressWarnings("unchecked")
 		@Override
-		public <T extends ParentWidget<?>> void setParent(T parent) {
+		public <T extends ParentWidget<?, ?>> void setParent(T parent) {
 			super.setParent(parent);
 			if (parent == null) {
 				this.parentWidget = null;
@@ -504,21 +505,21 @@ public class PetListScreen extends Screen {
 			}
 		}
 		
-		protected void stopCommand(ChildButtonWidget ignored) {
+		protected void stopCommand(ChildButtonWidget<?> ignored) {
 			NetworkHandler.sendToServer(PetCommandMessage.PetStop(pet));
 		}
 		
-		protected void stayCommand(ChildButtonWidget ignored) {
+		protected void stayCommand(ChildButtonWidget<?> ignored) {
 			NetworkHandler.sendToServer(PetCommandMessage.PetOrder(pet, new PetOrder(EPetOrderType.STAY, null)));
 		}
 		
-		protected void comeCommand(ChildButtonWidget ignored) {
+		protected void comeCommand(ChildButtonWidget<?> ignored) {
 			NetworkHandler.sendToServer(PetCommandMessage.PetOrder(pet, new PetOrder(EPetOrderType.MOVE_TO_ME, null)));
 		}
 		
 	}
 	
-	protected static class PetChildButtonWidget extends ChildButtonWidget {
+	protected static class PetChildButtonWidget extends ChildButtonWidget<PetChildButtonWidget> {
 		
 		protected static final List<Component> TOO_FAR = List.of(new TextComponent("Too far away!"));
 		
@@ -660,7 +661,7 @@ public class PetListScreen extends Screen {
 		}
 	}
 	
-	protected static class PlacemodeModeButton extends ChildButtonWidget {
+	protected static class PlacemodeModeButton extends ChildButtonWidget<PlacemodeModeButton> {
 		protected final Supplier<EPetPlacementMode> modeSupplier;
 
 		public PlacemodeModeButton(Screen parent, int x, int y, int width, int height, OnPress onPress, Supplier<EPetPlacementMode> modeSupplier) {
@@ -698,7 +699,7 @@ public class PetListScreen extends Screen {
 		}
 	}
 	
-	protected static class TargetModeButton extends ChildButtonWidget {
+	protected static class TargetModeButton extends ChildButtonWidget<TargetModeButton> {
 		protected final Supplier<EPetTargetMode> modeSupplier;
 
 		public TargetModeButton(Screen parent, int x, int y, int width, int height, OnPress onPress, Supplier<EPetTargetMode> modeSupplier) {

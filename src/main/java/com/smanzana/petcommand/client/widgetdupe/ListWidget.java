@@ -3,7 +3,7 @@ package com.smanzana.petcommand.client.widgetdupe;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Component;
 
-public class ListWidget<T extends ObscurableChildWidget> extends AutoLayoutParentWidget<T> {
+public class ListWidget<T extends ObscurableChildWidget<?>> extends AutoLayoutParentWidget<ListWidget<T>, T> {
 
 	public ListWidget(int x, int y, int width, int height, Component title) {
 		super(x, y, width, height, title);

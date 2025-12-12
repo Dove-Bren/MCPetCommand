@@ -17,7 +17,7 @@ public interface IChildWidget extends IMoveableWidget {
 		this.setAbsolutePosition(getParentOffsetX() + parentX, getParentOffsetY() + parentY);
 	}
 	
-	public default <T extends ParentWidget<?>> void setParent(T parent) {
+	public default <T extends ParentWidget<?, ?>> void setParent(T parent) {
 		;
 	}
 

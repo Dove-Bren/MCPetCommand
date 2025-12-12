@@ -1,14 +1,8 @@
 package com.smanzana.petcommand.client.widgetdupe;
 
-import java.util.List;
 import java.util.function.Supplier;
 
-import javax.annotation.Nullable;
-
-import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.smanzana.petcommand.api.pet.EPetAction;
-import com.smanzana.petcommand.client.icon.PetActionIcon;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -17,7 +11,7 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 
-public class LabeledWidget extends ObscurableChildWidget {
+public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 	
 	public static interface ILabel {
 		public Rect2i render(PoseStack matrixStackIn, int x, int y, float partialTicks, int color);
@@ -31,7 +25,6 @@ public class LabeledWidget extends ObscurableChildWidget {
 	protected final ILabel label;
 	protected final IValue value;
 	
-	protected @Nullable Supplier<List<Component>> tooltip;
 	protected int colorLabel = 0xFFAAAAAA;
 	protected int colorValue = 0xFFE4E5D5;
 	protected float scale = 1f;
@@ -41,24 +34,6 @@ public class LabeledWidget extends ObscurableChildWidget {
 		this.parent = parent;
 		this.label = label;
 		this.value = value;
-	}
-	
-	public LabeledWidget tooltip(List<Component> tooltip) {
-		this.tooltip = () -> tooltip;
-		return this;
-	}
-	
-	public LabeledWidget tooltip(Component tooltip) {
-		return tooltip(Lists.newArrayList(tooltip));
-	}
-	
-	public LabeledWidget tooltip(Supplier<List<Component>> tooltip) {
-		this.tooltip = tooltip;
-		return this;
-	}
-	
-	public LabeledWidget tooltip(Supplier<Component> tooltip, int dummy) {
-		return tooltip(() -> Lists.newArrayList(tooltip.get()));
 	}
 	
 	public LabeledWidget color(int labelColor, int valueColor) {
@@ -100,16 +75,6 @@ public class LabeledWidget extends ObscurableChildWidget {
 	}
 	
 	@Override
-	public void renderToolTip(PoseStack matrixStackIn, int mouseX, int mouseY) {
-		if (this.isHoveredOrFocused() && this.tooltip != null) {
-			matrixStackIn.pushPose();
-			matrixStackIn.translate(0, 0, 100);
-			parent.renderComponentTooltip(matrixStackIn, tooltip.get(), mouseX, mouseY);
-			matrixStackIn.popPose();
-		}
-	}
-	
-	@Override
 	protected boolean isValidClickButton(int button) {
 		return false; // no click consumption
 	}
@@ -143,34 +108,6 @@ public class LabeledWidget extends ObscurableChildWidget {
 	public static class StringLabel extends TextLabel {
 		public StringLabel(String label) {
 			super(new TextComponent(label));
-		}
-	}
-	
-	public static class PetActionValue implements IValue {
-		
-		protected final Supplier<EPetAction> valueGetter;
-		protected final int width;
-		protected final int height;
-		
-		public PetActionValue(Supplier<EPetAction> value, int width, int height) {
-			this.valueGetter = value;
-			this.width = width;
-			this.height = height;
-		}
-		
-		@Override
-		public Rect2i render(PoseStack matrixStackIn, int x, int y, float partialTicks, int color, Rect2i labelArea) {
-			final EPetAction value = valueGetter.get();
-			
-			// Try to center vertically with the label
-			final int labelCenter = (labelArea.getY() + (labelArea.getHeight() / 2));
-			final int yAdjust = labelCenter - (height / 2);
-			
-			if (value != null) {
-				PetActionIcon.get(value).draw(matrixStackIn, x, yAdjust, width, height);
-			}
-			
-			return new Rect2i(x, yAdjust, width, height);
 		}
 	}
 	

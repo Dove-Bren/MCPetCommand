@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.network.chat.TextComponent;
 
-public class SpacerWidget extends ObscurableChildWidget {
+public class SpacerWidget extends ObscurableChildWidget<SpacerWidget> {
 
 	public SpacerWidget(int x, int y, int width, int height) {
 		super(x, y, width, height, TextComponent.EMPTY);
