@@ -18,6 +18,7 @@ import com.smanzana.petcommand.entity.BoundIronGolemEntity;
 import com.smanzana.petcommand.entity.ai.FollowOwnerAdvancedGoal;
 import com.smanzana.petcommand.entity.ai.FollowPetOrderGoal;
 import com.smanzana.petcommand.entity.ai.PetTargetGoal;
+import com.smanzana.petcommand.init.ModInit;
 import com.smanzana.petcommand.listener.MovementListener;
 import com.smanzana.petcommand.listener.TargetListener;
 import com.smanzana.petcommand.pet.PetCommandManager;
@@ -75,6 +76,8 @@ public class PetCommand
 		targetListener = new TargetListener();
 		petOverrides = new PetOverrides();
 		MinecraftForge.EVENT_BUS.addListener(BoundIronGolemEntity::EntityInteractListener);
+		
+		ModInit.addRegistries();
 	}
 	
 	public static CommonProxy GetProxy() {

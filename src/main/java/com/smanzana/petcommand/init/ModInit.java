@@ -1,18 +1,19 @@
 package com.smanzana.petcommand.init;
 
 import com.smanzana.petcommand.PetCommand;
+import com.smanzana.petcommand.client.container.PetCommandContainers;
+import com.smanzana.petcommand.entity.PetCommandEntities;
 import com.smanzana.petcommand.network.NetworkHandler;
 import com.smanzana.petcommand.proxy.PetCommandAPIImpl;
 import com.smanzana.petcommand.proxy.PetCommandClientAPIImpl;
-import com.smanzana.petcommand.serializers.PetJobSerializer;
+import com.smanzana.petcommand.serializers.PetCommandSerializers;
 
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.registries.DataSerializerEntry;
-import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 @Mod.EventBusSubscriber(modid = PetCommand.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModInit {
@@ -23,10 +24,11 @@ public class ModInit {
 		DistExecutor.safeRunForDist(() -> PetCommandClientAPIImpl::Register, () -> PetCommandAPIImpl::Register);
 	}
 	
-	@SubscribeEvent
-    public static void registerDataSerializers(RegistryEvent.Register<DataSerializerEntry> event) {
-		final IForgeRegistry<DataSerializerEntry> registry = event.getRegistry();
-		
-		registry.register(new DataSerializerEntry(PetJobSerializer.GetInstance()).setRegistryName("petcommand.serial.pet_job"));
+	public static final void addRegistries() {
+		// Registries
+		final IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+		PetCommandContainers.REGISTRY.register(modBus);
+		PetCommandEntities.REGISTRY.register(modBus);
+		PetCommandSerializers.REGISTRY.register(modBus);
 	}
 }

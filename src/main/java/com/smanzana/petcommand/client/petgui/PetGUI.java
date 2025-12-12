@@ -119,7 +119,7 @@ public class PetGUI {
 		
 		@SafeVarargs
 		public PetContainer(int windowId, int netID, T pet, Player player, IPetGUISheet<T> ... sheets) {
-			super(PetCommandContainers.PetGui, windowId);
+			super(PetCommandContainers.PetGui.get(), windowId);
 			this.pet = pet;
 			this.livingPet= (LivingEntity) pet;
 			this.player = player;

@@ -339,7 +339,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	}
 	
 	public static final void TransformToBound(IronGolem entity, @Nullable LivingEntity owner) {
-		BoundIronGolemEntity ent = PetCommandEntities.BOUND_IRON_GOLEM.create(entity.level);
+		BoundIronGolemEntity ent = PetCommandEntities.BOUND_IRON_GOLEM.get().create(entity.level);
 		ent.copyPosition(entity);
 		if (entity.hasCustomName()) {
 			ent.setCustomName(entity.getCustomName());

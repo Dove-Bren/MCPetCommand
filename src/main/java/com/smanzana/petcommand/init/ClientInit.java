@@ -27,7 +27,7 @@ public class ClientInit {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@SubscribeEvent
 	public static void clientSetup(FMLClientSetupEvent event) {
-		MenuScreens.register(PetCommandContainers.PetGui, new PetGUIFactory());
+		MenuScreens.register(PetCommandContainers.PetGui.get(), new PetGUIFactory());
 		
 		ClientProxy proxy = (ClientProxy) PetCommand.GetProxy();
 		proxy.initKeybinds();
@@ -39,7 +39,7 @@ public class ClientInit {
 	
 	@SubscribeEvent
 	public static void registerEntityRenderers(RegisterRenderers event) {
-		event.registerEntityRenderer(PetCommandEntities.BOUND_IRON_GOLEM, (manager) -> new BoundIronGolemRenderer(manager));
+		event.registerEntityRenderer(PetCommandEntities.BOUND_IRON_GOLEM.get(), (manager) -> new BoundIronGolemRenderer(manager));
 	}
 	
 	// To get around bounds matching. D:
