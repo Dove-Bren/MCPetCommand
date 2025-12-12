@@ -15,7 +15,7 @@ import net.minecraftforge.registries.RegistryObject;
 @Mod.EventBusSubscriber(modid = PetCommand.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class PetCommandEntities {
 	
-	public static final DeferredRegister<EntityType<?>> REGISTRY = DeferredRegister.create(ForgeRegistries.ENTITIES, PetCommand.MODID);
+	public static final DeferredRegister<EntityType<?>> REGISTRY = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, PetCommand.MODID);
 
 	// Values copied from EntityType.IRON_GOLEM
 	public static final RegistryObject<EntityType<BoundIronGolemEntity>> BOUND_IRON_GOLEM = REGISTRY.register(BoundIronGolemEntity.ID, () -> EntityType.Builder.<BoundIronGolemEntity>of(BoundIronGolemEntity::new, MobCategory.MISC)

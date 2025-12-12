@@ -2,12 +2,12 @@ package com.smanzana.petcommand.client.widgetdupe;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 
 public class SpacerWidget extends ObscurableChildWidget<SpacerWidget> {
 
 	public SpacerWidget(int x, int y, int width, int height) {
-		super(x, y, width, height, TextComponent.EMPTY);
+		super(x, y, width, height, Component.empty());
 	}
 	
 	@Override
@@ -16,7 +16,7 @@ public class SpacerWidget extends ObscurableChildWidget<SpacerWidget> {
 	}
 	
 	@Override
-	public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 		; // render nothing
 	}
 

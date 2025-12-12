@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -110,7 +109,7 @@ public class PetStatSheet<T extends LivingEntity> implements IPetGUISheet<T> {
 					continue;
 				}
 				
-				drawAttribute(matrixStackIn, font, new TranslatableComponent(attr.getAttribute().getDescriptionId()), String.format("%.2f", attr.getValue()));
+				drawAttribute(matrixStackIn, font, Component.translatable(attr.getAttribute().getDescriptionId()), String.format("%.2f", attr.getValue()));
 				matrixStackIn.translate(0, rowMargin, 0);
 			}
 		}

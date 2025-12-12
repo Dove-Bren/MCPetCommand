@@ -3,7 +3,7 @@ package com.smanzana.petcommand.config;
 import org.apache.commons.lang3.tuple.Pair;
 
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 public class ModConfig {
 	
@@ -28,9 +28,9 @@ public class ModConfig {
 		
 	}
 	
-	public void register() {
-		ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.CLIENT, clientSpec);
-		ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.COMMON, commonSpec);
+	public void register(FMLJavaModLoadingContext context) {
+		context.registerConfig(net.minecraftforge.fml.config.ModConfig.Type.CLIENT, clientSpec);
+		context.registerConfig(net.minecraftforge.fml.config.ModConfig.Type.COMMON, commonSpec);
 	}
 	
 	public boolean showHealthbars() {

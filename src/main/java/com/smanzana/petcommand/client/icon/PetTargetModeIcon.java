@@ -24,7 +24,7 @@ public class PetTargetModeIcon {
 	private final ResourceLocation texture;
 	
 	private PetTargetModeIcon(EPetTargetMode mode) {
-		texture = new ResourceLocation(PetCommand.MODID, "textures/gui/pettarget_" + mode.name().toLowerCase() + ".png");
+		texture = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/gui/pettarget_" + mode.name().toLowerCase() + ".png");
 	}
 	
 	protected ResourceLocation getTexture() {

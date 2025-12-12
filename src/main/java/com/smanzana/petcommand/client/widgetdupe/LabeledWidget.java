@@ -9,7 +9,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 
 public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 	
@@ -30,7 +29,7 @@ public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 	protected float scale = 1f;
 	
 	public LabeledWidget(Screen parent, ILabel label, IValue value, int x, int y, int width, int height) {
-		super(x, y, width, height, TextComponent.EMPTY);
+		super(x, y, width, height, Component.empty());
 		this.parent = parent;
 		this.label = label;
 		this.value = value;
@@ -60,9 +59,12 @@ public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 	}
 	
 	@Override
-	public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		final int x = this.getX();
+		final int y = this.getY();
+		
 		matrixStackIn.pushPose();
-		matrixStackIn.translate(this.x, this.y, 0);
+		matrixStackIn.translate(x, y, 0);
 		matrixStackIn.scale(scale, scale, 1f);
 		final Rect2i labelArea = renderLabel(matrixStackIn, 0, 0, partialTicks);
 		final Rect2i valueArea = renderValue(matrixStackIn, labelArea.getWidth(), 0, partialTicks, labelArea);
@@ -71,7 +73,7 @@ public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 		// Recalc hover to be actual rendered text length. value can change so have to keep redoing this...
 		final int actingWidth = (int) ((valueArea.getX() + valueArea.getWidth()) * scale); // expect value to return a rect offset by label starting x etc.
 		final int actingHeight = (int) (Math.max(labelArea.getY() + labelArea.getHeight(), valueArea.getY() + valueArea.getHeight()) * scale);
-		this.isHovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + actingWidth && mouseY < this.y + actingHeight;
+		this.isHovered = mouseX >= x && mouseY >= y && mouseX < x + actingWidth && mouseY < y + actingHeight;
 	}
 	
 	@Override
@@ -107,7 +109,7 @@ public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 	
 	public static class StringLabel extends TextLabel {
 		public StringLabel(String label) {
-			super(new TextComponent(label));
+			super(Component.literal(label));
 		}
 	}
 	

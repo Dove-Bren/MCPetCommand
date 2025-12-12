@@ -3,7 +3,7 @@ package com.smanzana.petcommand.client.widgetdupe;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 
-public class MoveableObscurableWidget extends ObscurableWidget implements IMoveableWidget {
+public abstract class MoveableObscurableWidget extends ObscurableWidget implements IMoveableWidget {
 
 	protected final int startX;
 	protected final int startY;
@@ -16,13 +16,13 @@ public class MoveableObscurableWidget extends ObscurableWidget implements IMovea
 
 	@Override
 	public void setPosition(int x, int y) {
-		this.x = x;
-		this.y = y;
+		this.setX(x);
+		this.setY(y);
 	}
 
 	@Override
 	public void offset(int x, int y) {
-		this.setPosition(this.x + x, this.y + y);
+		this.setPosition(this.getX() + x, this.getY() + y);
 	}
 
 	@Override
@@ -39,9 +39,9 @@ public class MoveableObscurableWidget extends ObscurableWidget implements IMovea
 	public int getStartingY() {
 		return startY;
 	}
-
+	
 	@Override
-	public void updateNarration(NarrationElementOutput p_169152_) {
+	protected void updateWidgetNarration(NarrationElementOutput narration) {
 		
 	}
 

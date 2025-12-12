@@ -25,8 +25,8 @@ public class TargetListener {
 	
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public void onAITarget(LivingChangeTargetEvent event) {
-		if (!event.isCanceled() && event.getEntityLiving() instanceof Mob) {
-			Mob mob = (Mob) event.getEntityLiving();
+		if (!event.isCanceled() && event.getEntity() instanceof Mob) {
+			Mob mob = (Mob) event.getEntity();
 			PetCommandAPI.GetTargetManager(mob).updateTarget(mob, event.getNewTarget());
 		}
 	}

@@ -36,11 +36,12 @@ import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(PetCommand.MODID)
@@ -61,12 +62,12 @@ public class PetCommand
 	private final TargetManager serverTargetManager;
 	private final TargetManager clientTargetManager;
 
-	public PetCommand() {
+	public PetCommand(FMLJavaModLoadingContext context) {
 		instance = this;
 		
 		proxy = DistExecutor.unsafeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new); // TODO unsafe so that it works in dev. See forge docs :(
 		
-		(new ModConfig()).register();
+		(new ModConfig()).register(context);
 		
 		serverTargetManager = new TargetManager();
 		clientTargetManager = new TargetManager();
@@ -77,7 +78,7 @@ public class PetCommand
 		petOverrides = new PetOverrides();
 		MinecraftForge.EVENT_BUS.addListener(BoundIronGolemEntity::EntityInteractListener);
 		
-		ModInit.addRegistries();
+		ModInit.addRegistries(context);
 	}
 	
 	public static CommonProxy GetProxy() {
@@ -143,10 +144,10 @@ public class PetCommand
 	}
 	
 	@SubscribeEvent
-	public void onWorldLoad(WorldEvent.Load event) {
-		if (!event.getWorld().isClientSide()) {
+	public void onWorldLoad(LevelEvent.Load event) {
+		if (!event.getLevel().isClientSide()) {
 			// force an exception here if this is wrong
-			ServerLevel world = (ServerLevel) event.getWorld();
+			ServerLevel world = (ServerLevel) event.getLevel();
 			
 			// Do the correct initialization for persisted data
 			//initPetSoulRegistry(world);
@@ -155,7 +156,7 @@ public class PetCommand
 	}
 	
 	@SubscribeEvent
-	public void onEntitySpawn(EntityJoinWorldEvent e) {
+	public void onEntitySpawn(EntityJoinLevelEvent e) {
 		if (e.isCanceled()) {
 			return;
 		}

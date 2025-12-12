@@ -173,11 +173,11 @@ public class PetCommandManager extends SavedData implements IPetOrderManager {
 	
 	@SubscribeEvent
 	public void onConnect(PlayerLoggedInEvent event) {
-		if (event.getPlayer().level.isClientSide) {
+		if (event.getEntity().level.isClientSide) {
 			return;
 		}
 		
-		sendSettingsToClient((ServerPlayer) event.getPlayer());
+		sendSettingsToClient((ServerPlayer) event.getEntity());
 	}
 	
 	protected @Nonnull PetCommandSettings getSettings(@Nonnull UUID uuid) {

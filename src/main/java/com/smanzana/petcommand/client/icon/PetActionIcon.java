@@ -24,7 +24,7 @@ public class PetActionIcon {
 	private final ResourceLocation texture;
 	
 	private PetActionIcon(EPetAction action) {
-		texture = new ResourceLocation(PetCommand.MODID, "textures/gui/petaction_" + action.name().toLowerCase() + ".png");
+		texture = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/gui/petaction_" + action.name().toLowerCase() + ".png");
 	}
 	
 	protected ResourceLocation getTexture() {

@@ -1,7 +1,6 @@
 package com.smanzana.petcommand.api.pet;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 
 /**
  * A summary of what the pet is currently doing
@@ -20,8 +19,8 @@ public enum EPetAction {
 	private final Component desc;
 	
 	private EPetAction() {
-		this.name = new TranslatableComponent("petaction." + this.name().toLowerCase() + ".name");
-		this.desc = new TranslatableComponent("petaction." + this.name().toLowerCase() + ".desc");
+		this.name = Component.translatable("petaction." + this.name().toLowerCase() + ".name");
+		this.desc = Component.translatable("petaction." + this.name().toLowerCase() + ".desc");
 	}
 	
 	public Component getName() {

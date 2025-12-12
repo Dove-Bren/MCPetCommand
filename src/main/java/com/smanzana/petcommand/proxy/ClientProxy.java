@@ -7,13 +7,13 @@ import javax.annotation.Nullable;
 
 import org.lwjgl.glfw.GLFW;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.api.pet.EPetOrderType;
 import com.smanzana.petcommand.api.pet.EPetPlacementMode;
 import com.smanzana.petcommand.api.pet.EPetTargetMode;
 import com.smanzana.petcommand.api.pet.ITargetManager;
+import com.smanzana.petcommand.client.input.PetCommandKeyBindings;
 import com.smanzana.petcommand.client.overlay.OverlayRenderer;
 import com.smanzana.petcommand.client.pet.SelectionManager;
 import com.smanzana.petcommand.client.render.OutlineRenderer;
@@ -25,29 +25,20 @@ import com.smanzana.petcommand.pet.PetOrder;
 import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 import com.smanzana.petcommand.util.RayTrace;
 
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.client.ClientRegistry;
-import net.minecraftforge.client.event.InputEvent.KeyInputEvent;
-import net.minecraftforge.client.event.InputEvent.RawMouseEvent;
+import net.minecraftforge.client.event.InputEvent.Key;
+import net.minecraftforge.client.event.InputEvent.MouseButton;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class ClientProxy extends CommonProxy {
 	
-	private KeyMapping bindingPetPlacementModeCycle;
-	private KeyMapping bindingPetTargetModeCycle;
-	private KeyMapping bindingPetAttackAll;
-	private KeyMapping bindingPetAttack;
-	private KeyMapping bindingPetAllStop;
-	private KeyMapping bindingPetScreen;
-	private KeyMapping bindingPetOrderModifier;
 	private OverlayRenderer overlayRenderer;
 	private OutlineRenderer outlineRenderer;
 	private PetOrderRenderer petOrderRenderer;
@@ -61,23 +52,6 @@ public class ClientProxy extends CommonProxy {
 		this.petOrderRenderer = new PetOrderRenderer();
 		
 		MinecraftForge.EVENT_BUS.register(this); // Handle keyboard inputs
-	}
-	
-	public void initKeybinds() {
-		bindingPetPlacementModeCycle = new KeyMapping("key.pet.placementmode.desc", InputConstants.UNKNOWN.getValue(), "key.PetCommand.desc");
-		ClientRegistry.registerKeyBinding(bindingPetPlacementModeCycle);
-		bindingPetTargetModeCycle = new KeyMapping("key.pet.targetmode.desc", InputConstants.UNKNOWN.getValue(), "key.PetCommand.desc");
-		ClientRegistry.registerKeyBinding(bindingPetTargetModeCycle);
-		bindingPetAttackAll = new KeyMapping("key.pet.attackall.desc", GLFW.GLFW_KEY_X, "key.PetCommand.desc");
-		ClientRegistry.registerKeyBinding(bindingPetAttackAll);
-		bindingPetAttack = new KeyMapping("key.pet.attack.desc", GLFW.GLFW_KEY_C, "key.PetCommand.desc");
-		ClientRegistry.registerKeyBinding(bindingPetAttack);
-		bindingPetAllStop = new KeyMapping("key.pet.stopall.desc", GLFW.GLFW_KEY_L, "key.PetCommand.desc");
-		ClientRegistry.registerKeyBinding(bindingPetAllStop);
-		bindingPetScreen = new KeyMapping("key.pet.screen.desc", GLFW.GLFW_KEY_P, "key.PetCommand.desc");
-		ClientRegistry.registerKeyBinding(bindingPetScreen);
-		bindingPetOrderModifier = new KeyMapping("key.pet.order.desc", GLFW.GLFW_KEY_LEFT_CONTROL, "key.PetCommand.desc");
-		ClientRegistry.registerKeyBinding(bindingPetOrderModifier);
 	}
 	
 	@Override
@@ -142,19 +116,19 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	@SubscribeEvent
-	public void onKey(KeyInputEvent event) {
-		if (bindingPetPlacementModeCycle.consumeClick()) {
+	public void onKey(Key event) {
+		if (PetCommandKeyBindings.bindingPetPlacementModeCycle.consumeClick()) {
 			// Cycle placement mode
 			cyclePlacementMode();
 			
 			// Update client icon
 			this.overlayRenderer.changePetPlacementIcon();
-		} else if (bindingPetTargetModeCycle.consumeClick()) {
+		} else if (PetCommandKeyBindings.bindingPetTargetModeCycle.consumeClick()) {
 			cycleTargetMode();
 			
 			// Update client icon
 			this.overlayRenderer.changePetTargetIcon();
-		} else if (bindingPetAttackAll.consumeClick()) {
+		} else if (PetCommandKeyBindings.bindingPetAttackAll.consumeClick()) {
 			// Raytrace, find tar get, and set all to attack
 			final Player player = getPlayer();
 			if (player != null && player.level != null) {
@@ -170,7 +144,7 @@ public class ClientProxy extends CommonProxy {
 					NetworkHandler.sendToServer(PetCommandMessage.AllAttack(RayTrace.livingFromRaytrace(result)));
 				}
 			}
-		} else if (bindingPetAttack.consumeClick()) {
+		} else if (PetCommandKeyBindings.bindingPetAttack.consumeClick()) {
 			// Raytrace, find target, and then make single one attack
 			// Probably could be same button but if raytrace is our pet,
 			// have them hold it down and release on an enemy? Or 'select' them
@@ -216,15 +190,15 @@ public class ClientProxy extends CommonProxy {
 				// Readjust order renderer based on selection
 				this.getPetOrderRenderer().setEnabled(!this.getSelectionManager().getSelectedPets().isEmpty());
 			}
-		} else if (bindingPetAllStop.consumeClick()) {
+		} else if (PetCommandKeyBindings.bindingPetAllStop.consumeClick()) {
 			NetworkHandler.sendToServer(PetCommandMessage.AllStop());
-		} else if (bindingPetScreen.consumeClick()) {
+		} else if (PetCommandKeyBindings.bindingPetScreen.consumeClick()) {
 			togglePetScreen();
 		}
 	}
 	
 	@SubscribeEvent
-	public void onMouse(RawMouseEvent event) {
+	public void onMouse(MouseButton.Pre event) {
 		if (event.isCanceled() || event.getButton() != GLFW.GLFW_MOUSE_BUTTON_2) {
 			return;
 		}
@@ -243,7 +217,7 @@ public class ClientProxy extends CommonProxy {
 	}
 	
 	public boolean isPetOrderPressed() {
-		return this.bindingPetOrderModifier.isDown();
+		return PetCommandKeyBindings.bindingPetOrderModifier.isDown();
 	}
 	
 	public boolean isPetOrderGuard() {
@@ -262,6 +236,10 @@ public class ClientProxy extends CommonProxy {
 		return this.selectionManager;
 	}
 	
+	public OverlayRenderer getOverlayRenderer() {
+		return this.overlayRenderer;
+	}
+	
 	protected void togglePetScreen() {
 		final Minecraft mc = Minecraft.getInstance();
 		if (mc.screen != null && mc.screen instanceof PetListScreen) {
@@ -269,7 +247,7 @@ public class ClientProxy extends CommonProxy {
 			mc.setScreen(null);
 		} else if (mc.screen == null) {
 			// Open it
-			mc.setScreen(new PetListScreen(TextComponent.EMPTY, this.getPlayer()));
+			mc.setScreen(new PetListScreen(Component.empty(), this.getPlayer()));
 		}
 	}
 	
@@ -300,8 +278,8 @@ public class ClientProxy extends CommonProxy {
 			
 		}
 		
-		player.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE, 1f, .5f);
-		player.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE, 1f, .65f);
+		player.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE.get(), 1f, .5f);
+		player.playSound(SoundEvents.NOTE_BLOCK_XYLOPHONE.get(), 1f, .65f);
 		
 		this.getSelectionManager().clearSelection();
 		this.getPetOrderRenderer().setEnabled(false);

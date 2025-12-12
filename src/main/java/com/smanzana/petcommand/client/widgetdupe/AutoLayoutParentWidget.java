@@ -97,7 +97,7 @@ public abstract class AutoLayoutParentWidget<W extends AutoLayoutParentWidget<W,
 	
 	@Override
 	protected Rect2i getBounds() {
-		return new Rect2i(x + itemMargin, y + itemMargin, this.width - (itemMargin * 2), this.height - (itemMargin * 2));
+		return new Rect2i(getX() + itemMargin, getY() + itemMargin, this.width - (itemMargin * 2), this.height - (itemMargin * 2));
 	}
 	
 	@Override
@@ -120,7 +120,7 @@ public abstract class AutoLayoutParentWidget<W extends AutoLayoutParentWidget<W,
 		final Vec3i offset = getChildOffset(child, index, this.itemSpacing);
 		
 		child.setBounds(bounds);
-		child.snapToParent(x + itemMargin + offset.getX(), y + itemMargin + offset.getY() - scrollPixels);
+		child.snapToParent(getX() + itemMargin + offset.getX(), getY() + itemMargin + offset.getY() - scrollPixels);
 		if (autoSizeChildren) {
 			this.autoSizeChild(child, this.width - (itemMargin * 2), this.height - (itemMargin * 2));
 		}

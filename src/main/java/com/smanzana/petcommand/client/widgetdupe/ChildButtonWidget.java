@@ -34,7 +34,9 @@ public class ChildButtonWidget<T extends ChildButtonWidget<T>> extends Obscurabl
 	}
 	
 	@Override
-	public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		final int x = getX();
+		final int y = getY();
 		//super.renderButton(matrixStackIn, mouseX, mouseY, partialTicks);
 		Minecraft minecraft = Minecraft.getInstance();
 		Font font = minecraft.font;
@@ -58,13 +60,13 @@ public class ChildButtonWidget<T extends ChildButtonWidget<T>> extends Obscurabl
 			fill(matrixStackIn, x + (width - 2), y + 1, x + (width - 1), y + (height - 1), 0x40000000);
 			
 		}
-		this.renderBg(matrixStackIn, minecraft, mouseX, mouseY);
+		//this.renderBg(matrixStackIn, minecraft, mouseX, mouseY);
 		int j = getFGColor();
 		
 		{
 			// possibly scale down if button is small
 			matrixStackIn.pushPose();
-			matrixStackIn.translate(this.x + this.width / 2, this.y + this.height / 2, 0);
+			matrixStackIn.translate(x + this.width / 2, y + this.height / 2, 0);
 			if (font.lineHeight > this.height - 4) {
 				final float scale = (float)(this.height - 4) / (float) (font.lineHeight);
 				matrixStackIn.scale(scale, scale, 1f);

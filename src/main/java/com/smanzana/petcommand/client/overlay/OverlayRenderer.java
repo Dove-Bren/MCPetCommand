@@ -5,12 +5,13 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import org.joml.Matrix4f;
+
 import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
 import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetCommandAPI;
 import com.smanzana.petcommand.api.PetFuncs;
@@ -42,16 +43,17 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Cat;
 import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.item.DyeColor;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
-import net.minecraftforge.client.gui.ForgeIngameGui;
-import net.minecraftforge.client.gui.IIngameOverlay;
-import net.minecraftforge.client.gui.OverlayRegistry;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
+import net.minecraftforge.client.gui.overlay.IGuiOverlay;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class OverlayRenderer extends GuiComponent {
 
-	private static final ResourceLocation GUI_HEALTHBARS = new ResourceLocation(PetCommand.MODID, "textures/gui/healthbars.png");
+	private static final ResourceLocation GUI_HEALTHBARS = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/gui/healthbars.png");
 	private static final int GUI_HEALTHBAR_ORB_BACK_WIDTH = 205;
 	private static final int GUI_HEALTHBAR_ORB_BACK_HEIGHT = 56;
 	private static final int GUI_HEALTHBAR_ORB_HEALTH_BAR_HOFFSET = 2;
@@ -94,7 +96,7 @@ public class OverlayRenderer extends GuiComponent {
 	private static final int GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET = 300;
 	private static final int GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET = 50;
 	
-	public static final ResourceLocation GUI_PET_ICONS = new ResourceLocation(PetCommand.MODID, "textures/gui/pet_icons.png");
+	public static final ResourceLocation GUI_PET_ICONS = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/gui/pet_icons.png");
 	//private static final int GUI_PET_ICONS_DIMS = 256;
 	private static final int GUI_PET_ICON_DIMS = 32;
 	private static final int GUI_PET_ICON_TARGET_VOFFSET = 0;
@@ -107,16 +109,18 @@ public class OverlayRenderer extends GuiComponent {
 	private int petPlacementIndex; // Controls displaying pet placement icon (fade in/out at 50%)
 	private int petPlacementAnimDur = 80;
 	
-	protected final IIngameOverlay healthbarOverlay;
-	protected final IIngameOverlay modeIconOverlay;
+	protected final IGuiOverlay healthbarOverlay = this::renderHealthbarOverlay;
+	protected final IGuiOverlay modeIconOverlay = this::renderModeOverlay;
 	
 	public OverlayRenderer() {
 		MinecraftForge.EVENT_BUS.register(this);
 		petTargetIndex = -1;
 		petPlacementIndex = -1;
-		
-		healthbarOverlay = OverlayRegistry.registerOverlayAbove(ForgeIngameGui.EXPERIENCE_BAR_ELEMENT, "PetCommand::healthbarOverlay", this::renderHealthbarOverlay);
-		modeIconOverlay = OverlayRegistry.registerOverlayAbove(ForgeIngameGui.CROSSHAIR_ELEMENT, "PetCommand::modeOverlay", this::renderModeOverlay);
+	}
+	
+	public final void register(RegisterGuiOverlaysEvent event) {
+		event.registerAbove(VanillaGuiOverlay.EXPERIENCE_BAR.id(), "pet_healthbar", healthbarOverlay);
+		event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "pet_mode", modeIconOverlay);
 	}
 	
 	@SubscribeEvent
@@ -143,7 +147,7 @@ public class OverlayRenderer extends GuiComponent {
 		}
 	}
 	
-	private void renderHealthbarOverlay(ForgeIngameGui gui, PoseStack matrixStackIn, float partialTicks, int width, int height) {
+	private void renderHealthbarOverlay(ForgeGui gui, PoseStack matrixStackIn, float partialTicks, int width, int height) {
 		if (ModConfig.config.showHealthbars()) {
 			Minecraft mc = Minecraft.getInstance();
 			LocalPlayer player = mc.player;
@@ -202,7 +206,7 @@ public class OverlayRenderer extends GuiComponent {
 		}
 	}
 	
-	private void renderModeOverlay(ForgeIngameGui gui, PoseStack matrixStackIn, float partialTicks, int width, int height) {
+	private void renderModeOverlay(ForgeGui gui, PoseStack matrixStackIn, float partialTicks, int width, int height) {
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;
 		final float ticks = player.tickCount + partialTicks;
@@ -327,7 +331,7 @@ public class OverlayRenderer extends GuiComponent {
 			matrixStackIn.translate(-20 + (int)(wiggleMod), 0, -101);
 			RenderSystem.setShaderColor(1f, 1f, 1f, .5f);
 			
-			this.fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
+			fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
 					GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
 					0x50000000, 0xA0000000); //nameplate background
 			RenderSystem.setShaderColor(1f, 1f, 1f, .5f);
@@ -340,7 +344,7 @@ public class OverlayRenderer extends GuiComponent {
 		// Draw background
 		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, -100);
-		this.fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
+		fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
 				GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
 				0x50000000, 0xA0000000); //nameplate background
 		RenderSystem.setShaderColor(petColor[0], petColor[1], petColor[2], petColor[3]);
@@ -387,11 +391,11 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.pushPose();
 		matrixStackIn.translate(GUI_HEALTHBAR_ORB_ENTITY_HOFFSET, GUI_HEALTHBAR_ORB_ENTITY_VOFFSET, 0);
 		//matrixStackIn.rotate(Vector3f.YP.rotationDegrees(-30f));
-		RenderSystem.getModelViewStack().pushPose();
-		RenderSystem.getModelViewStack().mulPoseMatrix(matrixStackIn.last().pose());
-		InventoryScreen.renderEntityInInventory(0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, width/2, -20, pet);
-		RenderSystem.getModelViewStack().popPose();
-		RenderSystem.applyModelViewMatrix();
+		//RenderSystem.getModelViewStack().pushPose();
+		//RenderSystem.getModelViewStack().mulPoseMatrix(matrixStackIn.last().pose());
+		InventoryScreen.renderEntityInInventoryFollowsMouse(matrixStackIn, 0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, width/2, -20, pet);
+		//RenderSystem.getModelViewStack().popPose();
+		//RenderSystem.applyModelViewMatrix();
 		matrixStackIn.popPose();
 		RenderSystem.setShaderTexture(0, GUI_HEALTHBARS);
 		

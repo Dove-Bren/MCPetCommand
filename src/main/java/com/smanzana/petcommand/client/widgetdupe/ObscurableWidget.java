@@ -34,18 +34,12 @@ public abstract class ObscurableWidget extends FixedWidget {
 		setBounds(new Rect2i(x, y, width, height));
 	}
 	
-	public void setX(int x) {
-		this.x = x;
-	}
-	
-	public void setY(int y) {
-		this.y = y;
-	}
-	
 	protected boolean inBounds() {
 		if (this.bounds != null) {
-			final int maxX = this.x + this.width;
-			final int maxY = this.y + this.height;
+			final int x = this.getX();
+			final int y = this.getY();
+			final int maxX = x + this.width;
+			final int maxY = y + this.height;
 			final int boundsMaxX = bounds.getX() + bounds.getWidth();
 			final int boundsMaxY = bounds.getY() + bounds.getHeight();
 			return x < boundsMaxX

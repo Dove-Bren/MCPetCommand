@@ -49,7 +49,7 @@ public class NetworkHandler {
 	
 	public NetworkHandler() {
 		
-		syncChannel = NetworkRegistry.newSimpleChannel(new ResourceLocation(PetCommand.MODID, CHANNEL_SYNC_NAME),
+		syncChannel = NetworkRegistry.newSimpleChannel(ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, CHANNEL_SYNC_NAME),
 				() -> PROTOCOL,
 				PROTOCOL::equals,
 				PROTOCOL::equals
@@ -67,7 +67,7 @@ public class NetworkHandler {
 	//ctx.get().getSender());
 	
 	public static <T> void sendTo(T msg, ServerPlayer player) {
-		NetworkHandler.syncChannel.sendTo(msg, player.connection.getConnection(), NetworkDirection.PLAY_TO_CLIENT);
+		NetworkHandler.syncChannel.sendTo(msg, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
 	}
 	
 	public static <T> void sendToServer(T msg) {

@@ -1,22 +1,24 @@
 package com.smanzana.petcommand.client.render;
 
+import org.joml.Matrix4f;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.proxy.ClientProxy;
 import com.smanzana.petcommand.util.RayTrace;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -103,17 +105,17 @@ public class PetOrderRenderer {
 		matrixStackIn.translate(0, .5 + (yMag * .125), 0);
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.pushPose();
-		matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(135f));
-		mc.getItemRenderer().renderStatic(markerItem, TransformType.FIXED, packedLight, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 0);
+		matrixStackIn.mulPose(Axis.ZP.rotationDegrees(135f));
+		mc.getItemRenderer().renderStatic(markerItem, ItemDisplayContext.FIXED, packedLight, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, (Level)null, 0);
 		matrixStackIn.popPose();
 		
-		matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90f));
-		matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(135f));
-		mc.getItemRenderer().renderStatic(markerItem, TransformType.FIXED, packedLight, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 0);
+		matrixStackIn.mulPose(Axis.YP.rotationDegrees(90f));
+		matrixStackIn.mulPose(Axis.ZP.rotationDegrees(135f));
+		mc.getItemRenderer().renderStatic(markerItem, ItemDisplayContext.FIXED, packedLight, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, (Level)null, 0);
 		matrixStackIn.popPose();
 	}
 	
-	public static final ResourceLocation TEX_MOVE = new ResourceLocation(PetCommand.MODID, "textures/effect/move_arrow.png");
+	public static final ResourceLocation TEX_MOVE = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/effect/move_arrow.png");
 	protected void renderMoveToMarker(PoseStack matrixStackIn, MultiBufferSource bufferIn, int renderTicks, float partialTicks, int packedLight) {
 		
 		VertexConsumer buffer = bufferIn.getBuffer(PetCommandRenderTypes.PET_ORDER_MOVE_ARROW);
@@ -132,9 +134,9 @@ public class PetOrderRenderer {
 			
 			for (int i = 0; i < 4; i++) {
 				matrixStackIn.pushPose();
-				matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90f * i));
+				matrixStackIn.mulPose(Axis.YP.rotationDegrees(90f * i));
 				matrixStackIn.translate(.25, 0, -height/2f);
-				matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(20f));
+				matrixStackIn.mulPose(Axis.ZP.rotationDegrees(20f));
 				{
 					final Matrix4f transform = matrixStackIn.last().pose();
 					//blit(matrixStackIn, 0, 0, GUI_PET_ICON_FLOATTARGET_HOFFSET, GUI_PET_ICON_FLOATTARGET_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
@@ -157,9 +159,9 @@ public class PetOrderRenderer {
 		matrixStackIn.translate(0, .75, 0);
 		for (int i = 0; i < 4; i++) {
 			matrixStackIn.pushPose();
-			matrixStackIn.mulPose(Vector3f.YP.rotationDegrees((90f * i) + (floatProg * 360f)));
+			matrixStackIn.mulPose(Axis.YP.rotationDegrees((90f * i) + (floatProg * 360f)));
 			matrixStackIn.translate(-.125, 0, -.5);
-			mc.getItemRenderer().renderStatic(guardItem, TransformType.FIXED, packedLight, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 0);
+			mc.getItemRenderer().renderStatic(guardItem, ItemDisplayContext.FIXED, packedLight, OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, (Level)null, 0);
 			matrixStackIn.popPose();
 			
 		}

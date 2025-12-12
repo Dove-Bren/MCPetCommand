@@ -7,7 +7,6 @@ import com.smanzana.petcommand.PetCommand;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 
 public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
@@ -28,7 +27,7 @@ public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
 	protected float scroll;
 	
 	public ScrollbarWidget(IScrollbarListener listener, int x, int y, int width, int height) {
-		this(listener, x, y, width, height, TextComponent.EMPTY);
+		this(listener, x, y, width, height, Component.empty());
 	}
 	
 	public ScrollbarWidget(IScrollbarListener listener, int x, int y, int width, int height, Component title) {
@@ -57,7 +56,7 @@ public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
 	protected float getScrollForY(double mouseY) {
 		final int yMargin = 2;
 		final int scrollRange = this.height - ((yMargin * 2) + (POS_SCROLLBAR_HEIGHT));
-		mouseY = mouseY - (y + yMargin + POS_SCROLLBAR_HEIGHT/2);
+		mouseY = mouseY - (getY() + yMargin + POS_SCROLLBAR_HEIGHT/2);
 		return Math.max(0, Math.min(1f, (float) mouseY / (float) scrollRange));
 	}
 	
@@ -115,7 +114,7 @@ public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
 		return true;
 	}
 	
-	private static final ResourceLocation TEXT = new ResourceLocation(PetCommand.MODID, "textures/gui/misc_widget.png");
+	private static final ResourceLocation TEXT = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/gui/misc_widget.png");
 	
 	private static final int TEX_WIDTH = 64;
 	private static final int TEX_HEIGHT = 64;
@@ -129,7 +128,9 @@ public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
 	private static final int POS_SCROLLBAR_HEIGHT = 14;
 
 	@Override
-	public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		final int x = getX();
+		final int y = getY();
 		final int xMargin = 2;
 		final int yMargin = 2;
 		matrixStackIn.pushPose();
@@ -178,7 +179,7 @@ public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
 	}
 
 	@Override
-	public void updateNarration(NarrationElementOutput p_169152_) {
+	protected void updateWidgetNarration(NarrationElementOutput p_169152_) {
 		// TODO Auto-generated method stub
 		
 	}

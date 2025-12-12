@@ -355,7 +355,7 @@ public class PetGUI {
 	@OnlyIn(Dist.CLIENT)
 	public static class PetGUIContainer<T extends LivingEntity> extends AutoGuiContainer<PetContainer<T>> {
 		
-		public static final ResourceLocation TEXT = new ResourceLocation(PetCommand.MODID + ":textures/gui/container/tamed_pet_gui.png");
+		public static final ResourceLocation TEXT = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/gui/container/tamed_pet_gui.png");
 
 		public static int GUI_TEX_WIDTH = 256;
 		public static int GUI_TEX_HEIGHT = 256;
@@ -454,7 +454,7 @@ public class PetGUI {
 				int xPosition = GUI_LENGTH_PREVIEW / 2;
 				int yPosition = GUI_LENGTH_PREVIEW / 2;
 				//RenderHelper.turnOff(); disable world lighting?
-				InventoryScreen.renderEntityInInventory(
+				InventoryScreen.renderEntityInInventoryFollowsMouse(matrixStackIn,
 						xPosition,
 						(int) (GUI_LENGTH_PREVIEW * .75f),
 						(int) (GUI_LENGTH_PREVIEW * .2),

@@ -11,7 +11,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class PetCommandContainers {
 	
-	public static final DeferredRegister<MenuType<?>> REGISTRY = DeferredRegister.create(ForgeRegistries.CONTAINERS, PetCommand.MODID);
+	public static final DeferredRegister<MenuType<?>> REGISTRY = DeferredRegister.create(ForgeRegistries.MENU_TYPES, PetCommand.MODID);
 
 	public static final RegistryObject<MenuType<?>> PetGui = REGISTRY.register(PetGUI.PetContainer.ID, () -> IForgeMenuType.create(PetGUI.PetContainer::FromNetwork));
 }

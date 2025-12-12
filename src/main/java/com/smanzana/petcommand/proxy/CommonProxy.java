@@ -35,7 +35,7 @@ public class CommonProxy {
 	
 	public void openContainer(Player player, IPackedContainerProvider provider) {
 		if (!player.level.isClientSide() && player instanceof ServerPlayer) {
-			NetworkHooks.openGui((ServerPlayer) player, provider, provider.getData());
+			NetworkHooks.openScreen((ServerPlayer) player, provider, provider.getData());
 		}
 	}
 	

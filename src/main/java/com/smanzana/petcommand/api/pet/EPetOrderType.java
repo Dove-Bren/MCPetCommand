@@ -1,7 +1,6 @@
 package com.smanzana.petcommand.api.pet;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 
 /**
  * A command given to pets to influence what they're doing
@@ -17,8 +16,8 @@ public enum EPetOrderType {
 	private final Component desc;
 	
 	private EPetOrderType() {
-		this.name = new TranslatableComponent("petcommand." + this.name().toLowerCase() + ".name");
-		this.desc = new TranslatableComponent("petcommand." + this.name().toLowerCase() + ".desc");
+		this.name = Component.translatable("petcommand." + this.name().toLowerCase() + ".name");
+		this.desc = Component.translatable("petcommand." + this.name().toLowerCase() + ".desc");
 	}
 	
 	public Component getName() {

@@ -1,7 +1,6 @@
 package com.smanzana.petcommand.api.pet;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 
 public enum EPetPlacementMode {
 	FREE, // No constraint; move as desired
@@ -13,8 +12,8 @@ public enum EPetPlacementMode {
 	private final Component desc;
 	
 	private EPetPlacementMode() {
-		this.name = new TranslatableComponent("petplacement." + this.name().toLowerCase() + ".name");
-		this.desc = new TranslatableComponent("petplacement." + this.name().toLowerCase() + ".desc");
+		this.name = Component.translatable("petplacement." + this.name().toLowerCase() + ".name");
+		this.desc = Component.translatable("petplacement." + this.name().toLowerCase() + ".desc");
 	}
 	
 	public Component getName() {

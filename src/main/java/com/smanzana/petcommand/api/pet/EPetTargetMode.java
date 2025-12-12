@@ -1,7 +1,6 @@
 package com.smanzana.petcommand.api.pet;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 
 public enum EPetTargetMode {
 	FREE, // Follow regular target rules for mob
@@ -14,8 +13,8 @@ public enum EPetTargetMode {
 	private final Component desc;
 	
 	private EPetTargetMode() {
-		this.name = new TranslatableComponent("pettarget." + this.name().toLowerCase() + ".name");
-		this.desc = new TranslatableComponent("pettarget." + this.name().toLowerCase() + ".desc");
+		this.name = Component.translatable("pettarget." + this.name().toLowerCase() + ".name");
+		this.desc = Component.translatable("pettarget." + this.name().toLowerCase() + ".desc");
 	}
 	
 	public Component getName() {

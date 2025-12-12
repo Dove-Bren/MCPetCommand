@@ -11,7 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -59,7 +58,7 @@ public class ContainerUtil {
 
 			@Override
 			public Component getDisplayName() {
-				return new TranslatableComponent("container." + PetCommand.MODID + "." + name + ".name");
+				return Component.translatable("container." + PetCommand.MODID + "." + name + ".name");
 			}
 
 			@Override

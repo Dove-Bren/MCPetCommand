@@ -58,7 +58,7 @@ public abstract class ParentWidget<W extends ParentWidget<W, T>, T extends Obscu
 	}
 	
 	@Override
-	public void renderButton(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
 		// This is maybe a rude assumption, but assume all parent widgets never want to render default vanilla the button background
 		
 		//fill(matrixStack, x, y, x + width, y + height, 0xFF202020);
@@ -200,12 +200,12 @@ public abstract class ParentWidget<W extends ParentWidget<W, T>, T extends Obscu
 	}
 	
 	protected Rect2i getBounds() {
-		return new Rect2i(x, y, this.width, this.height);
+		return new Rect2i(getX(), getY(), this.width, this.height);
 	}
 	
 	protected void updateChildPosition(T widget, Rect2i bounds) {
 		widget.setBounds(bounds);
-		widget.snapToParent(x, y);
+		widget.snapToParent(getX(), getY());
 	}
 	
 	/**

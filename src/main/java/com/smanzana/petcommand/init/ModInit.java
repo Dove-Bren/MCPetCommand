@@ -24,9 +24,9 @@ public class ModInit {
 		DistExecutor.safeRunForDist(() -> PetCommandClientAPIImpl::Register, () -> PetCommandAPIImpl::Register);
 	}
 	
-	public static final void addRegistries() {
+	public static final void addRegistries(FMLJavaModLoadingContext context) {
 		// Registries
-		final IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+		final IEventBus modBus = context.getModEventBus();
 		PetCommandContainers.REGISTRY.register(modBus);
 		PetCommandEntities.REGISTRY.register(modBus);
 		PetCommandSerializers.REGISTRY.register(modBus);

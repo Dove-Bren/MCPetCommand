@@ -17,10 +17,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent.Stage;
 import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.client.event.ViewportEvent.ComputeCameraAngles;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.event.TickEvent.Phase;
@@ -84,7 +84,7 @@ public class OutlineRenderer implements IEntityOutliner {
 		outlineShader.process(partialTicks);
 		mc.getMainRenderTarget().bindWrite(false);
 		RenderSystem.defaultBlendFunc();
-		RenderSystem.enableTexture(); // Rendering shaders disables texture but world renderer expects it to be enabled at this point for particles?
+		//RenderSystem.tex.enableTexture(); // Rendering shaders disables texture but world renderer expects it to be enabled at this point for particles?
 	}
 	
 	@SubscribeEvent
@@ -120,7 +120,7 @@ public class OutlineRenderer implements IEntityOutliner {
 	}
 	
 	@SubscribeEvent
-	public final void onRenderWorldBegin(CameraSetup event) {
+	public final void onRenderWorldBegin(ComputeCameraAngles event) {
 		this.renderEntityDoingGlow = false; // Reset at beginning of render frame
 		this.renderedOutlines = false;
 	}

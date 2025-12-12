@@ -45,13 +45,10 @@ import com.smanzana.petcommand.util.ColorUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Widget;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -92,7 +89,7 @@ public class PetListScreen extends Screen {
 		final int scrollbarWidth = 10;
 		final int listWidth = width - (margin + margin + leftWidth + scrollbarWidth + 1);
 		petList = new ListWidget<>(margin + leftWidth, margin,
-				listWidth, height - (margin + margin), TextComponent.EMPTY);
+				listWidth, height - (margin + margin), Component.empty());
 		scrollbar = new ScrollbarWidget(petList, width - (margin + scrollbarWidth + 1), margin, scrollbarWidth, height - (margin + margin));
 		petList.setScrollbar(scrollbar).setSpacing(2).setAutoSizeChildren().setMargin(1);
 		
@@ -108,30 +105,30 @@ public class PetListScreen extends Screen {
 		
 		final int extraHSpace = Math.max(0, leftWidth - (68 + 24 + 5));
 		
-		controlList = new ListWidget<>(margin, margin, leftWidth, height - (margin + margin), TextComponent.EMPTY);
+		controlList = new ListWidget<>(margin, margin, leftWidth, height - (margin + margin), Component.empty());
 		controlList.setMargin(5);
 		controlList.setSpacing(5);
 		controlList.setAutoSizeChildren();
 		
-		AutoRowWidget<ObscurableChildWidget<?>> row = new AutoRowWidget<>(0, 0, leftWidth, 24, TextComponent.EMPTY);
-			row.addChild(new TextWidget(this, new TextComponent("Placement: "), 0, 0, 68, 24).centerVertical().centerInBounds().tooltip(Tooltip.create(new TranslatableComponent("petplacement.info"))));
+		AutoRowWidget<ObscurableChildWidget<?>> row = new AutoRowWidget<>(0, 0, leftWidth, 24, Component.empty());
+			row.addChild(new TextWidget(this, Component.literal("Placement: "), 0, 0, 68, 24).centerVertical().centerInBounds().tooltip(Tooltip.create(Component.translatable("petplacement.info"))));
 			if (extraHSpace > 5) {
 				row.addChild(new SpacerWidget(0, 0, extraHSpace - 5, 1));
 			}
 			row.addChild(new PlacemodeModeButton(this, 0, 0, 24, 24, this::cyclePlacementMode, this::getPlacementMode).tooltip(this::getPetPlacementTooltip));
 		controlList.addChild(row);
 		
-		row = new AutoRowWidget<>(0, 0, leftWidth, 24, TextComponent.EMPTY);
-			row.addChild(new TextWidget(this, new TextComponent("Target Mode: "), 0, 0, 68, 24).centerVertical().centerInBounds().tooltip(Tooltip.create(new TranslatableComponent("pettarget.info"))));
+		row = new AutoRowWidget<>(0, 0, leftWidth, 24, Component.empty());
+			row.addChild(new TextWidget(this, Component.literal("Target Mode: "), 0, 0, 68, 24).centerVertical().centerInBounds().tooltip(Tooltip.create(Component.translatable("pettarget.info"))));
 			if (extraHSpace > 5) {
 				row.addChild(new SpacerWidget(0, 0, extraHSpace - 5, 1));
 			}
 			row.addChild(new TargetModeButton(this, 0, 0, 24, 24, this::cycleTargetMode, this::getTargetMode).tooltip(this::getPetTargetTooltip));
 		controlList.addChild(row);
 		
-		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, new TextComponent("All Stop"), this::stopAll));
-		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, new TextComponent("All Come"), this::callAll));
-		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, new TextComponent("All Stay"), this::stayAll));
+		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, Component.literal("All Stop"), this::stopAll));
+		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, Component.literal("All Come"), this::callAll));
+		controlList.addChild(new ChildButtonWidget<>(this, 0, 0, 20, 24, Component.literal("All Stay"), this::stayAll));
 		
 		this.addRenderableWidget(controlList);
 	}
@@ -181,9 +178,10 @@ public class PetListScreen extends Screen {
 			matrixStack.popPose();
 		}
 		
+		// Automatic? No. The vanilla path is but not this one
 		// Tooltips and foregrounds
-		for (Widget child : this.renderables) {
-			if (child instanceof AbstractWidget widget) {
+		for (Renderable child : this.renderables) {
+			if (child instanceof ObscurableChildWidget widget) {
 				widget.renderToolTip(matrixStack, mouseX, mouseY);
 			}
 		}
@@ -280,7 +278,7 @@ public class PetListScreen extends Screen {
 		protected AutoRowWidget<ObscurableChildWidget<?>> secondRow;
 
 		public PetListEntry(PetListScreen parent, LivingEntity pet, int width) {
-			super(0, 0, width, collapsedHeight, TextComponent.EMPTY);
+			super(0, 0, width, collapsedHeight, Component.empty());
 			this.pet = pet;
 			
 			this.setAutoSizeChildren();
@@ -291,12 +289,12 @@ public class PetListScreen extends Screen {
 			
 			final int tagWidth = 6;
 			
-			this.addChild(new ColorButtonWidget(parent, pet, 0, 0, 6, expandedHeight, TextComponent.EMPTY, (b) -> this.cycleColor(), () -> this.getColor()));
-			ListWidget<ObscurableChildWidget<?>> mainList = new ListWidget<>(0, 0, 300 - tagWidth, collapsedHeight, TextComponent.EMPTY);
+			this.addChild(new ColorButtonWidget(parent, pet, 0, 0, 6, expandedHeight, Component.empty(), (b) -> this.cycleColor(), () -> this.getColor()));
+			ListWidget<ObscurableChildWidget<?>> mainList = new ListWidget<>(0, 0, 300 - tagWidth, collapsedHeight, Component.empty());
 			this.addChild(mainList);
 			
 			{
-				firstRow = new AutoRowWidget<>(0, 0, width - tagWidth, collapsedHeight, TextComponent.EMPTY);
+				firstRow = new AutoRowWidget<>(0, 0, width - tagWidth, collapsedHeight, Component.empty());
 
 				final int spacing = 3;
 				firstRow.setMargin(0);
@@ -326,7 +324,7 @@ public class PetListScreen extends Screen {
 						.tooltip(() -> getPetActionTooltip(PetInfo.Wrap(pet).getPetAction())).scale(.5f));
 				if (extraPer > 0)
 				firstRow.addChild(new SpacerWidget(0, 0, extraPer, collapsedHeight));
-				firstRow.addChild(new TextWidget(parent, new TextComponent(String.format("%5d blocks away", dist)), 0, 0, 45, collapsedHeight).truncate().scale(.5f).color(0xFFFFFFFF).centerVertical().centerInBounds());
+				firstRow.addChild(new TextWidget(parent, Component.literal(String.format("%5d blocks away", dist)), 0, 0, 45, collapsedHeight).truncate().scale(.5f).color(0xFFFFFFFF).centerVertical().centerInBounds());
 				firstRow.addChild(new HideButtonWidget(parent, pet, 0, 0, collapsedHeight, collapsedHeight, (b) -> {
 					toggleHidden();
 				}, () -> OverlayRenderer.IsHiddenFromHUD(pet)));
@@ -340,7 +338,7 @@ public class PetListScreen extends Screen {
 				
 				final int spacing = 3;
 				
-				secondRow = new AutoRowWidget<>(0, 0, width - tagWidth, collapsedHeight, TextComponent.EMPTY); 
+				secondRow = new AutoRowWidget<>(0, 0, width - tagWidth, collapsedHeight, Component.empty()); 
 				secondRow.setMargin(0);
 				secondRow.setSpacing(spacing);
 				secondRow.setAutoSizeChildren();
@@ -351,7 +349,7 @@ public class PetListScreen extends Screen {
 				
 				final int extraPer = Math.max(0, extraSpace / 2);
 				
-				secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 40, 8, new TextComponent("Open Menu"), (b) -> {
+				secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 40, 8, Component.literal("Open Menu"), (b) -> {
 					NetworkHandler.sendToServer(new OpenPetGUIMessage(pet));
 				}).checkDistance());
 				
@@ -363,7 +361,7 @@ public class PetListScreen extends Screen {
 							.scale(.5f));
 					
 					if (values != null && values.size() > 1) {
-						secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 6, collapsedHeight, new TextComponent("o"), (b) -> {
+						secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 6, collapsedHeight, Component.literal("o"), (b) -> {
 							cycleValue();
 						}));
 					} else {
@@ -378,9 +376,9 @@ public class PetListScreen extends Screen {
 				if (extraPer > 0)
 				secondRow.addChild(new SpacerWidget(0, 0, extraPer, collapsedHeight));
 				
-				secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 20, collapsedHeight, new TextComponent("Stop"), this::stopCommand));
-				secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 20, collapsedHeight, new TextComponent("Call"), this::comeCommand));
-				secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 20, collapsedHeight, new TextComponent("Stay"), this::stayCommand));
+				secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 20, collapsedHeight, Component.literal("Stop"), this::stopCommand));
+				secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 20, collapsedHeight, Component.literal("Call"), this::comeCommand));
+				secondRow.addChild(new PetChildButtonWidget(parent, pet, 0, 0, 20, collapsedHeight, Component.literal("Stay"), this::stayCommand));
 			}
 			mainList.addChild(secondRow);
 		}
@@ -397,10 +395,10 @@ public class PetListScreen extends Screen {
 		}
 
 		@Override
-		public void renderButton(PoseStack matrixStackIn, int p_93677_, int p_93678_, float p_93679_) {
-			super.renderButton(matrixStackIn, p_93677_, p_93678_, p_93679_);
+		public void renderWidget(PoseStack matrixStackIn, int p_93677_, int p_93678_, float p_93679_) {
+			super.renderWidget(matrixStackIn, p_93677_, p_93678_, p_93679_);
 			RenderSystem.enableDepthTest();
-			fill(matrixStackIn, x, y, x + this.getWidth(), y + this.getHeight(), this.isHoveredOrFocused() ? 0x40808080 : 0x40804040);
+			fill(matrixStackIn, getX(), getY(), getX() + this.getWidth(), getY() + this.getHeight(), this.isHoveredOrFocused() ? 0x40808080 : 0x40804040);
 		}
 
 		@Override
@@ -521,7 +519,7 @@ public class PetListScreen extends Screen {
 	
 	protected static class PetChildButtonWidget extends ChildButtonWidget<PetChildButtonWidget> {
 		
-		protected static final List<Component> TOO_FAR = List.of(new TextComponent("Too far away!"));
+		protected static final List<Component> TOO_FAR = List.of(Component.literal("Too far away!"));
 		
 		protected final LivingEntity pet;
 		protected boolean checkDistance;
@@ -542,9 +540,9 @@ public class PetListScreen extends Screen {
 		}
 		
 		@Override
-		public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 			this.active = isEnabled();
-			super.renderButton(matrixStackIn, mouseX, mouseY, partialTicks);
+			super.renderWidget(matrixStackIn, mouseX, mouseY, partialTicks);
 		}
 		
 		@Override
@@ -573,7 +571,7 @@ public class PetListScreen extends Screen {
 		}
 		
 		@Override
-		public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 			//super.renderButton(matrixStackIn, mouseX, mouseY, partialTicks);
 			Minecraft minecraft = Minecraft.getInstance();
 			Font font = minecraft.font;
@@ -583,6 +581,8 @@ public class PetListScreen extends Screen {
 			RenderSystem.defaultBlendFunc();
 			RenderSystem.enableDepthTest();
 			{
+				final int x = getX();
+				final int y = getY();
 //				this.blit(matrixStackIn, this.x, this.y, 0, 46 + i * 20, this.width / 2, this.height);
 //				this.blit(matrixStackIn, this.x + this.width / 2, this.y, 200 - this.width / 2, 46 + i * 20, this.width / 2, this.height);
 				// gonna just render outside border, and then grainy texture. Will scale if button is too large?
@@ -597,14 +597,14 @@ public class PetListScreen extends Screen {
 				fill(matrixStackIn, x + (width - 2), y + 1, x + (width - 1), y + (height - 1), 0x40000000);
 				
 			}
-			this.renderBg(matrixStackIn, minecraft, mouseX, mouseY);
+			//this.renderBg(matrixStackIn, minecraft, mouseX, mouseY); Needed?
 			int j = getFGColor();
 			
-			if (this.getMessage() != null && this.getMessage() != TextComponent.EMPTY)
+			if (this.getMessage() != null && this.getMessage() != Component.empty())
 			{
 				// possibly scale down if button is small
 				matrixStackIn.pushPose();
-				matrixStackIn.translate(this.x + this.width / 2, this.y + this.height / 2, 0);
+				matrixStackIn.translate(this.getX() + this.width / 2, this.getY() + this.height / 2, 0);
 				if (font.lineHeight > this.height - 4) {
 					final float scale = (float)(this.height - 4) / (float) (font.lineHeight);
 					matrixStackIn.scale(scale, scale, 1f);
@@ -617,18 +617,18 @@ public class PetListScreen extends Screen {
 	
 	protected static final class HideButtonWidget extends PetChildButtonWidget {
 		
-		private static final ResourceLocation TEXT = new ResourceLocation(PetCommand.MODID, "textures/gui/misc_widget.png");
+		private static final ResourceLocation TEXT = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/gui/misc_widget.png");
 		
 		private static final int TEX_WIDTH = 64;
 		private static final int TEX_HEIGHT = 64;
 		
-		private static final List<Component> HIDE_TEXT = List.of(new TextComponent("Hide"));
-		private static final List<Component> SHOW_TEXT = List.of(new TextComponent("Show"));
+		private static final List<Component> HIDE_TEXT = List.of(Component.literal("Hide"));
+		private static final List<Component> SHOW_TEXT = List.of(Component.literal("Show"));
 			
 		protected final Supplier<Boolean> hiddenSupplier;
 	
 		public HideButtonWidget(Screen parent, LivingEntity pet, int x, int y, int width, int height, OnPress onPress, Supplier<Boolean> hidden) {
-			super(parent, pet, x, y, width, height, TextComponent.EMPTY, onPress);
+			super(parent, pet, x, y, width, height, Component.empty(), onPress);
 			this.hiddenSupplier = hidden;
 			this.tooltip(() -> isPetHidden() ? SHOW_TEXT : HIDE_TEXT);
 		}
@@ -643,7 +643,7 @@ public class PetListScreen extends Screen {
 		}
 		
 		@Override
-		public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 			//super.renderButton(matrixStackIn, mouseX, mouseY, partialTicks);
 			final float sat = this.active ? 1f : .3f;
 			final int vOffset = 0 + (isPetHidden() ? 32 : 0);
@@ -654,7 +654,7 @@ public class PetListScreen extends Screen {
 			{
 				RenderSystem.setShader(GameRenderer::getPositionTexShader);
 				RenderSystem.setShaderTexture(0, TEXT);
-				blit(matrixStackIn, x, y, width, width, 32, vOffset, 32, 32, TEX_WIDTH, TEX_HEIGHT);
+				blit(matrixStackIn, getX(), getY(), width, width, 32, vOffset, 32, 32, TEX_WIDTH, TEX_HEIGHT);
 				
 			}
 			
@@ -665,18 +665,20 @@ public class PetListScreen extends Screen {
 		protected final Supplier<EPetPlacementMode> modeSupplier;
 
 		public PlacemodeModeButton(Screen parent, int x, int y, int width, int height, OnPress onPress, Supplier<EPetPlacementMode> modeSupplier) {
-			super(parent, x, y, width, height, TextComponent.EMPTY, onPress);
+			super(parent, x, y, width, height, Component.empty(), onPress);
 			this.modeSupplier = modeSupplier;
 		}
 		
 		@Override
-		public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 			final EPetPlacementMode mode = this.modeSupplier.get();
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
 			RenderSystem.enableBlend();
 			RenderSystem.defaultBlendFunc();
 			RenderSystem.enableDepthTest();
 			{
+				final int x = getX();
+				final int y = getY();
 				fill(matrixStackIn, x, y, x + width, y + height, this.isHoveredOrFocused() ? 0xFFCCCCCC : 0xFF000000);
 				
 				RenderSystem.setShader(GameRenderer::getPositionTexShader);
@@ -703,18 +705,20 @@ public class PetListScreen extends Screen {
 		protected final Supplier<EPetTargetMode> modeSupplier;
 
 		public TargetModeButton(Screen parent, int x, int y, int width, int height, OnPress onPress, Supplier<EPetTargetMode> modeSupplier) {
-			super(parent, x, y, width, height, TextComponent.EMPTY, onPress);
+			super(parent, x, y, width, height, Component.empty(), onPress);
 			this.modeSupplier = modeSupplier;
 		}
 		
 		@Override
-		public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 			final EPetTargetMode mode = this.modeSupplier.get();
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
 			RenderSystem.enableBlend();
 			RenderSystem.defaultBlendFunc();
 			RenderSystem.enableDepthTest();
 			{
+				final int x = getX();
+				final int y = getY();
 				fill(matrixStackIn, x, y, x + width, y + height, this.isHoveredOrFocused() ? 0xFFCCCCCC : 0xFF000000);
 				
 				RenderSystem.setShader(GameRenderer::getPositionTexShader);

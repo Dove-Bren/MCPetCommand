@@ -7,7 +7,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.util.FormattedCharSequence;
 
 public class TextWidget extends ObscurableChildWidget<TextWidget> {
@@ -23,7 +22,7 @@ public class TextWidget extends ObscurableChildWidget<TextWidget> {
 	protected boolean truncate = false;
 	
 	public TextWidget(Screen parent, Component text, int x, int y, int width, int height) {
-		super(x, y, width, height, TextComponent.EMPTY);
+		super(x, y, width, height, Component.empty());
 		this.parent = parent;
 		this.text = text;
 	}
@@ -86,12 +85,14 @@ public class TextWidget extends ObscurableChildWidget<TextWidget> {
 	}
 	
 	@Override
-	public void renderButton(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 		final Minecraft mc = this.parent.getMinecraft();
 		final Font font = mc.font;
+		final int x = getX();
+		final int y = getY();
 		
 		matrixStackIn.pushPose();
-		matrixStackIn.translate(this.x, this.y, 0);
+		matrixStackIn.translate(x, y, 0);
 		matrixStackIn.scale(scale, scale, 1f);
 		final FormattedCharSequence textToDraw;
 		if (truncate) {

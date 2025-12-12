@@ -7,7 +7,6 @@ import com.smanzana.petcommand.client.widgetdupe.LabeledWidget;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 
 public class PetValueWidget extends LabeledWidget {
 
@@ -20,7 +19,7 @@ public class PetValueWidget extends LabeledWidget {
 		protected final Supplier<PetValue> valueSupplier;
 		
 		public PetValueLabel(Supplier<PetValue> valueSupplier) {
-			super(TextComponent.EMPTY);
+			super(Component.empty());
 			this.valueSupplier = valueSupplier;
 		}
 		
@@ -31,7 +30,7 @@ public class PetValueWidget extends LabeledWidget {
 				return value.label().copy().append(": ");
 			}
 			
-			return TextComponent.EMPTY;
+			return Component.empty();
 		}
 		
 	}

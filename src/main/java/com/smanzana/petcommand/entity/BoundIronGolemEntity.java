@@ -22,7 +22,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -60,7 +59,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	
 	public static final String ID = "bound_iron_golem";
 	
-	private static final Component SwingLabel = new TranslatableComponent("value." + ID + ".cooldown");
+	private static final Component SwingLabel = Component.translatable("value." + ID + ".cooldown");
 	
 	private static final String NBT_OWNER_ID = "bound_owner_id";
 	private static final String NBT_INVENTORY = "inventory";
@@ -329,8 +328,8 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 					&& !(event.getTarget() instanceof BoundIronGolemEntity)) {
 				ItemStack stack = event.getItemStack();
 				if (!stack.isEmpty() && stack.getItem() == Items.POPPY) {
-					event.getWorld().playSound(null, event.getPos(), SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.NEUTRAL, 1f, 1f);
-					TransformToBound((IronGolem) event.getTarget(), event.getPlayer());
+					event.getLevel().playSound(null, event.getPos(), SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.NEUTRAL, 1f, 1f);
+					TransformToBound((IronGolem) event.getTarget(), event.getEntity());
 					stack.shrink(1);
 					event.setCancellationResult(InteractionResult.SUCCESS);
 				}

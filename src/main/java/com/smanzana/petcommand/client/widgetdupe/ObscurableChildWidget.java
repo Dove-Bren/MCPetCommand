@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-public class ObscurableChildWidget<T extends ObscurableChildWidget<?>> extends MoveableObscurableWidget implements IChildWidget {
+public abstract class ObscurableChildWidget<T extends ObscurableChildWidget<?>> extends MoveableObscurableWidget implements IChildWidget {
 
 	protected int parentOffsetX;
 	protected int parentOffsetY;
@@ -48,6 +48,11 @@ public class ObscurableChildWidget<T extends ObscurableChildWidget<?>> extends M
 	}
 	
 	@Override
+	public void render(PoseStack pose, int mouseX, int mouseY, float partialTicks) {
+		super.render(pose, mouseX, mouseY, partialTicks);
+	}
+	
+	//@Override CAn't override parent since it's private
 	public void renderToolTip(PoseStack matrixStackIn, int mouseX, int mouseY) {
 		if (this.isHoveredOrFocused() && this.tooltip != null) {
 			Tooltip.RenderTooltip(this.tooltip, getScreen(), matrixStackIn, mouseX, mouseY);

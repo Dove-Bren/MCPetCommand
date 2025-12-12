@@ -29,10 +29,10 @@ public enum PetCommandSounds {
 	}
 	
 	private PetCommandSounds(String suffix, SoundSource category, float volume) {
-		this.resource = new ResourceLocation(PetCommand.MODID, suffix);
+		this.resource = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, suffix);
 		this.category = category;
-		this.event = new SoundEvent(resource);
-		event.setRegistryName(resource);
+		this.event = SoundEvent.createVariableRangeEvent(resource);
+		//event.setRegistryName(resource);
 		this.volume = volume;
 	}
 	

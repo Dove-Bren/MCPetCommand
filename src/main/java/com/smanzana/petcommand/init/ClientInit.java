@@ -2,6 +2,7 @@ package com.smanzana.petcommand.init;
 
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.client.container.PetCommandContainers;
+import com.smanzana.petcommand.client.input.PetCommandKeyBindings;
 import com.smanzana.petcommand.client.petgui.PetGUI;
 import com.smanzana.petcommand.client.petgui.PetGUI.PetContainer;
 import com.smanzana.petcommand.client.petgui.PetGUI.PetGUIContainer;
@@ -17,6 +18,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -29,9 +32,6 @@ public class ClientInit {
 	public static void clientSetup(FMLClientSetupEvent event) {
 		MenuScreens.register(PetCommandContainers.PetGui.get(), new PetGUIFactory());
 		
-		ClientProxy proxy = (ClientProxy) PetCommand.GetProxy();
-		proxy.initKeybinds();
-		
 		PetGUIRenderHelperImpl.Register();
 		
 		PetCommand.GetClientPetOverrides().loadFromDisk();
@@ -40,6 +40,22 @@ public class ClientInit {
 	@SubscribeEvent
 	public static void registerEntityRenderers(RegisterRenderers event) {
 		event.registerEntityRenderer(PetCommandEntities.BOUND_IRON_GOLEM.get(), (manager) -> new BoundIronGolemRenderer(manager));
+	}
+	
+	@SubscribeEvent
+	public static void registerKeybinds(RegisterKeyMappingsEvent event) {
+		event.register(PetCommandKeyBindings.bindingPetPlacementModeCycle);
+		event.register(PetCommandKeyBindings.bindingPetTargetModeCycle);
+		event.register(PetCommandKeyBindings.bindingPetAttackAll);
+		event.register(PetCommandKeyBindings.bindingPetAttack);
+		event.register(PetCommandKeyBindings.bindingPetAllStop);
+		event.register(PetCommandKeyBindings.bindingPetScreen);
+		event.register(PetCommandKeyBindings.bindingPetOrderModifier);
+	}
+	
+	@SubscribeEvent
+	public static void registerOverlays(RegisterGuiOverlaysEvent event) {
+		((ClientProxy) PetCommand.GetProxy()).getOverlayRenderer().register(event);
 	}
 	
 	// To get around bounds matching. D:

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.animal.IronGolem;
 
 public class BoundIronGolemRenderer extends IronGolemRenderer {
 	
-	private static final ResourceLocation BOUND_GOLEM_TEXTURES = new ResourceLocation(PetCommand.MODID, "textures/entity/bound_iron_golem/bound_iron_golem.png");
+	private static final ResourceLocation BOUND_GOLEM_TEXTURES = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/entity/bound_iron_golem/bound_iron_golem.png");
 
 	public BoundIronGolemRenderer(EntityRendererProvider.Context context) {
 		super(context);

@@ -106,7 +106,7 @@ public class RayTrace {
 	
 	public static HitResult miss(Vec3 fromPos, Vec3 toPos) {
 		Vec3 rayVec = toPos.subtract(fromPos);
-    	return BlockHitResult.miss(fromPos, Direction.getNearest(rayVec.x, rayVec.y, rayVec.z), new BlockPos(fromPos));
+    	return BlockHitResult.miss(fromPos, Direction.getNearest(rayVec.x, rayVec.y, rayVec.z), BlockPos.containing(fromPos));
 	}
 	
 	public static @Nullable Entity entFromRaytrace(HitResult result) {
@@ -136,7 +136,7 @@ public class RayTrace {
 	
 	protected static final BlockPos GetHitPos(Vec3 hitVec, BlockPos selectedPos) {
 		final Vec3 diff = hitVec.subtract(Vec3.atCenterOf(selectedPos));
-		return new BlockPos(
+		return BlockPos.containing(
 				hitVec.add(diff.normalize().scale(.05))
 				);
 	}
