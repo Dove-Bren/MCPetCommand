@@ -1,10 +1,9 @@
 package com.smanzana.petcommand.client.widgetdupe;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.PetCommand;
 
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -128,16 +127,16 @@ public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
 	private static final int POS_SCROLLBAR_HEIGHT = 14;
 
 	@Override
-	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 		final int x = getX();
 		final int y = getY();
 		final int xMargin = 2;
 		final int yMargin = 2;
-		matrixStackIn.pushPose();
-		matrixStackIn.translate(x, y, 0);
+		graphics.pose().pushPose();
+		graphics.pose().translate(x, y, 0);
 		
 		// Draw track
-		this.drawTrack(matrixStackIn, this.width, this.height);
+		this.drawTrack(graphics, this.width, this.height);
 		
 		// Draw scrollbar
 		final int barPos;
@@ -159,23 +158,22 @@ public class ScrollbarWidget extends ObscurableChildWidget<ScrollbarWidget> {
 			RenderSystem.setShaderColor(.2f, .2f, .2f, 1f);
 		}
 		
-		matrixStackIn.pushPose();
-		matrixStackIn.translate(xMargin, barPos, 0);
-		this.drawScrollbar(matrixStackIn, POS_SCROLLBAR_WIDTH, POS_SCROLLBAR_HEIGHT);
-		matrixStackIn.popPose();
+		graphics.pose().pushPose();
+		graphics.pose().translate(xMargin, barPos, 0);
+		this.drawScrollbar(graphics, POS_SCROLLBAR_WIDTH, POS_SCROLLBAR_HEIGHT);
+		graphics.pose().popPose();
 		
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 		
-		matrixStackIn.popPose();
+		graphics.pose().popPose();
 	}
 	
-	protected void drawScrollbar(PoseStack matrixStackIn, int width, int height) {
-		RenderSystem.setShaderTexture(0, TEXT);
-		blit(matrixStackIn, 0, 0, width, height, TEX_SCROLLBAR_HOFFSET, TEX_SCROLLBAR_VOFFSET, TEX_SCROLLBAR_WIDTH, TEX_SCROLLBAR_HEIGHT, TEX_WIDTH, TEX_HEIGHT);
+	protected void drawScrollbar(GuiGraphics graphics, int width, int height) {
+		graphics.blit(TEXT, 0, 0, width, height, TEX_SCROLLBAR_HOFFSET, TEX_SCROLLBAR_VOFFSET, TEX_SCROLLBAR_WIDTH, TEX_SCROLLBAR_HEIGHT, TEX_WIDTH, TEX_HEIGHT);
 	}
 	
-	protected void drawTrack(PoseStack matrixStackIn, int width, int height) {
-		GuiComponent.fill(matrixStackIn, 0, 0, width, height, 0xFF000000);
+	protected void drawTrack(GuiGraphics graphics, int width, int height) {
+		graphics.fill(0, 0, width, height, 0xFF000000);
 	}
 
 	@Override

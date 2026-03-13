@@ -2,7 +2,7 @@ package com.smanzana.petcommand.api.client.petgui;
 
 import javax.annotation.Nullable;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiGraphics;
 
 public abstract class PetGUIRenderHelper {
 
@@ -13,15 +13,15 @@ public abstract class PetGUIRenderHelper {
 	 * @param width
 	 * @param height
 	 */
-	public static final void DrawSingleSlot(PoseStack matrixStackIn, int width, int height) {
+	public static final void DrawSingleSlot(GuiGraphics graphics, int width, int height) {
 		if (Impl != null) {
-			Impl.drawSingleSlot(matrixStackIn, width, height);
+			Impl.drawSingleSlot(graphics, width, height);
 		}
 	}
 	
-	public static final void DrawSlots(PoseStack matrixStackIn, int width, int height, int count, int columns) {
+	public static final void DrawSlots(GuiGraphics graphics, int width, int height, int count, int columns) {
 		if (Impl != null) {
-			Impl.drawSlots(matrixStackIn, width, height, count, columns);
+			Impl.drawSlots(graphics, width, height, count, columns);
 		}
 	}
 	
@@ -41,6 +41,6 @@ public abstract class PetGUIRenderHelper {
 		Impl = api;
 	}
 	
-	protected abstract void drawSingleSlot(PoseStack matrixStackIn, int width, int height);
-	protected abstract void drawSlots(PoseStack matrixStackIn, int width, int height, int count, int columns);
+	protected abstract void drawSingleSlot(GuiGraphics graphics, int width, int height);
+	protected abstract void drawSlots(GuiGraphics graphics, int width, int height, int count, int columns);
 }

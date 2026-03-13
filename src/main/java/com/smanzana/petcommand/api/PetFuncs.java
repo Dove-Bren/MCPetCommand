@@ -28,10 +28,11 @@ public class PetFuncs {
 		
 		Iterable<Entity> entities;
 		
-		if (owner.level instanceof ServerLevel) {
-			entities = ((ServerLevel) owner.level).getEntities().getAll();
+		final var level = owner.level();
+		if (level instanceof ServerLevel) {
+			entities = ((ServerLevel) level).getEntities().getAll();
 		} else {
-			entities = ((ClientLevel) owner.level).entitiesForRendering();
+			entities = ((ClientLevel) level).entitiesForRendering();
 		}
 		
 		for (Entity e : entities) {
@@ -67,7 +68,7 @@ public class PetFuncs {
 		} else if (ent instanceof TamableAnimal) {
 			TamableAnimal tame = (TamableAnimal) ent;
 			// return tame.getOwner(); // this always assumes player
-			@Nullable Entity rawEntity = PetCommand.GetEntityByUUID(tame.level, tame.getOwnerUUID());
+			@Nullable Entity rawEntity = PetCommand.GetEntityByUUID(tame.level(), tame.getOwnerUUID());
 			if (rawEntity != null && rawEntity instanceof LivingEntity living) {
 				return living;
 			}

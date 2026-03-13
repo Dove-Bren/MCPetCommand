@@ -22,8 +22,8 @@ import net.minecraftforge.client.event.RenderLevelStageEvent.Stage;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.ViewportEvent.ComputeCameraAngles;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
-import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
@@ -142,9 +142,8 @@ public class OutlineRenderer implements IEntityOutliner {
 	
 	@SubscribeEvent
 	public void onTick(ClientTickEvent event) {
-		if (event.phase == Phase.END) {
+		if (event.phase == TickEvent.Phase.END)
 			this.cleanup();
-		}
 	}
 	
 }

@@ -1,8 +1,7 @@
 package com.smanzana.petcommand.client.container;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -23,10 +22,9 @@ public abstract class AutoGuiContainer<T extends AbstractContainerMenu> extends 
 	}
 	
 	@Override
-	public void render(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(matrixStackIn);
-		super.render(matrixStackIn, mouseX, mouseY, partialTicks);
-		this.renderTooltip(matrixStackIn, mouseX, mouseY);
+	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+		this.renderBackground(graphics);
+		super.render(graphics, mouseX, mouseY, partialTicks);
+		this.renderTooltip(graphics, mouseX, mouseY);
 	}
-
 }

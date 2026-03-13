@@ -2,11 +2,11 @@ package com.smanzana.petcommand.client.widget;
 
 import java.util.function.Supplier;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.api.pet.EPetAction;
 import com.smanzana.petcommand.client.icon.PetActionIcon;
 import com.smanzana.petcommand.client.widgetdupe.LabeledWidget.IValue;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
 
 public class PetActionValue implements IValue {
@@ -22,7 +22,7 @@ public class PetActionValue implements IValue {
 	}
 	
 	@Override
-	public Rect2i render(PoseStack matrixStackIn, int x, int y, float partialTicks, int color, Rect2i labelArea) {
+	public Rect2i render(GuiGraphics graphics, int x, int y, float partialTicks, int color, Rect2i labelArea) {
 		final EPetAction value = valueGetter.get();
 		
 		// Try to center vertically with the label
@@ -30,7 +30,7 @@ public class PetActionValue implements IValue {
 		final int yAdjust = labelCenter - (height / 2);
 		
 		if (value != null) {
-		PetActionIcon.get(value).draw(matrixStackIn, x, yAdjust, width, height);
+			PetActionIcon.get(value).draw(graphics, x, yAdjust, width, height);
 		}
 		
 		return new Rect2i(x, yAdjust, width, height);

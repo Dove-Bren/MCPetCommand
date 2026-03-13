@@ -62,11 +62,13 @@ public class PetOrderRenderer {
 		final Player player = PetCommand.GetProxy().getPlayer();
 		final boolean isGuard = ((ClientProxy) PetCommand.GetProxy()).isPetOrderGuard();
 		
-		PoseStack matrixStack = event.getPoseStack();
+		//PoseStack matrixStack = new PoseStack();
+		//matrixStack.mulPose(event.getPoseStack()); // recreate it
+		final var matrixStack = event.getPoseStack();
 		final float partialTicks = event.getPartialTick();
 		
 		HitResult result = RayTrace.raytrace(
-				player.level, player,
+				player.level(), player,
 				player.getEyePosition(partialTicks),
 				player.getViewVector(partialTicks),
 				100, (e) -> false);

@@ -7,10 +7,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import org.lwjgl.opengl.GL32;
-
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.PetFuncs;
 import com.smanzana.petcommand.api.pet.EPetAction;
@@ -45,9 +42,9 @@ import com.smanzana.petcommand.util.ColorUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -134,62 +131,32 @@ public class PetListScreen extends Screen {
 	}
 	
 	@Override
-	public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 
-		this.renderBackground(matrixStack);
+		this.renderBackground(graphics);
 
 		final int margin = 20;
 		// Set up mask
-		{
-			RenderSystem.enableDepthTest(); // make sure this is on
-			RenderSystem.depthMask(true);
-			
-			matrixStack.pushPose();
-			matrixStack.translate(0, 0, 950); // 950 copied from achv tab vanilla renderer
-			
-			// Set the max depth up to a really high value to prevent things from rendering under it
-			RenderSystem.colorMask(false, false, false, false); // only write to depth
-			Screen.fill(matrixStack, 4680, 2260, -4680, -2260, 0xFF000000); // Magic width/height is from vanilla. Is that 8k?
-			
-			// Slice out the section we want to render on to allow things to render
-			matrixStack.translate(0, 0, -950);
-			RenderSystem.depthFunc(GL32.GL_GEQUAL); // Only render to spots with a depth already set to higher AKA our giant mask
-			Screen.fill(matrixStack, margin, margin, width - (margin), height - (margin), 0xFF000000); // "Render" no color at this depth, effectively setting the max depth drawn back to 0
-			RenderSystem.depthFunc(GL32.GL_LEQUAL); // Restore to standard 'only draw on top of things' behavior for rest of render
-			RenderSystem.colorMask(true, true, true, true); // write color again
-			
-			matrixStack.popPose();
-		}
+		graphics.enableScissor(margin, margin, width - margin, height - margin);
 		
 		// Renders widgets
-		super.render(matrixStack, mouseX, mouseY, partialTicks);
+		super.render(graphics, mouseX, mouseY, partialTicks);
 		
 		// Clear out mask
-		{
-			RenderSystem.enableDepthTest(); // make sure this is on
-			RenderSystem.depthMask(true);
-			matrixStack.pushPose();
-			matrixStack.translate(0, 0, 0);
-			RenderSystem.colorMask(false, false, false, false); // only write to depth
-			RenderSystem.depthFunc(GL32.GL_GEQUAL);
-			Screen.fill(matrixStack, 4680, 2260, -4680, -2260, 0xFF000000); // Magic width/height is from vanilla. Is that 8k?
-			RenderSystem.colorMask(true, true, true, true);
-			RenderSystem.depthFunc(GL32.GL_LEQUAL);
-			matrixStack.popPose();
-		}
+		graphics.disableScissor();
 		
 		// Automatic? No. The vanilla path is but not this one
 		// Tooltips and foregrounds
 		for (Renderable child : this.renderables) {
 			if (child instanceof ObscurableChildWidget widget) {
-				widget.renderToolTip(matrixStack, mouseX, mouseY);
+				widget.renderToolTip(graphics, mouseX, mouseY);
 			}
 		}
 	}
 	
 	@Override
-	public void renderBackground(PoseStack matrixStack) {
-		super.renderBackground(matrixStack);
+	public void renderBackground(GuiGraphics graphics) {
+		super.renderBackground(graphics);
 		
 		final int margin = 20;
 		final int wideSpace = this.width - (margin * 2);
@@ -204,9 +171,9 @@ public class PetListScreen extends Screen {
 		final int endX = startX + (width - (margin + margin + leftWidth + scrollbarWidth + 2));
 		final int endY = startY + (height - (margin + margin));
 		
-		Screen.fill(matrixStack, startX, startY, endX, endY, 0xFF202020);
+		graphics.fill(startX, startY, endX, endY, 0xFF202020);
 		
-		Screen.fill(matrixStack, margin, margin, margin + leftWidth, margin + (height - (margin + margin)), 0xFF404040);
+		graphics.fill(margin, margin, margin + leftWidth, margin + (height - (margin + margin)), 0xFF404040);
 	}
 	
 	protected EPetPlacementMode getPlacementMode() {
@@ -395,14 +362,14 @@ public class PetListScreen extends Screen {
 		}
 
 		@Override
-		public void renderWidget(PoseStack matrixStackIn, int p_93677_, int p_93678_, float p_93679_) {
-			super.renderWidget(matrixStackIn, p_93677_, p_93678_, p_93679_);
+		public void renderWidget(GuiGraphics graphics, int p_93677_, int p_93678_, float p_93679_) {
+			super.renderWidget(graphics, p_93677_, p_93678_, p_93679_);
 			RenderSystem.enableDepthTest();
-			fill(matrixStackIn, getX(), getY(), getX() + this.getWidth(), getY() + this.getHeight(), this.isHoveredOrFocused() ? 0x40808080 : 0x40804040);
+			graphics.fill(getX(), getY(), getX() + this.getWidth(), getY() + this.getHeight(), this.isHoveredOrFocused() ? 0x40808080 : 0x40804040);
 		}
 
 		@Override
-		public void renderToolTip(PoseStack p_93653_, int p_93654_, int p_93655_) {
+		public void renderToolTip(GuiGraphics p_93653_, int p_93654_, int p_93655_) {
 			super.renderToolTip(p_93653_, p_93654_, p_93655_);
 		}
 		
@@ -540,21 +507,23 @@ public class PetListScreen extends Screen {
 		}
 		
 		@Override
-		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 			this.active = isEnabled();
-			super.renderWidget(matrixStackIn, mouseX, mouseY, partialTicks);
+			super.renderWidget(graphics, mouseX, mouseY, partialTicks);
 		}
 		
 		@Override
-		public void renderToolTip(PoseStack matrixStackIn, int mouseX, int mouseY) {
+		public void renderToolTip(GuiGraphics graphics, int mouseX, int mouseY) {
 			if (this.isHoveredOrFocused()) {
 				if (!this.active) {
-					matrixStackIn.pushPose();
-					matrixStackIn.translate(0, 0, 100);
-					parent.renderComponentTooltip(matrixStackIn, TOO_FAR, mouseX, mouseY);
-					matrixStackIn.popPose();
+					final Minecraft mc = Minecraft.getInstance();
+					
+					graphics.pose().pushPose();
+					graphics.pose().translate(0, 0, 100);
+					graphics.renderComponentTooltip(mc.font, TOO_FAR, mouseX, mouseY);
+					graphics.pose().popPose();
 				} else if (this.tooltip != null) {
-					Tooltip.RenderTooltip(tooltip, parent, matrixStackIn, mouseX, mouseY);
+					Tooltip.RenderTooltip(tooltip, parent, graphics, mouseX, mouseY);
 				}
 			}
 		}
@@ -571,8 +540,8 @@ public class PetListScreen extends Screen {
 		}
 		
 		@Override
-		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
-			//super.renderButton(matrixStackIn, mouseX, mouseY, partialTicks);
+		public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+			//super.renderButton(graphics, mouseX, mouseY, partialTicks);
 			Minecraft minecraft = Minecraft.getInstance();
 			Font font = minecraft.font;
 			final int color = this.colorSupplier.get();
@@ -583,34 +552,34 @@ public class PetListScreen extends Screen {
 			{
 				final int x = getX();
 				final int y = getY();
-//				this.blit(matrixStackIn, this.x, this.y, 0, 46 + i * 20, this.width / 2, this.height);
-//				this.blit(matrixStackIn, this.x + this.width / 2, this.y, 200 - this.width / 2, 46 + i * 20, this.width / 2, this.height);
+//				this.blit(graphics, this.x, this.y, 0, 46 + i * 20, this.width / 2, this.height);
+//				this.blit(graphics, this.x + this.width / 2, this.y, 200 - this.width / 2, 46 + i * 20, this.width / 2, this.height);
 				// gonna just render outside border, and then grainy texture. Will scale if button is too large?
-				fill(matrixStackIn, x, y, x + width, y + height, this.isHoveredOrFocused() ? 0xFFCCCCCC : 0xFF000000);
+				graphics.fill(x, y, x + width, y + height, this.isHoveredOrFocused() ? 0xFFCCCCCC : 0xFF000000);
 				
-				fill(matrixStackIn, x + 1, y + 1, x + width - 2, y + height - 2, color);
+				graphics.fill(x + 1, y + 1, x + width - 2, y + height - 2, color);
 				
 				// highlights
-				fill(matrixStackIn, x + 1, y + 1, x + (width - 1), y + 2, 0x40FFFFFF);
-				fill(matrixStackIn, x + 1, y + 1, x + 2, y + (height - 1), 0x40FFFFFF);
-				fill(matrixStackIn, x + 1, y + (height - 2), x + (width - 1), y + (height - 1), 0x40000000);
-				fill(matrixStackIn, x + (width - 2), y + 1, x + (width - 1), y + (height - 1), 0x40000000);
+				graphics.fill(x + 1, y + 1, x + (width - 1), y + 2, 0x40FFFFFF);
+				graphics.fill(x + 1, y + 1, x + 2, y + (height - 1), 0x40FFFFFF);
+				graphics.fill(x + 1, y + (height - 2), x + (width - 1), y + (height - 1), 0x40000000);
+				graphics.fill(x + (width - 2), y + 1, x + (width - 1), y + (height - 1), 0x40000000);
 				
 			}
-			//this.renderBg(matrixStackIn, minecraft, mouseX, mouseY); Needed?
+			//this.renderBg(graphics, minecraft, mouseX, mouseY); Needed?
 			int j = getFGColor();
 			
 			if (this.getMessage() != null && this.getMessage() != Component.empty())
 			{
 				// possibly scale down if button is small
-				matrixStackIn.pushPose();
-				matrixStackIn.translate(this.getX() + this.width / 2, this.getY() + this.height / 2, 0);
+				graphics.pose().pushPose();
+				graphics.pose().translate(this.getX() + this.width / 2, this.getY() + this.height / 2, 0);
 				if (font.lineHeight > this.height - 4) {
 					final float scale = (float)(this.height - 4) / (float) (font.lineHeight);
-					matrixStackIn.scale(scale, scale, 1f);
+					graphics.pose().scale(scale, scale, 1f);
 				}
-				drawCenteredString(matrixStackIn, font, this.getMessage(), 0, -(font.lineHeight / 2), j | Mth.ceil(this.alpha * 255.0F) << 24);
-				matrixStackIn.popPose();
+				graphics.drawCenteredString(font, this.getMessage(), 0, -(font.lineHeight / 2), j | Mth.ceil(this.alpha * 255.0F) << 24);
+				graphics.pose().popPose();
 			}
 		}
 	}
@@ -643,8 +612,8 @@ public class PetListScreen extends Screen {
 		}
 		
 		@Override
-		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
-			//super.renderButton(matrixStackIn, mouseX, mouseY, partialTicks);
+		public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+			//super.renderButton(graphics, mouseX, mouseY, partialTicks);
 			final float sat = this.active ? 1f : .3f;
 			final int vOffset = 0 + (isPetHidden() ? 32 : 0);
 			RenderSystem.setShaderColor(sat, sat, sat, this.alpha);
@@ -652,9 +621,7 @@ public class PetListScreen extends Screen {
 			RenderSystem.defaultBlendFunc();
 			RenderSystem.enableDepthTest();
 			{
-				RenderSystem.setShader(GameRenderer::getPositionTexShader);
-				RenderSystem.setShaderTexture(0, TEXT);
-				blit(matrixStackIn, getX(), getY(), width, width, 32, vOffset, 32, 32, TEX_WIDTH, TEX_HEIGHT);
+				graphics.blit(TEXT, getX(), getY(), width, width, 32, vOffset, 32, 32, TEX_WIDTH, TEX_HEIGHT);
 				
 			}
 			
@@ -670,7 +637,7 @@ public class PetListScreen extends Screen {
 		}
 		
 		@Override
-		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 			final EPetPlacementMode mode = this.modeSupplier.get();
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
 			RenderSystem.enableBlend();
@@ -679,23 +646,22 @@ public class PetListScreen extends Screen {
 			{
 				final int x = getX();
 				final int y = getY();
-				fill(matrixStackIn, x, y, x + width, y + height, this.isHoveredOrFocused() ? 0xFFCCCCCC : 0xFF000000);
+				graphics.fill(x, y, x + width, y + height, this.isHoveredOrFocused() ? 0xFFCCCCCC : 0xFF000000);
 				
-				RenderSystem.setShader(GameRenderer::getPositionTexShader);
-				RenderSystem.setShaderTexture(0, WIDGETS_LOCATION);
-				blit(matrixStackIn, x + 1, y + 1, width - 2, height - 2, 2, 68, (width - 2), Math.min(height - 2, 14), 256, 256);
+				graphics.blit(WIDGETS_LOCATION, x + 1, y + 1, width - 2, height - 2, 2, 68, (width - 2), Math.min(height - 2, 14), 256, 256);
+				//graphics.blitSprite(SPRITES.get(active, this.isHoveredOrFocused()), x + 1, y + 1, width - 2, height - 2, 2, 68, (width - 2), Math.min(height - 2, 14));
 				
 				{
-					//fill(matrixStackIn, x + 1, y + 1, x + width - 2, y + height - 2, color);
+					//fill(graphics, x + 1, y + 1, x + width - 2, y + height - 2, color);
 					final float sat = this.isHoveredOrFocused() ? 1f : .8f;
-					PetPlacementModeIcon.get(mode).draw(matrixStackIn, x + 1, y + 1, width - 2, height - 2, sat, sat, sat, 1f);
+					PetPlacementModeIcon.get(mode).draw(graphics, x + 1, y + 1, width - 2, height - 2, sat, sat, sat, 1f);
 				}
 				
 				// highlights
-				fill(matrixStackIn, x + 1, y + 1, x + (width - 1), y + 2, 0x40FFFFFF);
-				fill(matrixStackIn, x + 1, y + 1, x + 2, y + (height - 1), 0x40FFFFFF);
-				fill(matrixStackIn, x + 1, y + (height - 2), x + (width - 1), y + (height - 1), 0x40000000);
-				fill(matrixStackIn, x + (width - 2), y + 1, x + (width - 1), y + (height - 1), 0x40000000);
+				graphics.fill(x + 1, y + 1, x + (width - 1), y + 2, 0x40FFFFFF);
+				graphics.fill(x + 1, y + 1, x + 2, y + (height - 1), 0x40FFFFFF);
+				graphics.fill(x + 1, y + (height - 2), x + (width - 1), y + (height - 1), 0x40000000);
+				graphics.fill(x + (width - 2), y + 1, x + (width - 1), y + (height - 1), 0x40000000);
 				
 			}
 		}
@@ -710,32 +676,31 @@ public class PetListScreen extends Screen {
 		}
 		
 		@Override
-		public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+		public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 			final EPetTargetMode mode = this.modeSupplier.get();
-			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
+			graphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
 			RenderSystem.enableBlend();
 			RenderSystem.defaultBlendFunc();
 			RenderSystem.enableDepthTest();
 			{
 				final int x = getX();
 				final int y = getY();
-				fill(matrixStackIn, x, y, x + width, y + height, this.isHoveredOrFocused() ? 0xFFCCCCCC : 0xFF000000);
+				graphics.fill(x, y, x + width, y + height, this.isHoveredOrFocused() ? 0xFFCCCCCC : 0xFF000000);
 				
-				RenderSystem.setShader(GameRenderer::getPositionTexShader);
-				RenderSystem.setShaderTexture(0, WIDGETS_LOCATION);
-				blit(matrixStackIn, x + 1, y + 1, width - 2, height - 2, 2, 68, (width - 2), Math.min(height - 2, 14), 256, 256);
+				graphics.blit(WIDGETS_LOCATION, x + 1, y + 1, width - 2, height - 2, 2, 68, (width - 2), Math.min(height - 2, 14), 256, 256);
+				//graphics.blitSprite(SPRITES.get(active, this.isHoveredOrFocused()), x + 1, y + 1, width - 2, height - 2, 2, 68, (width - 2), Math.min(height - 2, 14));
 				
 				{
-					//fill(matrixStackIn, x + 1, y + 1, x + width - 2, y + height - 2, color);
+					//fill(graphics, x + 1, y + 1, x + width - 2, y + height - 2, color);
 					final float sat = this.isHoveredOrFocused() ? 1f : .8f;
-					PetTargetModeIcon.get(mode).draw(matrixStackIn, x + 1, y + 1, width - 2, height - 2, sat, sat, sat, 1f);
+					PetTargetModeIcon.get(mode).draw(graphics, x + 1, y + 1, width - 2, height - 2, sat, sat, sat, 1f);
 				}
 				
 				// highlights
-				fill(matrixStackIn, x + 1, y + 1, x + (width - 1), y + 2, 0x40FFFFFF);
-				fill(matrixStackIn, x + 1, y + 1, x + 2, y + (height - 1), 0x40FFFFFF);
-				fill(matrixStackIn, x + 1, y + (height - 2), x + (width - 1), y + (height - 1), 0x40000000);
-				fill(matrixStackIn, x + (width - 2), y + 1, x + (width - 1), y + (height - 1), 0x40000000);
+				graphics.fill(x + 1, y + 1, x + (width - 1), y + 2, 0x40FFFFFF);
+				graphics.fill(x + 1, y + 1, x + 2, y + (height - 1), 0x40FFFFFF);
+				graphics.fill(x + 1, y + (height - 2), x + (width - 1), y + (height - 1), 0x40000000);
+				graphics.fill(x + (width - 2), y + 1, x + (width - 1), y + (height - 1), 0x40000000);
 				
 			}
 		}

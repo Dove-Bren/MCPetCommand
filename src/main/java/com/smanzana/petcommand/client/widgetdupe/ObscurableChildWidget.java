@@ -2,9 +2,8 @@ package com.smanzana.petcommand.client.widgetdupe;
 
 import javax.annotation.Nullable;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -47,15 +46,10 @@ public abstract class ObscurableChildWidget<T extends ObscurableChildWidget<?>> 
 		return self();
 	}
 	
-	@Override
-	public void render(PoseStack pose, int mouseX, int mouseY, float partialTicks) {
-		super.render(pose, mouseX, mouseY, partialTicks);
-	}
-	
 	//@Override CAn't override parent since it's private
-	public void renderToolTip(PoseStack matrixStackIn, int mouseX, int mouseY) {
+	public void renderToolTip(GuiGraphics graphics, int mouseX, int mouseY) {
 		if (this.isHoveredOrFocused() && this.tooltip != null) {
-			Tooltip.RenderTooltip(this.tooltip, getScreen(), matrixStackIn, mouseX, mouseY);
+			Tooltip.RenderTooltip(this.tooltip, getScreen(), graphics, mouseX, mouseY);
 		}
 	}
 	

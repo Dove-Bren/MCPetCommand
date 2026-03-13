@@ -393,7 +393,7 @@ public class RayTrace {
 		double d3 = projectile.getDeltaMovement().x;
 		double d4 = projectile.getDeltaMovement().y;
 		double d5 = projectile.getDeltaMovement().z;
-		Level world = projectile.level;
+		Level world = projectile.level();
 		Vec3 Vec3 = new Vec3(d0, d1, d2);
 		Vec3 Vector3d1 = new Vec3(d0 + d3, d1 + d4, d2 + d5);
 		HitResult raytraceresult = world.clip(new ClipContext(Vec3, Vector3d1, Block, ClipContext.Fluid.NONE, projectile));

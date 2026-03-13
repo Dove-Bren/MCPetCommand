@@ -113,6 +113,7 @@ public class PetCommandManager extends SavedData implements IPetOrderManager {
 		this.playerSettings = new HashMap<>();
 	}
 	
+	//Supplier<T> constructor, BiFunction<CompoundTag, HolderLookup.Provider, T> deserializer, DataFixTypes type
 	public static PetCommandManager Load(CompoundTag nbt) {
 		PetCommandManager manager = new PetCommandManager();
 		CompoundTag subtag = nbt.getCompound(NBT_SETTINGS);
@@ -173,7 +174,8 @@ public class PetCommandManager extends SavedData implements IPetOrderManager {
 	
 	@SubscribeEvent
 	public void onConnect(PlayerLoggedInEvent event) {
-		if (event.getEntity().level.isClientSide) {
+		final var level = event.getEntity().level();
+		if (level.isClientSide) {
 			return;
 		}
 		

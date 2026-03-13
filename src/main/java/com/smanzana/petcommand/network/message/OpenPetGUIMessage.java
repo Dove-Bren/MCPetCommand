@@ -22,7 +22,7 @@ public class OpenPetGUIMessage {
 		// Get ID
 		ctx.get().setPacketHandled(true);
 		ctx.get().enqueueWork(() -> {
-			@Nullable Entity ent = ctx.get().getSender().getLevel().getEntity(message.entID);
+			@Nullable Entity ent = ctx.get().getSender().level().getEntity(message.entID);
 			if (ent == null || ent.distanceTo(ctx.get().getSender()) > 10 || !(ent instanceof LivingEntity)) {
 				; // do nothing
 			} else {

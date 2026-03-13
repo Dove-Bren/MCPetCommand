@@ -35,7 +35,7 @@ public class PetCommandMessage {
 			final @Nullable Mob pet;
 			
 			if (message.targetUUID != null) {
-				Entity e = PetCommand.GetEntityByUUID(sp.level, message.targetUUID);
+				Entity e = PetCommand.GetEntityByUUID(sp.level(), message.targetUUID);
 				if (e instanceof LivingEntity) {
 					target = (LivingEntity) e;
 				} else {
@@ -46,7 +46,7 @@ public class PetCommandMessage {
 			}
 			
 			if (message.petUUID != null) {
-				Entity e = PetCommand.GetEntityByUUID(sp.level, message.petUUID);
+				Entity e = PetCommand.GetEntityByUUID(sp.level(), message.petUUID);
 				if (e instanceof Mob) {
 					pet = (Mob) e;
 				} else {

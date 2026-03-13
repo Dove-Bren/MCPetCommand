@@ -2,10 +2,9 @@ package com.smanzana.petcommand.client.widgetdupe;
 
 import java.util.function.Supplier;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
@@ -13,11 +12,11 @@ import net.minecraft.network.chat.Component;
 public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 	
 	public static interface ILabel {
-		public Rect2i render(PoseStack matrixStackIn, int x, int y, float partialTicks, int color);
+		public Rect2i render(GuiGraphics graphics, int x, int y, float partialTicks, int color);
 	}
 	
 	public static interface IValue {
-		public Rect2i render(PoseStack matrixStackIn, int x, int y, float partialTicks, int color, Rect2i labelArea);
+		public Rect2i render(GuiGraphics graphics, int x, int y, float partialTicks, int color, Rect2i labelArea);
 	}
 	
 	protected final Screen parent;
@@ -50,25 +49,25 @@ public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 		return this;
 	}
 	
-	protected Rect2i renderLabel(PoseStack matrixStackIn, int x, int y, float partialTicks) {
-		return this.label.render(matrixStackIn, x, y, partialTicks, this.colorLabel);
+	protected Rect2i renderLabel(GuiGraphics graphics, int x, int y, float partialTicks) {
+		return this.label.render(graphics, x, y, partialTicks, this.colorLabel);
 	}
 	
-	protected Rect2i renderValue(PoseStack matrixStackIn, int x, int y, float partialTicks, Rect2i labelArea) {
-		return this.value.render(matrixStackIn, x, y, partialTicks, this.colorValue, labelArea);
+	protected Rect2i renderValue(GuiGraphics graphics, int x, int y, float partialTicks, Rect2i labelArea) {
+		return this.value.render(graphics, x, y, partialTicks, this.colorValue, labelArea);
 	}
 	
 	@Override
-	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 		final int x = this.getX();
 		final int y = this.getY();
 		
-		matrixStackIn.pushPose();
-		matrixStackIn.translate(x, y, 0);
-		matrixStackIn.scale(scale, scale, 1f);
-		final Rect2i labelArea = renderLabel(matrixStackIn, 0, 0, partialTicks);
-		final Rect2i valueArea = renderValue(matrixStackIn, labelArea.getWidth(), 0, partialTicks, labelArea);
-		matrixStackIn.popPose();
+		graphics.pose().pushPose();
+		graphics.pose().translate(x, y, 0);
+		graphics.pose().scale(scale, scale, 1f);
+		final Rect2i labelArea = renderLabel(graphics, 0, 0, partialTicks);
+		final Rect2i valueArea = renderValue(graphics, labelArea.getWidth(), 0, partialTicks, labelArea);
+		graphics.pose().popPose();
 		
 		// Recalc hover to be actual rendered text length. value can change so have to keep redoing this...
 		final int actingWidth = (int) ((valueArea.getX() + valueArea.getWidth()) * scale); // expect value to return a rect offset by label starting x etc.
@@ -94,14 +93,14 @@ public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 		}
 		
 		@Override
-		public Rect2i render(PoseStack matrixStackIn, int x, int y, float partialTicks, int color) {
+		public Rect2i render(GuiGraphics graphics, int x, int y, float partialTicks, int color) {
 			final Component label = getLabel();
 			
 			final Minecraft mc = Minecraft.getInstance();
 			final Font font = mc.font;
 			final int len = font.width(label);
 			
-			font.drawShadow(matrixStackIn, label, 0, 0, color);
+			graphics.drawString(font, label, 0, 0, color, true);
 			
 			return new Rect2i(x, y, len, font.lineHeight);
 		}
@@ -122,7 +121,7 @@ public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 		}
 		
 		@Override
-		public Rect2i render(PoseStack matrixStackIn, int x, int y, float partialTicks, int color, Rect2i labelArea) {
+		public Rect2i render(GuiGraphics graphics, int x, int y, float partialTicks, int color, Rect2i labelArea) {
 			final Minecraft mc = Minecraft.getInstance();
 			final Font font = mc.font;
 			final String value = valueGetter.get();
@@ -132,7 +131,7 @@ public class LabeledWidget extends ObscurableChildWidget<LabeledWidget> {
 			final int labelCenter = (labelArea.getY() + (labelArea.getHeight() / 2));
 			final int yAdjust = labelCenter - (font.lineHeight / 2);
 			
-			font.draw(matrixStackIn, value, x, yAdjust, color);
+			graphics.drawString(font, value, x, yAdjust, color);
 			
 			return new Rect2i(x, yAdjust, len, font.lineHeight);
 		}

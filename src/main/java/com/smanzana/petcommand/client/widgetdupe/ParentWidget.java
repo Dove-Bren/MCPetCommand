@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 
@@ -38,40 +37,33 @@ public abstract class ParentWidget<W extends ParentWidget<W, T>, T extends Obscu
 	}
 	
 	@Override
-	public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-		super.render(matrixStack, mouseX, mouseY, partialTicks);
+	public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+		//super.renderWidget(graphics, mouseX, mouseY, partialTicks);
 		
 		if (this.visible) {
 			for (T widget : children) {
-				widget.render(matrixStack, mouseX, mouseY, partialTicks);
+				widget.render(graphics, mouseX, mouseY, partialTicks);
 			}
 		}
 		
-		renderForeground(matrixStack, mouseX, mouseY, partialTicks);
+		renderForeground(graphics, mouseX, mouseY, partialTicks);
 	}
 	
 	@Override
-	public void renderToolTip(PoseStack matrixStack, int mouseX, int mouseY) {
+	public void renderToolTip(GuiGraphics matrixStack, int mouseX, int mouseY) {
 		for (T widget : children) {
 			widget.renderToolTip(matrixStack, mouseX, mouseY);
 		}
 	}
 	
-	@Override
-	public void renderWidget(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-		// This is maybe a rude assumption, but assume all parent widgets never want to render default vanilla the button background
-		
-		//fill(matrixStack, x, y, x + width, y + height, 0xFF202020);
-	}
-	
 	/**
 	 * Render foreground media. Notably, this is called after children have been rendered.
-	 * @param matrixStackIn
+	 * @param graphics
 	 * @param mouseX
 	 * @param mouseY
 	 * @param partialTicks
 	 */
-	protected void renderForeground(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	protected void renderForeground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 		
 	}
 	

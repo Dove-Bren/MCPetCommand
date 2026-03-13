@@ -41,11 +41,11 @@ public enum PetCommandSounds {
 	}
 	
 	public void play(Entity at) {
-		play(null, at.level, at.position());
+		play(null, at.level(), at.position());
 	}
 	
 	public void play(Player at) {
-		play(at, at.level, at.position());
+		play(at, at.level(), at.position());
 	}
 	
 	public void play(Player player, Level world, Vec3 at) {
@@ -57,7 +57,7 @@ public enum PetCommandSounds {
 	}
 	
 	public void playClient(Entity at) {
-		playClient(at.level, at.getX(), at.getY(), at.getZ());
+		playClient(at.level(), at.getX(), at.getY(), at.getZ());
 	}
 	
 	public void playClient(Level world, double x, double y, double z) {

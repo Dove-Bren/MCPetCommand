@@ -45,7 +45,7 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 	
 	public FollowOwnerAdvancedGoal(T thePetIn, double followSpeedIn, float minDistIn, float maxDistIn, Predicate<? super T> filter) {
 		this.thePet = thePetIn;
-		this.theWorld = thePetIn.level;
+		this.theWorld = thePetIn.level();
 		this.followSpeed = followSpeedIn;
 		this.petPathfinder = thePetIn.getNavigation();
 		this.minDist = minDistIn;
@@ -215,6 +215,7 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 		if (entitylivingbase == null) {
 			return false;
 		}
+		this.theOwner = entitylivingbase;
 		
 		if (thePet.getTarget() != null) {
 			return false;
@@ -238,7 +239,6 @@ public class FollowOwnerAdvancedGoal<T extends Mob> extends Goal {
 		} else if (this.filter != null && !this.filter.apply(this.thePet)) {
 			return false;
 		} else {
-			this.theOwner = entitylivingbase;
 			return true;
 		}
 	}

@@ -10,7 +10,6 @@ import javax.annotation.Nonnull;
 
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.PetCommand;
 import com.smanzana.petcommand.api.client.container.IPetContainer;
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
@@ -34,8 +33,7 @@ import com.smanzana.petcommand.util.ContainerUtil.IPackedContainerProvider;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -72,7 +70,8 @@ public class PetGUI {
 	}
 	
 	private static void register(PetContainer<?> container, int key) {
-		if (container.player.level.isClientSide) {
+		final var level = container.player.level();
+		if (level.isClientSide) {
 			throw new IllegalArgumentException("Can't register on the client!");
 		}
 		
@@ -127,7 +126,7 @@ public class PetGUI {
 			this.sheetsAllInternal = Lists.newArrayList(sheets);
 			this.id = netID;
 			
-			if (livingPet.level.isClientSide()) {
+			if (livingPet.level().isClientSide()) {
 				PetGUI.clientContainer = this;
 			}
 
@@ -141,7 +140,7 @@ public class PetGUI {
 			final int numSheets = buffer.readVarInt();
 			
 			LivingEntity pet = null;
-			Entity foundEnt = PetCommand.GetEntityByUUID(PetCommand.GetProxy().getPlayer().level, petID);
+			Entity foundEnt = PetCommand.GetEntityByUUID(PetCommand.GetProxy().getPlayer().level(), petID);
 			
 			if (foundEnt == null || !(foundEnt instanceof LivingEntity)) {
 				return null; // crash
@@ -382,27 +381,24 @@ public class PetGUI {
 				PetGUIRenderHelper.ProvideImpl(this);
 			}
 
-			protected void drawSlotRaw(PoseStack matrixStackIn, int width, int height, int x, int y) {
-				Screen.blit(matrixStackIn, x, y,
+			protected void drawSlotRaw(GuiGraphics graphics, int width, int height, int x, int y) {
+				graphics.blit(PetGUI.PetGUIContainer.TEXT, x, y,
 						GUI_TEX_CELL_HOFFSET, GUI_TEX_CELL_VOFFSET, 
 						width, height,
 						GUI_TEX_WIDTH, GUI_TEX_HEIGHT);
 			}
 
 			@Override
-			protected void drawSingleSlot(PoseStack matrixStackIn, int width, int height) {
-				RenderSystem.setShaderTexture(0, PetGUI.PetGUIContainer.TEXT);
-				this.drawSlotRaw(matrixStackIn, width, height, 0, 0);
+			protected void drawSingleSlot(GuiGraphics graphics, int width, int height) {
+				this.drawSlotRaw(graphics, width, height, 0, 0);
 			}
 
 			@Override
-			protected void drawSlots(PoseStack matrixStackIn, int width, int height, int count, int columns) {
-				RenderSystem.setShaderTexture(0, PetGUI.PetGUIContainer.TEXT);
-				
+			protected void drawSlots(GuiGraphics graphics, int width, int height, int count, int columns) {
 				for (int i = 0; i < count; i++) {
 					final int x = width * (i % columns);
 					final int y = height * (i / columns);
-					this.drawSlotRaw(matrixStackIn, width, height, x, y);
+					this.drawSlotRaw(graphics, width, height, x, y);
 				}
 			}
 		}
@@ -438,26 +434,29 @@ public class PetGUI {
 //		}
 
 		@Override
-		protected void renderBg(PoseStack matrixStackIn, float partialTicks, int mouseX, int mouseY) {
+		protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
 			final int GUI_SHEET_HOFFSET = this.width - (GUI_SHEET_WIDTH + GUI_SHEET_NHOFFSET);
 			final int GUI_SHEET_BUTTON_HOFFSET = GUI_SHEET_HOFFSET;
 			
 			if (this.container.pet == null) {
-				drawCenteredString(matrixStackIn, font, "Waiting for server...", this.width / 2, this.height / 2, 0XFFAAAAAA);
+				graphics.drawCenteredString(font, "Waiting for server...", this.width / 2, this.height / 2, 0XFFAAAAAA);
 				return;
 			}
 			
 			// Draw top-left preview
 			{
-				GuiComponent.fill(matrixStackIn, 0, 0, GUI_LENGTH_PREVIEW, GUI_LENGTH_PREVIEW, 0xFF283D2A);
+				graphics.fill(0, 0, GUI_LENGTH_PREVIEW, GUI_LENGTH_PREVIEW, 0xFF283D2A);
 				
 				int xPosition = GUI_LENGTH_PREVIEW / 2;
 				int yPosition = GUI_LENGTH_PREVIEW / 2;
 				//RenderHelper.turnOff(); disable world lighting?
-				InventoryScreen.renderEntityInInventoryFollowsMouse(matrixStackIn,
+				InventoryScreen.renderEntityInInventoryFollowsMouse(graphics,
 						xPosition,
+						//yPosition,
 						(int) (GUI_LENGTH_PREVIEW * .75f),
 						(int) (GUI_LENGTH_PREVIEW * .2),
+						//30, // idk what this is
+						//0.0625f, // or this. Height maybe?
 						(float) (xPosition) - mouseX,
 						(float) (-yPosition) - mouseY,
 						(LivingEntity) container.pet);
@@ -465,13 +464,13 @@ public class PetGUI {
 			
 			// Move everything forward ahead of the drawn entity
 			// Can't just move entity back cause there's a GRAY plane drawn at just below 0 Z
-			matrixStackIn.pushPose();
-			matrixStackIn.translate(0, 0, 51);
+			graphics.pose().pushPose();
+			graphics.pose().translate(0, 0, 51);
 			
 			// Black background (not overlapping preview)
 			{
-				GuiComponent.fill(matrixStackIn, 0, GUI_LENGTH_PREVIEW, width, height, 0xFF000000);
-				GuiComponent.fill(matrixStackIn, GUI_LENGTH_PREVIEW, 0, width, GUI_LENGTH_PREVIEW, 0xFF000000);
+				graphics.fill(0, GUI_LENGTH_PREVIEW, width, height, 0xFF000000);
+				graphics.fill(GUI_LENGTH_PREVIEW, 0, width, GUI_LENGTH_PREVIEW, 0xFF000000);
 			}
 			
 			// Draw stats and stuff
@@ -487,15 +486,15 @@ public class PetGUI {
 				
 				// Health
 				{
-					drawCenteredString(matrixStackIn, this.font, ChatFormatting.BOLD + "Health", centerX, y, 0xFFFFFFFF);
+					graphics.drawCenteredString(this.font, ChatFormatting.BOLD + "Health", centerX, y, 0xFFFFFFFF);
 					y += font.lineHeight + 5;
-					GuiComponent.fill(matrixStackIn, x, y, x + w, y + h, 0xFFD0D0D0);
-					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF201010);
+					graphics.fill(x, y, x + w, y + h, 0xFFD0D0D0);
+					graphics.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF201010);
 					
 					int prog = (int) ((float) (w - 2) * (info.getCurrentHp() / info.getMaxHp()));
-					GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + 1 + prog, y + h - 1, 0xFFA02020);
+					graphics.fill(x + 1, y + 1, x + 1 + prog, y + h - 1, 0xFFA02020);
 					
-					drawCenteredString(matrixStackIn, font,
+					graphics.drawCenteredString(font,
 							String.format("%d / %d", (int) info.getCurrentHp(), (int) info.getMaxHp()),
 							centerX,
 							y + (h / 2) - (font.lineHeight / 2),
@@ -518,15 +517,15 @@ public class PetGUI {
 						final ValueFlavor flavor = value.flavor();
 						final int color = ColorUtil.colorToARGB(flavor.colorR(realProg), flavor.colorG(realProg), flavor.colorB(realProg), flavor.colorA(realProg));
 						
-						drawCenteredString(matrixStackIn, this.font, value.label().copy().withStyle(ChatFormatting.BOLD), centerX, y, 0xFFFFFFFF);
+						graphics.drawCenteredString(this.font, value.label().copy().withStyle(ChatFormatting.BOLD), centerX, y, 0xFFFFFFFF);
 						y += font.lineHeight + 5;
-						GuiComponent.fill(matrixStackIn, x, y, x + w, y + h, 0xFFD0D0D0);
-						GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF201010);
+						graphics.fill(x, y, x + w, y + h, 0xFFD0D0D0);
+						graphics.fill(x + 1, y + 1, x + w - 1, y + h - 1, 0xFF201010);
 						
 						int prog = (int) ((float) (w - 2) * realProg);
-						GuiComponent.fill(matrixStackIn, x + 1, y + 1, x + 1 + prog, y + h - 1, color);
+						graphics.fill(x + 1, y + 1, x + 1 + prog, y + h - 1, color);
 						
-						drawCenteredString(matrixStackIn, font,
+						graphics.drawCenteredString(font,
 								value.getFormattedString(),
 								centerX,
 								y + (h / 2) - (font.lineHeight / 2),
@@ -541,76 +540,75 @@ public class PetGUI {
 				int x = GUI_SHEET_BUTTON_HOFFSET;
 				
 				for (IPetGUISheet<T> sheet : container.getSheets()) {
-					GuiComponent.fill(matrixStackIn, x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0xFFFFFFFF);
-					GuiComponent.fill(matrixStackIn, x + 1, GUI_SHEET_BUTTON_VOFFSET + 1, x + GUI_SHEET_BUTTON_WIDTH - 1, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT - 1, 0xFF202020);
+					graphics.fill(x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0xFFFFFFFF);
+					graphics.fill(x + 1, GUI_SHEET_BUTTON_VOFFSET + 1, x + GUI_SHEET_BUTTON_WIDTH - 1, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT - 1, 0xFF202020);
 					
 					if (sheet == container.getCurrentSheet()) {
-						GuiComponent.fill(matrixStackIn, x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0x40FFFFFF);
+						graphics.fill(x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0x40FFFFFF);
 					}
 					
 					if (mouseX >= x && mouseX <= x + GUI_SHEET_BUTTON_WIDTH && mouseY >= GUI_SHEET_BUTTON_VOFFSET && mouseY <= GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT) {
-						GuiComponent.fill(matrixStackIn, x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0x40FFFFFF);
+						graphics.fill(x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0x40FFFFFF);
 					}
 					
 					String text = sheet.getButtonText();
 					int strLen = font.width(text);
 					int strHeight = font.lineHeight;
-					font.draw(matrixStackIn, text, x + (GUI_SHEET_BUTTON_WIDTH / 2) - (strLen / 2), GUI_SHEET_BUTTON_VOFFSET + (GUI_SHEET_BUTTON_HEIGHT / 2) - (strHeight / 2), 0xFFFFFFFF);
+					graphics.drawString(font, text, x + (GUI_SHEET_BUTTON_WIDTH / 2) - (strLen / 2), GUI_SHEET_BUTTON_VOFFSET + (GUI_SHEET_BUTTON_HEIGHT / 2) - (strHeight / 2), 0xFFFFFFFF);
 					x += GUI_SHEET_BUTTON_WIDTH;
 				}
 				
 				if (container.supportsReroll() && PetCommand.GetProxy().getPlayer().isCreative()) {
-					GuiComponent.fill(matrixStackIn, x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0xFFFFDDFF);
-					GuiComponent.fill(matrixStackIn, x + 1, GUI_SHEET_BUTTON_VOFFSET + 1, x + GUI_SHEET_BUTTON_WIDTH - 1, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT - 1, 0xFF702070);
+					graphics.fill(x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0xFFFFDDFF);
+					graphics.fill(x + 1, GUI_SHEET_BUTTON_VOFFSET + 1, x + GUI_SHEET_BUTTON_WIDTH - 1, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT - 1, 0xFF702070);
 					
 					if (mouseX >= x && mouseX <= x + GUI_SHEET_BUTTON_WIDTH && mouseY >= GUI_SHEET_BUTTON_VOFFSET && mouseY <= GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT) {
-						GuiComponent.fill(matrixStackIn, x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0x40FFFFFF);
+						graphics.fill(x, GUI_SHEET_BUTTON_VOFFSET, x + GUI_SHEET_BUTTON_WIDTH, GUI_SHEET_BUTTON_VOFFSET + GUI_SHEET_BUTTON_HEIGHT, 0x40FFFFFF);
 					}
 					
 					String text = "Reroll";
 					int strLen = font.width(text);
 					int strHeight = font.lineHeight;
-					font.draw(matrixStackIn, text, x + (GUI_SHEET_BUTTON_WIDTH / 2) - (strLen / 2), GUI_SHEET_BUTTON_VOFFSET + (GUI_SHEET_BUTTON_HEIGHT / 2) - (strHeight / 2), 0xFFFFFFFF);
+					graphics.drawString(font, text, x + (GUI_SHEET_BUTTON_WIDTH / 2) - (strLen / 2), GUI_SHEET_BUTTON_VOFFSET + (GUI_SHEET_BUTTON_HEIGHT / 2) - (strHeight / 2), 0xFFFFFFFF);
 					x += GUI_SHEET_BUTTON_WIDTH;
 				}
 			}
 			
-			RenderSystem.setShaderTexture(0, TEXT);
 			
 			// Draw sheet
 			IPetGUISheet<T> sheet = container.getCurrentSheet();
 			if (sheet != null) {
-				matrixStackIn.pushPose();
-				matrixStackIn.translate(GUI_SHEET_HOFFSET, GUI_SHEET_VOFFSET, 0);
-				
+				graphics.pose().pushPose();
+				graphics.pose().translate(GUI_SHEET_HOFFSET, GUI_SHEET_VOFFSET, 0);
+
 				RenderSystem.enableBlend();
-				RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-				blit(matrixStackIn, -GUI_SHEET_MARGIN, -GUI_SHEET_MARGIN, 0, 0, GUI_SHEET_WIDTH + (GUI_SHEET_MARGIN * 2), GUI_SHEET_HEIGHT + (GUI_SHEET_MARGIN * 2), GUI_TEX_WIDTH, GUI_TEX_HEIGHT);
+				graphics.setColor(1f, 1f, 1f, 1f);
+				graphics.blit(TEXT, -GUI_SHEET_MARGIN, -GUI_SHEET_MARGIN, 0, 0, GUI_SHEET_WIDTH + (GUI_SHEET_MARGIN * 2), GUI_SHEET_HEIGHT + (GUI_SHEET_MARGIN * 2), GUI_TEX_WIDTH, GUI_TEX_HEIGHT);
 				
-				sheet.draw(matrixStackIn, Minecraft.getInstance(), partialTicks, GUI_SHEET_WIDTH,
+				sheet.draw(graphics, Minecraft.getInstance(), partialTicks, GUI_SHEET_WIDTH,
 						GUI_SHEET_HEIGHT, mouseX - GUI_SHEET_HOFFSET, mouseY - GUI_SHEET_VOFFSET);
-				matrixStackIn.popPose();
+				graphics.pose().popPose();
 			}
 			
-			matrixStackIn.popPose();
+			graphics.pose().popPose();
 		}
 		
 		@Override
-		protected void renderLabels(PoseStack matrixStackIn, int mouseX, int mouseY) {
+		protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
 			//super.drawGuiContainerForegroundLayer(matrixStackIn, mouseX, mouseY);
 			
 			final int GUI_SHEET_HOFFSET = this.width - (GUI_SHEET_WIDTH + GUI_SHEET_NHOFFSET);
 			
 			IPetGUISheet<T> sheet = container.getCurrentSheet();
 			if (sheet != null) {
-				matrixStackIn.pushPose();
-				matrixStackIn.translate(GUI_SHEET_HOFFSET, GUI_SHEET_VOFFSET, 0);
+				graphics.pose().pushPose();
+				graphics.pose().translate(GUI_SHEET_HOFFSET, GUI_SHEET_VOFFSET, 0);
 				
 				RenderSystem.enableBlend();
 				
-				sheet.overlay(matrixStackIn, Minecraft.getInstance(), 0f, GUI_SHEET_WIDTH,
+				sheet.overlay(graphics, Minecraft.getInstance(), 0f, GUI_SHEET_WIDTH,
 						GUI_SHEET_HEIGHT, mouseX - GUI_SHEET_HOFFSET, mouseY - GUI_SHEET_VOFFSET);
-				matrixStackIn.popPose();
+				graphics.pose().popPose();
 			}
 		}
 		

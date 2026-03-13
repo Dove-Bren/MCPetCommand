@@ -1,7 +1,6 @@
 package com.smanzana.petcommand.client.widgetdupe;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 public class SpacerWidget extends ObscurableChildWidget<SpacerWidget> {
@@ -16,7 +15,7 @@ public class SpacerWidget extends ObscurableChildWidget<SpacerWidget> {
 	}
 	
 	@Override
-	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(GuiGraphics matrixStackIn, int mouseX, int mouseY, float partialTicks) {
 		; // render nothing
 	}
 

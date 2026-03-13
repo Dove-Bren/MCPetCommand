@@ -67,7 +67,8 @@ public class ClientProxy extends CommonProxy {
 	
 	@Override
 	public void openContainer(Player player, IPackedContainerProvider provider) {
-		if (!player.level.isClientSide) {
+		final var level = player.level();
+		if (!level.isClientSide) {
 			super.openContainer(player, provider);
 		}
 		; // On client, do nothing
@@ -131,11 +132,11 @@ public class ClientProxy extends CommonProxy {
 		} else if (PetCommandKeyBindings.bindingPetAttackAll.consumeClick()) {
 			// Raytrace, find tar get, and set all to attack
 			final Player player = getPlayer();
-			if (player != null && player.level != null) {
+			if (player != null && player.level() != null) {
 				final float partialTicks = Minecraft.getInstance().getFrameTime();
 				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
 				HitResult result = RayTrace.raytraceApprox(
-						player.level, player,
+						player.level(), player,
 						player.getEyePosition(partialTicks),
 						player.getViewVector(partialTicks),
 						100, (e) -> { return e != player && e instanceof LivingEntity && !player.isAlliedTo(e) && !tames.contains(e);},
@@ -150,14 +151,14 @@ public class ClientProxy extends CommonProxy {
 			// have them hold it down and release on an enemy? Or 'select' them
 			// and have them press again to select enemy?
 			final Player player = getPlayer();
-			if (player != null && player.level != null) {
+			if (player != null && player.level() != null) {
 				final float partialTicks = Minecraft.getInstance().getFrameTime();
 				final List<LivingEntity> tames = PetFuncs.GetTamedEntities(player);
 				final Set<LivingEntity> selectedPets = this.getSelectionManager().getSelectedPets();
 				if (selectedPets.isEmpty()) {
 					// Try and select a pet
 					HitResult result = RayTrace.raytraceApprox(
-							player.level, player,
+							player.level(), player,
 							player.getEyePosition(partialTicks),
 							player.getViewVector(partialTicks),
 							100, (e) -> { return e != player && tames.contains(e);},
@@ -172,7 +173,7 @@ public class ClientProxy extends CommonProxy {
 				} else {
 					// Find target
 					HitResult result = RayTrace.raytraceApprox(
-							player.level, player,
+							player.level(), player,
 							player.getEyePosition(partialTicks),
 							player.getViewVector(partialTicks),
 							100, (e) -> { return e != player && e instanceof LivingEntity && !player.isAlliedTo(e) && !tames.contains(e);},
@@ -257,7 +258,7 @@ public class ClientProxy extends CommonProxy {
 		final Player player = this.getPlayer();
 		final float partialTicks = Minecraft.getInstance().getFrameTime();
 		HitResult result = RayTrace.raytrace(
-				player.level, player,
+				player.level(), player,
 				player.getEyePosition(partialTicks),
 				player.getViewVector(partialTicks),
 				100, (e) -> false);

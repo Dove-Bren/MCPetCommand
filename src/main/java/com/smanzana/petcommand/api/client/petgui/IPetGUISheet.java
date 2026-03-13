@@ -1,9 +1,9 @@
 package com.smanzana.petcommand.api.client.petgui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.api.client.container.IPetContainer;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -26,10 +26,10 @@ public interface IPetGUISheet<T extends LivingEntity> {
 	
 	// Draw the sheet
 	@OnlyIn(Dist.CLIENT)
-	public void draw(PoseStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY);
+	public void draw(GuiGraphics graphics, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY);
 	
 	@OnlyIn(Dist.CLIENT)
-	public void overlay(PoseStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY);
+	public void overlay(GuiGraphics graphics, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY);
 	
 	// Handle a mouse click.
 	// mouseX and mouseY are relative to the sheet, not global.

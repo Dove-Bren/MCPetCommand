@@ -1,9 +1,8 @@
 package com.smanzana.petcommand.client.widgetdupe;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -85,15 +84,15 @@ public class TextWidget extends ObscurableChildWidget<TextWidget> {
 	}
 	
 	@Override
-	public void renderWidget(PoseStack matrixStackIn, int mouseX, int mouseY, float partialTicks) {
+	public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 		final Minecraft mc = this.parent.getMinecraft();
 		final Font font = mc.font;
 		final int x = getX();
 		final int y = getY();
 		
-		matrixStackIn.pushPose();
-		matrixStackIn.translate(x, y, 0);
-		matrixStackIn.scale(scale, scale, 1f);
+		graphics.pose().pushPose();
+		graphics.pose().translate(x, y, 0);
+		graphics.pose().scale(scale, scale, 1f);
 		final FormattedCharSequence textToDraw;
 		if (truncate) {
 			textToDraw = Language.getInstance().getVisualOrder(font.substrByWidth(this.text, (int) (this.width / scale)));
@@ -103,8 +102,8 @@ public class TextWidget extends ObscurableChildWidget<TextWidget> {
 		final int textWidth = font.width(textToDraw);
 		final int offsetX = this.getOffsetX(scale, textWidth);
 		final int offsetY = this.getOffsetY(scale, font.lineHeight);
-		font.draw(matrixStackIn, textToDraw, offsetX, offsetY, color);
-		matrixStackIn.popPose();
+		graphics.drawString(font, textToDraw, offsetX, offsetY, color);
+		graphics.pose().popPose();
 		
 		final int actingWidth = (int) (textWidth * scale);
 		final int actingHeight = (int) (font.lineHeight * scale);

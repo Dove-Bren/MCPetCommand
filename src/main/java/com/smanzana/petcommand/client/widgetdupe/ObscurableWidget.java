@@ -2,8 +2,7 @@ package com.smanzana.petcommand.client.widgetdupe;
 
 import javax.annotation.Nullable;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 
@@ -52,10 +51,10 @@ public abstract class ObscurableWidget extends FixedWidget {
 	}
 	
 	@Override
-	public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+	public final void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 		// Check bounds
 		this.visible = !isHidden() && inBounds();
-		super.render(matrixStack, mouseX, mouseY, partialTicks);
+		super.render(graphics, mouseX, mouseY, partialTicks);
 	}
 	
 }

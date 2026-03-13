@@ -33,7 +33,7 @@ import com.smanzana.petcommand.util.ColorUtil;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.player.LocalPlayer;
@@ -51,7 +51,7 @@ import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-public class OverlayRenderer extends GuiComponent {
+public class OverlayRenderer {
 
 	private static final ResourceLocation GUI_HEALTHBARS = ResourceLocation.fromNamespaceAndPath(PetCommand.MODID, "textures/gui/healthbars.png");
 	private static final int GUI_HEALTHBAR_ORB_BACK_WIDTH = 205;
@@ -147,7 +147,7 @@ public class OverlayRenderer extends GuiComponent {
 		}
 	}
 	
-	private void renderHealthbarOverlay(ForgeGui gui, PoseStack matrixStackIn, float partialTicks, int width, int height) {
+	private void renderHealthbarOverlay(ForgeGui gui, GuiGraphics graphics, float partialTicks, int width, int height) {
 		if (ModConfig.config.showHealthbars()) {
 			Minecraft mc = Minecraft.getInstance();
 			LocalPlayer player = mc.player;
@@ -176,7 +176,7 @@ public class OverlayRenderer extends GuiComponent {
 				});
 				for (LivingEntity bigPet: bigPets) {
 					final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getSelectionManager().isSelected(bigPet);
-					renderHealthbarOrb(matrixStackIn, player, width, height, bigPet, isSelected, xOffset, y, scale);
+					renderHealthbarOrb(graphics, player, width, height, bigPet, isSelected, xOffset, y, scale);
 					y += healthbarHeight + 2;
 				}
 			}
@@ -200,19 +200,19 @@ public class OverlayRenderer extends GuiComponent {
 					continue;
 				}
 				final boolean isSelected = ((ClientProxy) PetCommand.GetProxy()).getSelectionManager().isSelected(tamed);
-				renderHealthbarBox(matrixStackIn, player, width, height, tamed, isSelected, xOffset, y, scale);
+				renderHealthbarBox(graphics, player, width, height, tamed, isSelected, xOffset, y, scale);
 				y += healthbarHeight;
 			}
 		}
 	}
 	
-	private void renderModeOverlay(ForgeGui gui, PoseStack matrixStackIn, float partialTicks, int width, int height) {
+	private void renderModeOverlay(ForgeGui gui, GuiGraphics graphics, float partialTicks, int width, int height) {
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;
 		final float ticks = player.tickCount + partialTicks;
 		if (petTargetIndex >= 0) {
 			EPetTargetMode mode = PetCommand.GetPetCommandManager().getTargetMode(player);
-			renderPetActionTargetMode(matrixStackIn, player, width, height, mode, (ticks - petTargetIndex) / (float) petTargetAnimDur);
+			renderPetActionTargetMode(graphics, player, width, height, mode, (ticks - petTargetIndex) / (float) petTargetAnimDur);
 			
 			if (ticks >= petTargetIndex + petTargetAnimDur) {
 				petTargetIndex = -1;
@@ -221,7 +221,7 @@ public class OverlayRenderer extends GuiComponent {
 		
 		if (petPlacementIndex >= 0) {
 			EPetPlacementMode mode = PetCommand.GetPetCommandManager().getPlacementMode(player);
-			renderPetActionPlacementMode(matrixStackIn, player, width, height, mode, (ticks - petPlacementIndex) / (float) petPlacementAnimDur);
+			renderPetActionPlacementMode(graphics, player, width, height, mode, (ticks - petPlacementIndex) / (float) petPlacementAnimDur);
 			
 			if (ticks >= petPlacementIndex + petPlacementAnimDur) {
 				petPlacementIndex = -1;
@@ -229,7 +229,7 @@ public class OverlayRenderer extends GuiComponent {
 		}
 	}
 
-	private void renderPetActionTargetMode(PoseStack matrixStackIn, LocalPlayer player, int width, int height, EPetTargetMode mode, float prog) {
+	private void renderPetActionTargetMode(GuiGraphics graphics, LocalPlayer player, int width, int height, EPetTargetMode mode, float prog) {
 		final float alpha;
 		if (prog < .2f) {
 			alpha = prog / .2f;
@@ -239,6 +239,7 @@ public class OverlayRenderer extends GuiComponent {
 			alpha = 1f;
 		}
 		
+		final var matrixStackIn = graphics.pose();
 		matrixStackIn.pushPose();
 		RenderSystem.enableBlend();
 		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
@@ -246,13 +247,13 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.translate(1, 1, 0);
 		
-		PetTargetModeIcon.get(mode).draw(matrixStackIn, 0, 0, GUI_PET_ICON_DIMS, GUI_PET_ICON_DIMS, 1f, 1f, 1f, alpha * .6f);
+		PetTargetModeIcon.get(mode).draw(graphics, 0, 0, GUI_PET_ICON_DIMS, GUI_PET_ICON_DIMS, 1f, 1f, 1f, alpha * .6f);
 		
 		RenderSystem.disableBlend();
 		matrixStackIn.popPose();
 	}
 	
-	private void renderPetActionPlacementMode(PoseStack matrixStackIn, LocalPlayer player, int width, int height, EPetPlacementMode mode, float prog) {
+	private void renderPetActionPlacementMode(GuiGraphics graphics, LocalPlayer player, int width, int height, EPetPlacementMode mode, float prog) {
 		final float alpha;
 		if (prog < .2f) {
 			alpha = prog / .2f;
@@ -261,20 +262,21 @@ public class OverlayRenderer extends GuiComponent {
 		} else {
 			alpha = 1f;
 		}
-		
+
+		final var matrixStackIn = graphics.pose();
 		matrixStackIn.pushPose();
 		RenderSystem.enableBlend();
 		RenderSystem.blendFunc(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA);
 		matrixStackIn.translate(width / 2, height / 2, 0);
 		matrixStackIn.scale(.5f, .5f, .5f);
 		matrixStackIn.translate(-(GUI_PET_ICON_DIMS + 1), 1, 0);
-		PetPlacementModeIcon.get(mode).draw(matrixStackIn, 0, 0, GUI_PET_ICON_DIMS, GUI_PET_ICON_DIMS, 1f, 1f, 1f, alpha * .6f);
+		PetPlacementModeIcon.get(mode).draw(graphics, 0, 0, GUI_PET_ICON_DIMS, GUI_PET_ICON_DIMS, 1f, 1f, 1f, alpha * .6f);
 		
 		RenderSystem.disableBlend();
 		matrixStackIn.popPose();
 	}
 	
-	private void renderHealthbarOrb(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, boolean isSelected, int xoffset, int yoffset, float scale) {
+	private void renderHealthbarOrb(GuiGraphics graphics, LocalPlayer player, int width, int height, LivingEntity pet, boolean isSelected, int xoffset, int yoffset, float scale) {
 		Minecraft mc = Minecraft.getInstance();
 		
 		// Render back, scaled bar + middle 'goods', and then foreground. Easy.
@@ -311,8 +313,7 @@ public class OverlayRenderer extends GuiComponent {
 		info.release();
 		info = null;
 		
-		RenderSystem.setShaderTexture(0, GUI_HEALTHBARS);
-		
+		final var matrixStackIn = graphics.pose();
 		matrixStackIn.pushPose();
 		
 		matrixStackIn.translate(xoffset, yoffset, 0);
@@ -329,34 +330,34 @@ public class OverlayRenderer extends GuiComponent {
 			
 			matrixStackIn.pushPose();
 			matrixStackIn.translate(-20 + (int)(wiggleMod), 0, -101);
-			RenderSystem.setShaderColor(1f, 1f, 1f, .5f);
+			graphics.setColor(1f, 1f, 1f, .5f);
 			
-			fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
+			graphics.fillGradient(GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
 					GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
 					0x50000000, 0xA0000000); //nameplate background
-			RenderSystem.setShaderColor(1f, 1f, 1f, .5f);
-			blit(matrixStackIn, 0, 0,
+			graphics.setColor(1f, 1f, 1f, .5f);
+			graphics.blit(GUI_HEALTHBARS, 0, 0,
 					0, GUI_HEALTHBAR_ORB_BACK_HEIGHT, GUI_HEALTHBAR_ORB_BACK_WIDTH, GUI_HEALTHBAR_ORB_BACK_HEIGHT);
-			RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+			graphics.setColor(1f, 1f, 1f, 1f);
 			matrixStackIn.popPose();
 		}
 		
 		// Draw background
 		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, -100);
-		fillGradient(matrixStackIn, GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
+		graphics.fillGradient(GUI_HEALTHBAR_ORB_NAME_HOFFSET, GUI_HEALTHBAR_ORB_NAME_VOFFSET,
 				GUI_HEALTHBAR_ORB_NAME_WIDTH, GUI_HEALTHBAR_ORB_NAME_HEIGHT,
 				0x50000000, 0xA0000000); //nameplate background
-		RenderSystem.setShaderColor(petColor[0], petColor[1], petColor[2], petColor[3]);
-		blit(matrixStackIn, 0, 0,
+		graphics.setColor(petColor[0], petColor[1], petColor[2], petColor[3]);
+		graphics.blit(GUI_HEALTHBARS, 0, 0,
 				0, GUI_HEALTHBAR_ORB_BACK_HEIGHT, GUI_HEALTHBAR_ORB_BACK_WIDTH, GUI_HEALTHBAR_ORB_BACK_HEIGHT);
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+		graphics.setColor(1f, 1f, 1f, 1f);
 		matrixStackIn.popPose();
 		
 		// Draw middle
 		matrixStackIn.pushPose();
 		// 	-> Health bar
-		blit(matrixStackIn,
+		graphics.blit(GUI_HEALTHBARS,
 				GUI_HEALTHBAR_ORB_HEALTH_BAR_INNER_HOFFSET + Math.round(GUI_HEALTHBAR_ORB_HEALTH_WIDTH * (1f-health)),
 				GUI_HEALTHBAR_ORB_HEALTH_BAR_INNER_VOFFSET,
 				GUI_HEALTHBAR_ORB_HEALTH_BAR_HOFFSET + Math.round(GUI_HEALTHBAR_ORB_HEALTH_WIDTH * (1f-health)),
@@ -376,15 +377,15 @@ public class OverlayRenderer extends GuiComponent {
 						flavor.colorA(secondaryMeter)};
 			}
 			
-			RenderSystem.setShaderColor(color[0], color[1], color[2], color[3]);
-			blit(matrixStackIn, 
+			graphics.setColor(color[0], color[1], color[2], color[3]);
+			graphics.blit(GUI_HEALTHBARS, 
 					GUI_HEALTHBAR_ORB_SECONDARY_BAR_INNER_HOFFSET + Math.round(GUI_HEALTHBAR_ORB_SECONDARY_WIDTH * (1f-secondaryMeter)),
 					GUI_HEALTHBAR_ORB_SECONDARY_BAR_INNER_VOFFSET,
 					GUI_HEALTHBAR_ORB_SECONDARY_BAR_HOFFSET + Math.round(GUI_HEALTHBAR_ORB_SECONDARY_WIDTH * (1f-secondaryMeter)),
 					GUI_HEALTHBAR_ORB_SECONDARY_BAR_VOFFSET,
 					GUI_HEALTHBAR_ORB_SECONDARY_WIDTH - Math.round(GUI_HEALTHBAR_ORB_SECONDARY_WIDTH * (1f-secondaryMeter)),
 					GUI_HEALTHBAR_ORB_SECONDARY_HEIGHT);
-			RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+			graphics.setColor(1f, 1f, 1f, 1f);
 		}
 	
 		//	-> Icon
@@ -393,28 +394,17 @@ public class OverlayRenderer extends GuiComponent {
 		//matrixStackIn.rotate(Vector3f.YP.rotationDegrees(-30f));
 		//RenderSystem.getModelViewStack().pushPose();
 		//RenderSystem.getModelViewStack().mulPoseMatrix(matrixStackIn.last().pose());
-		InventoryScreen.renderEntityInInventoryFollowsMouse(matrixStackIn, 0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, width/2, -20, pet);
+		InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, 0, 0, GUI_HEALTHBAR_ORB_ENTITY_WIDTH, width/2, -20, pet);
 		//RenderSystem.getModelViewStack().popPose();
 		//RenderSystem.applyModelViewMatrix();
 		matrixStackIn.popPose();
-		RenderSystem.setShaderTexture(0, GUI_HEALTHBARS);
 		
 		//	-> Status
 		matrixStackIn.translate(0, 0, 100);
 		matrixStackIn.pushPose();
 		matrixStackIn.scale(.6f, .6f, .6f);
 		matrixStackIn.translate(0, 0, 0);
-//		if (action == PetAction.ATTACK) {
-//			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
-//					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_ATTACK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-//		} else if (action == PetAction.STAY) {
-//			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
-//					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_STAY_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-//		} else if (action == PetAction.WORK) {
-//			blit(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
-//					GUI_HEALTHBAR_ICON_HOFFSET, GUI_HEALTHBAR_ICON_WORK_VOFFSET, GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
-//		}
-		PetActionIcon.get(action).draw(matrixStackIn, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
+		PetActionIcon.get(action).draw(graphics, GUI_HEALTHBAR_ICON_INTERNAL_HOFFSET, GUI_HEALTHBAR_ICON_INTERNAL_VOFFSET,
 				GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
 		matrixStackIn.popPose();
 		
@@ -425,8 +415,7 @@ public class OverlayRenderer extends GuiComponent {
 		final float fontScale = scale * 2.4f;
 		matrixStackIn.pushPose();
 		matrixStackIn.scale(fontScale, fontScale, fontScale);
-		fonter.draw(matrixStackIn, name, 123 - (nameLen), 25 - (fonter.lineHeight + 2), 0xFFFFFFFF);
-		RenderSystem.setShaderTexture(0, GUI_HEALTHBARS);
+		graphics.drawString(fonter, name, 123 - (nameLen), 25 - (fonter.lineHeight + 2), 0xFFFFFFFF);
 		matrixStackIn.popPose();
 		
 		matrixStackIn.popPose();
@@ -435,7 +424,7 @@ public class OverlayRenderer extends GuiComponent {
 		RenderSystem.enableBlend();
 		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, 100);
-		blit(matrixStackIn, 0, 0,
+		graphics.blit(GUI_HEALTHBARS, 0, 0,
 				0, 0, GUI_HEALTHBAR_ORB_BACK_WIDTH, GUI_HEALTHBAR_ORB_BACK_HEIGHT);
 		matrixStackIn.popPose();
 		
@@ -443,7 +432,7 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.popPose();
 	}
 	
-	private void renderHealthbarBox(PoseStack matrixStackIn, LocalPlayer player, int width, int height, LivingEntity pet, boolean isSelected, int xoffset, int yoffset, float scale) {
+	private void renderHealthbarBox(GuiGraphics graphics, LocalPlayer player, int width, int height, LivingEntity pet, boolean isSelected, int xoffset, int yoffset, float scale) {
 		Minecraft mc = Minecraft.getInstance();
 		
 		// Render back, scaled bar + middle 'goods', and then foreground. Easy.
@@ -471,8 +460,7 @@ public class OverlayRenderer extends GuiComponent {
 		info.release();
 		info = null;
 		
-		RenderSystem.setShaderTexture(0, GUI_HEALTHBARS);
-		
+		final var matrixStackIn = graphics.pose();
 		matrixStackIn.pushPose();
 		
 		matrixStackIn.translate(xoffset, yoffset, 0);
@@ -489,27 +477,27 @@ public class OverlayRenderer extends GuiComponent {
 			
 			matrixStackIn.pushPose();
 			matrixStackIn.translate(-20 + (int)(wiggleMod), 0, -101);
-			RenderSystem.setShaderColor(1f, 1f, 1f, .5f);
+			graphics.setColor(1f, 1f, 1f, .5f);
 			
-			blit(matrixStackIn, 0, 0,
+			graphics.blit(GUI_HEALTHBARS, 0, 0,
 					0, GUI_HEALTHBAR_BOX_BACK_VOFFSET + GUI_HEALTHBAR_BOX_BACK_HEIGHT, GUI_HEALTHBAR_BOX_BACK_WIDTH, GUI_HEALTHBAR_BOX_BACK_HEIGHT);
-			RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+			graphics.setColor(1f, 1f, 1f, 1f);
 			matrixStackIn.popPose();
 		}
 		
 		// Draw background
 		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, -100);
-		RenderSystem.setShaderColor(petColor[0], petColor[1], petColor[2], petColor[3]);
-		blit(matrixStackIn, 0, 0,
+		graphics.setColor(petColor[0], petColor[1], petColor[2], petColor[3]);
+		graphics.blit(GUI_HEALTHBARS, 0, 0,
 				0, GUI_HEALTHBAR_BOX_BACK_VOFFSET + GUI_HEALTHBAR_BOX_BACK_HEIGHT, GUI_HEALTHBAR_BOX_BACK_WIDTH, GUI_HEALTHBAR_BOX_BACK_HEIGHT);
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+		graphics.setColor(1f, 1f, 1f, 1f);
 		matrixStackIn.popPose();
 		
 		// Draw middle
 		matrixStackIn.pushPose();
 		// 	-> Health bar
-		blit(matrixStackIn, 
+		graphics.blit(GUI_HEALTHBARS, 
 				GUI_HEALTHBAR_BOX_HEALTH_BAR_INNER_HOFFSET + Math.round(GUI_HEALTHBAR_BOX_HEALTH_WIDTH * (1f-health)),
 				GUI_HEALTHBAR_BOX_HEALTH_BAR_INNER_VOFFSET,
 				GUI_HEALTHBAR_BOX_HEALTH_BAR_HOFFSET + Math.round(GUI_HEALTHBAR_BOX_HEALTH_WIDTH * (1f-health)),
@@ -529,15 +517,15 @@ public class OverlayRenderer extends GuiComponent {
 						flavor.colorA(secondaryMeter)};
 			}
 			
-			RenderSystem.setShaderColor(color[0], color[1], color[2], color[3]);
-			blit(matrixStackIn, 
+			graphics.setColor(color[0], color[1], color[2], color[3]);
+			graphics.blit(GUI_HEALTHBARS, 
 					GUI_HEALTHBAR_BOX_SECONDARY_BAR_INNER_HOFFSET + Math.round(GUI_HEALTHBAR_BOX_SECONDARY_WIDTH * (1f-secondaryMeter)),
 					GUI_HEALTHBAR_BOX_SECONDARY_BAR_INNER_VOFFSET,
 					GUI_HEALTHBAR_BOX_SECONDARY_BAR_HOFFSET + Math.round(GUI_HEALTHBAR_BOX_SECONDARY_WIDTH * (1f-secondaryMeter)),
 					GUI_HEALTHBAR_BOX_SECONDARY_BAR_VOFFSET,
 					GUI_HEALTHBAR_BOX_SECONDARY_WIDTH - Math.round(GUI_HEALTHBAR_BOX_SECONDARY_WIDTH * (1f-secondaryMeter)),
 					GUI_HEALTHBAR_BOX_SECONDARY_HEIGHT);
-			RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+			graphics.setColor(1f, 1f, 1f, 1f);
 		}
 	
 		
@@ -546,7 +534,7 @@ public class OverlayRenderer extends GuiComponent {
 		matrixStackIn.pushPose();
 		matrixStackIn.scale(.6f, .6f, .6f);
 		matrixStackIn.translate(0, 0, 0);
-		PetActionIcon.get(action).draw(matrixStackIn, 282, 6,
+		PetActionIcon.get(action).draw(graphics, 282, 6,
 				GUI_HEALTHBAR_ICON_LENGTH, GUI_HEALTHBAR_ICON_LENGTH);
 		matrixStackIn.popPose();
 
@@ -557,8 +545,7 @@ public class OverlayRenderer extends GuiComponent {
 		final float fontScale = scale * 2.4f;
 		matrixStackIn.pushPose();
 		matrixStackIn.scale(fontScale, fontScale, fontScale);
-		fonter.drawShadow(matrixStackIn, name, 135 - (nameLen), 14 - (fonter.lineHeight + 2), 0xFFFFFFFF);
-		RenderSystem.setShaderTexture(0, GUI_HEALTHBARS);
+		graphics.drawString(fonter, name, 135 - (nameLen), 14 - (fonter.lineHeight + 2), 0xFFFFFFFF, true);
 		matrixStackIn.popPose();
 		
 		matrixStackIn.popPose();
@@ -567,7 +554,7 @@ public class OverlayRenderer extends GuiComponent {
 		RenderSystem.enableBlend();
 		matrixStackIn.pushPose();
 		matrixStackIn.translate(0, 0, 100);
-		blit(matrixStackIn, 0, 0,
+		graphics.blit(GUI_HEALTHBARS, 0, 0,
 				0, GUI_HEALTHBAR_BOX_BACK_VOFFSET, GUI_HEALTHBAR_BOX_BACK_WIDTH, GUI_HEALTHBAR_BOX_BACK_HEIGHT);
 		matrixStackIn.popPose();
 		

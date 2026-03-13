@@ -62,7 +62,7 @@ public class PetTargetGoal<T extends PathfinderMob> extends TargetGoal {
 	protected static @Nullable LivingEntity FindAggressiveTarget(Mob attacker, double range) {
 		LivingEntity owner = PetFuncs.GetOwner(attacker);
 		List<LivingEntity> tamed = (owner == null ? Lists.newArrayList() : PetFuncs.GetTamedEntities(owner));
-		List<Entity> entities = attacker.level.getEntities(attacker, attacker.getBoundingBox().inflate(range), (e) -> {
+		List<Entity> entities = attacker.level().getEntities(attacker, attacker.getBoundingBox().inflate(range), (e) -> {
 			return e instanceof LivingEntity
 					&& e != attacker
 					&& e != owner

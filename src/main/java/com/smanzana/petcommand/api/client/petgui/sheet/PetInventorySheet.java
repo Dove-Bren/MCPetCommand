@@ -1,12 +1,12 @@
 package com.smanzana.petcommand.api.client.petgui.sheet;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.api.client.container.IPetContainer;
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
 import com.smanzana.petcommand.api.client.petgui.PetGUIRenderHelper;
 import com.smanzana.petcommand.api.entity.IEntityPet;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.LivingEntity;
@@ -52,9 +52,9 @@ public abstract class PetInventorySheet<T extends LivingEntity & IEntityPet> imp
 	}
 
 	@Override
-	public void draw(PoseStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
+	public void draw(GuiGraphics graphics, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
 		// Draw sheet
-		matrixStackIn.pushPose();
+		graphics.pose().pushPose();
 		{
 			final int cellWidth = 18;
 			final int invRow = 9;
@@ -64,26 +64,26 @@ public abstract class PetInventorySheet<T extends LivingEntity & IEntityPet> imp
 			final int playerInvSize = 27 + 9;
 			
 			// Pet slots
-			matrixStackIn.pushPose();
-			matrixStackIn.translate(leftOffset - 1, dragonTopOffset - 1, 0);
-			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, petInv.getContainerSize(), invRow);
-			matrixStackIn.popPose();
+			graphics.pose().pushPose();
+			graphics.pose().translate(leftOffset - 1, dragonTopOffset - 1, 0);
+			PetGUIRenderHelper.DrawSlots(graphics, cellWidth, cellWidth, petInv.getContainerSize(), invRow);
+			graphics.pose().popPose();
 			
 			// Player slots
 			final int playerTopOffset = 100;
-			matrixStackIn.pushPose();
-			matrixStackIn.translate(leftOffset - 1, playerTopOffset - 1, 0);
+			graphics.pose().pushPose();
+			graphics.pose().translate(leftOffset - 1, playerTopOffset - 1, 0);
 			// ... First 27
-			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, Math.min(27, playerInvSize), invRow);
+			PetGUIRenderHelper.DrawSlots(graphics, cellWidth, cellWidth, Math.min(27, playerInvSize), invRow);
 			
 			// Remaining (toolbar)
 			final int yOffset = ((Math.min(27, playerInvSize) / invRow)) * cellWidth;
-			matrixStackIn.translate(0, 10 + yOffset, 0);
-			PetGUIRenderHelper.DrawSlots(matrixStackIn, cellWidth, cellWidth, Math.max(0, playerInvSize-27), invRow);
+			graphics.pose().translate(0, 10 + yOffset, 0);
+			PetGUIRenderHelper.DrawSlots(graphics, cellWidth, cellWidth, Math.max(0, playerInvSize-27), invRow);
 			
-			matrixStackIn.popPose();
+			graphics.pose().popPose();
 		}
-		matrixStackIn.popPose();
+		graphics.pose().popPose();
 	}
 
 	@Override
@@ -105,7 +105,7 @@ public abstract class PetInventorySheet<T extends LivingEntity & IEntityPet> imp
 	public abstract boolean shouldShow(T dragon, IPetContainer<T> container);
 
 	@Override
-	public void overlay(PoseStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
+	public void overlay(GuiGraphics graphics, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
 		
 	}
 

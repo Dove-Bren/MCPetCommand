@@ -55,7 +55,7 @@ public class FollowPetOrderGoal<T extends Mob> extends Goal {
 	
 	public FollowPetOrderGoal(T thePetIn, double followSpeedIn, float maxDistIn, Predicate<? super T> filter) {
 		this.thePet = thePetIn;
-		this.theWorld = thePetIn.level;
+		this.theWorld = thePetIn.level();
 		this.followSpeed = followSpeedIn;
 		this.petPathfinder = thePetIn.getNavigation();
 		this.maxDist = maxDistIn;
@@ -129,7 +129,7 @@ public class FollowPetOrderGoal<T extends Mob> extends Goal {
 	
 	protected @Nullable LivingEntity getGuardTarget(T pet, LivingEntity owner, @Nonnull PetOrder order) {
 		List<LivingEntity> tamed = (owner == null ? Lists.newArrayList() : PetFuncs.GetTamedEntities(owner));
-		List<Entity> entities = pet.getLevel().getEntities(pet, AABB.ofSize(Vec3.atBottomCenterOf(order.pos()), 12, 6, 12), (e) -> {
+		List<Entity> entities = pet.level().getEntities(pet, AABB.ofSize(Vec3.atBottomCenterOf(order.pos()), 12, 6, 12), (e) -> {
 			return e instanceof LivingEntity
 					&& e != pet
 					&& e != owner

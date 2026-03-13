@@ -157,7 +157,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	public void aiStep() {
 		super.aiStep();
 		
-		if (!level.isClientSide) {
+		if (!level().isClientSide()) {
 			if (this.getOwnerID() == null) {
 				// Revert to normal iron golem
 				transformBack();
@@ -170,13 +170,13 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	
 	@Override
 	protected void dropEquipment() {
-		if (!this.level.isClientSide) {
+		if (!this.level().isClientSide()) {
 			if (this.inventory != null) {
 				for (int i = 0; i < inventory.getContainerSize(); i++) {
 					ItemStack stack = inventory.getItem(i);
 					if (!stack.isEmpty()) {
-						ItemEntity item = new ItemEntity(this.level, this.getX(), this.getY(), this.getZ(), stack);
-						this.level.addFreshEntity(item);
+						ItemEntity item = new ItemEntity(this.level(), this.getX(), this.getY(), this.getZ(), stack);
+						this.level().addFreshEntity(item);
 					}
 				}
 			}
@@ -225,7 +225,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 		if (parent != InteractionResult.PASS) {
 			return parent;
 		}
-		if (!level.isClientSide()) {
+		if (!level().isClientSide()) {
 			PetCommandAPI.OpenPetGUI(player, this);
 		}
 		return InteractionResult.SUCCESS;
@@ -238,7 +238,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 			return null;
 		}
 		
-		return PetCommand.GetEntityByUUID(level, ownerID);
+		return PetCommand.GetEntityByUUID(level(), ownerID);
 	}
 
 	@Override
@@ -303,13 +303,13 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 
 	protected void transformBack() {
 		// Transform into the given entity
-		Entity ent = EntityType.IRON_GOLEM.create(level);
+		Entity ent = EntityType.IRON_GOLEM.create(level());
 		ent.copyPosition(this);
 		if (this.hasCustomName()) {
 			ent.setCustomName(this.getCustomName());
 			ent.setCustomNameVisible(this.isCustomNameVisible());
 		}
-		level.addFreshEntity(ent);
+		level().addFreshEntity(ent);
 		this.remove(RemovalReason.DISCARDED);
 	}
 
@@ -323,7 +323,7 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	}
 	
 	public static void EntityInteractListener(PlayerInteractEvent.EntityInteract event) {
-		if (!event.isCanceled() && !event.getEntity().level.isClientSide()) {
+		if (!event.isCanceled() && !event.getEntity().level().isClientSide()) {
 			if (event.getTarget() instanceof IronGolem
 					&& !(event.getTarget() instanceof BoundIronGolemEntity)) {
 				ItemStack stack = event.getItemStack();
@@ -338,14 +338,14 @@ public class BoundIronGolemEntity extends IronGolem implements IEntityPet {
 	}
 	
 	public static final void TransformToBound(IronGolem entity, @Nullable LivingEntity owner) {
-		BoundIronGolemEntity ent = PetCommandEntities.BOUND_IRON_GOLEM.get().create(entity.level);
+		BoundIronGolemEntity ent = PetCommandEntities.BOUND_IRON_GOLEM.get().create(entity.level());
 		ent.copyPosition(entity);
 		if (entity.hasCustomName()) {
 			ent.setCustomName(entity.getCustomName());
 			ent.setCustomNameVisible(entity.isCustomNameVisible());
 		}
 		ent.setOwner(owner);
-		entity.level.addFreshEntity(ent);
+		entity.level().addFreshEntity(ent);
 		entity.remove(RemovalReason.DISCARDED);
 	}
 

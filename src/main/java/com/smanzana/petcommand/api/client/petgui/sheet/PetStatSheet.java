@@ -3,7 +3,6 @@ package com.smanzana.petcommand.api.client.petgui.sheet;
 import java.util.List;
 import java.util.Set;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.smanzana.petcommand.api.client.container.IPetContainer;
 import com.smanzana.petcommand.api.client.petgui.IPetGUISheet;
 import com.smanzana.petcommand.api.entity.IEntityPet;
@@ -12,6 +11,7 @@ import com.smanzana.petcommand.api.pet.PetInfo.PetValue;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
@@ -44,22 +44,22 @@ public class PetStatSheet<T extends LivingEntity> implements IPetGUISheet<T> {
 		container.clearSlots();
 	}
 	
-	protected void drawAttribute(PoseStack matrixStackIn, Font font, String label, String value) {
+	protected void drawAttribute(GuiGraphics graphics, Font font, String label, String value) {
 		final String labelStr = label + ": ";
 		final int width = font.width(labelStr);
-		font.draw(matrixStackIn, labelStr, 0, 0, 0xFFFFFFFF);
-		font.draw(matrixStackIn, value, width, 0, 0xFFAAAAAA);
+		graphics.drawString(font, labelStr, 0, 0, 0xFFFFFFFF);
+		graphics.drawString(font, value, width, 0, 0xFFAAAAAA);
 	}
 	
-	protected void drawAttribute(PoseStack matrixStackIn, Font font, Component label, String value) {
+	protected void drawAttribute(GuiGraphics graphics, Font font, Component label, String value) {
 		final Component labelStr = label.copy().append(": ");
 		final int width = font.width(labelStr);
-		font.draw(matrixStackIn, labelStr, 0, 0, 0xFFFFFFFF);
-		font.draw(matrixStackIn, value, width, 0, 0xFFAAAAAA);
+		graphics.drawString(font, labelStr, 0, 0, 0xFFFFFFFF);
+		graphics.drawString(font, value, width, 0, 0xFFAAAAAA);
 	}
 
 	@Override
-	public void draw(PoseStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
+	public void draw(GuiGraphics graphics, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
 		final int rowMarginBase = 2;
 		
 		final Font font = mc.font;
@@ -68,25 +68,25 @@ public class PetStatSheet<T extends LivingEntity> implements IPetGUISheet<T> {
 		final int rowMargin = font.lineHeight + rowMarginBase;
 		
 		// Draw sheet
-		matrixStackIn.pushPose();
+		graphics.pose().pushPose();
 		{
-			matrixStackIn.translate(5, 3, 0); // margin
+			graphics.pose().translate(5, 3, 0); // margin
 			
 			// HP and pet values pulled out first
 			if (info != null) {
-				drawAttribute(matrixStackIn, font, "Health", String.format("%d / %d", (int) info.getCurrentHp(), (int) info.getMaxHp()));
-				matrixStackIn.translate(0, rowMargin, 0);
+				drawAttribute(graphics, font, "Health", String.format("%d / %d", (int) info.getCurrentHp(), (int) info.getMaxHp()));
+				graphics.pose().translate(0, rowMargin, 0);
 				
 				List<PetValue> values = info.getPetValues();
 				if (values != null) {
 					for (PetValue value : values) {
-						drawAttribute(matrixStackIn, font, value.label(), String.format("%d / %d", (int) value.current(), (int) value.max()));
-						matrixStackIn.translate(0, rowMargin, 0);
+						drawAttribute(graphics, font, value.label(), String.format("%d / %d", (int) value.current(), (int) value.max()));
+						graphics.pose().translate(0, rowMargin, 0);
 					}
 				}
 			} else {
-				drawAttribute(matrixStackIn, font, "Health", String.format("%d / %d", (int) pet.getHealth(), (int) pet.getMaxHealth()));
-				matrixStackIn.translate(0, rowMargin, 0);
+				drawAttribute(graphics, font, "Health", String.format("%d / %d", (int) pet.getHealth(), (int) pet.getMaxHealth()));
+				graphics.pose().translate(0, rowMargin, 0);
 			}
 			
 			// Vanilla attributes
@@ -100,20 +100,21 @@ public class PetStatSheet<T extends LivingEntity> implements IPetGUISheet<T> {
 					);
 			var attributes = pet.getAttributes();
 			for (Attribute attribute : ForgeRegistries.ATTRIBUTES.getValues()) {
-				if (attribute == null || !attributes.hasAttribute(attribute) || hideAttributes.contains(attribute) ) {
+				final var holder = ForgeRegistries.ATTRIBUTES.getHolder(attribute).get();
+				if (attribute == null || !attributes.hasAttribute(holder) || hideAttributes.contains(attribute) ) {
 					continue;
 				}
 				
-				AttributeInstance attr = attributes.getInstance(attribute);
+				AttributeInstance attr = attributes.getInstance(holder);
 				if (attr.getValue() == 0) {
 					continue;
 				}
 				
-				drawAttribute(matrixStackIn, font, Component.translatable(attr.getAttribute().getDescriptionId()), String.format("%.2f", attr.getValue()));
-				matrixStackIn.translate(0, rowMargin, 0);
+				drawAttribute(graphics, font, Component.translatable(attr.getAttribute().getDescriptionId()), String.format("%.2f", attr.getValue()));
+				graphics.pose().translate(0, rowMargin, 0);
 			}
 		}
-		matrixStackIn.popPose();
+		graphics.pose().popPose();
 	}
 
 	@Override
@@ -132,7 +133,7 @@ public class PetStatSheet<T extends LivingEntity> implements IPetGUISheet<T> {
 	}
 
 	@Override
-	public void overlay(PoseStack matrixStackIn, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
+	public void overlay(GuiGraphics graphics, Minecraft mc, float partialTicks, int width, int height, int mouseX, int mouseY) {
 		
 	}
 

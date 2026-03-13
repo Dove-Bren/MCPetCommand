@@ -28,13 +28,13 @@ public class CommonProxy {
 	}
 	
 	public <T extends IEntityPet> void openPetGUI(Player player, LivingEntity pet) {
-		if (!player.level.isClientSide()) {
+		if (!player.level().isClientSide()) {
 			this.openContainer(player, PetGUI.PetContainer.Make(pet, player));
 		}
 	}
 	
 	public void openContainer(Player player, IPackedContainerProvider provider) {
-		if (!player.level.isClientSide() && player instanceof ServerPlayer) {
+		if (!player.level().isClientSide() && player instanceof ServerPlayer) {
 			NetworkHooks.openScreen((ServerPlayer) player, provider, provider.getData());
 		}
 	}

@@ -27,8 +27,8 @@ public class TargetUpdateMessage {
 				return;
 			}
 			try {
-				Mob mob = (Mob) mc.player.level.getEntity(message.sourceID);
-				LivingEntity target = message.targetID == null ? null : (LivingEntity) mc.player.level.getEntity(message.targetID);
+				Mob mob = (Mob) mc.player.level().getEntity(message.sourceID);
+				LivingEntity target = message.targetID == null ? null : (LivingEntity) mc.player.level().getEntity(message.targetID);
 				PetCommand.GetClientTargetManager().updateTarget(mob, target);
 			} catch (Exception e) {
 				PetCommand.LOGGER.error("Received a target update for entities we didn't know: " + message.sourceID + " => " + (message.targetID == null ? "NULL" : message.targetID));
